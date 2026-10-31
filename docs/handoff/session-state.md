@@ -1,6 +1,6 @@
 # Session state: SnobblemonRaids (CobbleRaids)
 
-Branch `cmor/amazing-hopper-1r6071`. Latest work: World Boss, version `0.8.191-world-boss`.
+Branch `cmor/amazing-hopper-1r6071`. Latest work: World Boss; this branch is at 0.8.197 (teleport lock for players in a raid, raid radar hologram and persistent charges, World Boss duels get AscensionLib's battle effects). `main` (which CobbleTowers builds against) is still labelled `0.8.191-world-boss` and carries the shared-boss withdrawal API (`CobbleRaidsEncounters.withdraw`, `hasWithdrawnParticipant`).
 Target: Minecraft 1.21.1, Fabric (loader 0.17.2, Fabric API 0.116.6+1.21.1), Cobblemon 1.8.2. Server-side only (Polymer items, WebGUI pages), so vanilla-resourcepack clients can join.
 Commit and push to the branch once tested; no PRs unless asked. Glossary: `CONTEXT.md`. Decisions: `docs/adr/`.
 
@@ -10,6 +10,7 @@ Commit and push to the branch once tested; no PRs unless asked. Glossary: `CONTE
 * Shop, renown and reward economy follow the raid-points ADR (`docs/adr/0001`).
 
 ## Recent state (newest first)
+* 0.8.195 to 0.8.197: refuse teleports for players in an active raid (command and packet level); World Boss duels get AscensionLib's battle effects; raid radar hologram and persistent player charges.
 * World Boss arena: spawn and entrance marker blocks, warp and return (0.8.191).
 * World Boss can only be started from another mod (0.8.191); ships on with the Halloween 2026 window (0.8.190).
 * World Boss: shared-pool event boss fought as solo duels, music, glass dome, night-only spawn, haunted boss bar.
