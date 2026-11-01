@@ -300,15 +300,24 @@ public final class RaidLifecycleCoordinator {
         boolean history = policy == null || policy.raidHistory();
         boolean catching = policy == null || policy.catchable();
         if (!history && !catching) return;
-
         RaidDefinition definition = RaidDefinitionRegistry.get(raid.getDefinitionId());
         if (definition == null) return;
         var boss = raid.getBossEntity();
-        Pokemon bossPokemon = boss == null ? null : boss.getPokemon();
-        Set<UUID> victors = raid.getActiveParticipants();
+        recordAndOfferCatch(server, definition, boss == null ? null : boss.getPokemon(), raid.getId(), raid.getActiveParticipants(),
+                raid.getContributionSnapshot(), raid.getRenownTitle(), raid.getRenownBoon(), history, catching);
+    }
+
+    /**
+     * A won raid's history (wins, titles, trophy room, Hall of Legends for a renown boss) and its capture offer, from explicit
+     * figures. The party raid above and the duel raid ({@code RaidDuelService}) both come through here.
+     */
+    public static void recordAndOfferCatch(MinecraftServer server, RaidDefinition definition, Pokemon bossPokemon, UUID raidId,
+                                           Set<UUID> victors, Map<UUID, Float> damage, String renownTitle, String renownBoon,
+                                           boolean history, boolean catching) {
+        final String title = renownTitle == null ? "" : renownTitle;
+        final String boonCode = renownBoon == null ? "" : renownBoon;
         // Same figures the reward screen shows, computed once rather than per player.
-        Map<UUID, Double> contributions =
-                ContributionMath.percentages(raid.getContributionSnapshot(), victors);
+        Map<UUID, Double> contributions = ContributionMath.percentages(damage, victors);
 
         // History first, for every victor, in one persist. Catching reads that history, so it has to
         // be written before any of the rolls below.
@@ -335,16 +344,16 @@ public final class RaidLifecycleCoordinator {
                     for (UUID playerId : victors) {
                         TrophyLedger.recordDefeat(server, playerId, species, bossPokemon.getLevel(),
                                 bossPokemon.getShiny(), ivPercent, evPercent, definition.rarityTier(), now,
-                                raid.getRenownTitle());
+                                title);
                     }
                 });
 
                 // Same guard, same history flag, but its own fault barrier: a failure recording a
                 // server-wide first must not take the per-player trophy write above down with it.
-                if (!raid.getRenownTitle().isEmpty()) {
+                if (!title.isEmpty()) {
                     RaidFaultBarrier.guard("hall-of-legends", () -> {
                         ResourceLocation species = bossPokemon.getSpecies().getResourceIdentifier();
-                        RenownBoon boon = RenownBoon.decode(raid.getRenownBoon())
+                        RenownBoon boon = RenownBoon.decode(boonCode)
                                 .orElse(new RenownBoon(RenownBoon.Kind.NONE, null));
                         List<UUID> victorIds = new ArrayList<>(victors.size());
                         List<String> victorNames = new ArrayList<>(victors.size());
@@ -353,7 +362,7 @@ public final class RaidLifecycleCoordinator {
                             victorIds.add(playerId);
                             victorNames.add(online != null ? online.getGameProfile().getName() : playerId.toString());
                         }
-                        LegendEntry candidate = new LegendEntry(raid.getRenownTitle(), species,
+                        LegendEntry candidate = new LegendEntry(title, species,
                                 definition.rarityTier(), boon, System.currentTimeMillis(), victorIds, victorNames);
                         if (HallOfLegends.recordFirstDefeat(server, candidate)) {
                             HallOfLegendsAnnouncementService.announce(server, candidate);
@@ -378,7 +387,7 @@ public final class RaidLifecycleCoordinator {
         // mid-reconnect-grace can still be an active participant, and their choice window (once they
         // actually claim) is wall clock, so there is no reason to require them online at this exact
         // instant to be offered a session.
-        RaidCaptureSessionService.offer(server, definition, bossPokemon, raid.getId(), victors);
+        RaidCaptureSessionService.offer(server, definition, bossPokemon, raidId, victors);
     }
 
     /** Used when Cobblemon/Showdown already ended the battle and then emitted BATTLE_VICTORY. */

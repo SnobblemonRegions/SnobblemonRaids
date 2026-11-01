@@ -446,7 +446,7 @@ public final class WorldBossService {
      * (found in two thread dumps). With no good ground at all (the player is flying, or in a cave) the nearest candidate at the player's own
      * height is used, which is still at least 6 blocks away.
      */
-    private static Vec3 duelPosition(ServerPlayer player) {
+    public static Vec3 duelPosition(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
         Vec3 look = player.getLookAngle();
         var spots = WorldBossDuelSpot.candidates(player.getX(), player.getZ(), look.x, look.z);
@@ -599,6 +599,14 @@ public final class WorldBossService {
             }
             RaidLog.info("World Boss {} defeated: {} player(s) paid {} Raid Points each", s.bossId(), paid,
                     config.rewardRaidPoints());
+            // Balance phase 3: the fallen pool pays Cobblemon experience by share (PoolExperienceRules, x5 for a World Boss).
+            RaidFaultBarrier.guard("worldboss:experience", () -> {
+                RaidDefinition fallen = RaidDefinitionRegistry.get(ResourceLocation.tryParse(s.definitionId()));
+                var species = fallen == null ? null : com.cobblemon.mod.common.api.pokemon.PokemonSpecies.getByIdentifier(fallen.species());
+                if (species == null) return;
+                com.cobbleraids.duel.PoolExperience.grant(current, species.getBaseExperienceYield(), config.duelBossLevel(),
+                        com.cobbleraids.duel.PoolExperienceRules.WORLD_BOSS_MULTIPLIER, damage, damage.keySet());
+            });
             // Balance phase 3: AscensionLib pays Apex Shards, attunement and dust by damage share (nothing with Threat off or no library).
             final UUID worldBossId = s.bossId();
             RaidFaultBarrier.guard("worldboss:ascensionlib", () -> com.cobbleraids.raid.AscensionLibArming.settleVictory(
@@ -755,11 +763,16 @@ public final class WorldBossService {
      * entity's first tick and whenever its level changes, and removeAllEffects() there takes the Invisibility with it.
      */
     public static void restoreDuelLook(PokemonEntity boss) {
+        // Balance phase 3: a duel raid's copies are always hidden, so its players see only the raid boss they walked up to.
+        if (com.cobbleraids.spawn.RaidBossEntityMarker.isOwnedBy(boss, com.cobbleraids.duel.RaidDuelService.OWNER)) {
+            hideDuelBoss(boss);
+            return;
+        }
         if (!com.cobbleraids.spawn.RaidBossEntityMarker.isOwnedBy(boss, OWNER)) return;
         if (WorldBossConfigManager.get().look().duelBossInvisible()) hideDuelBoss(boss);
     }
 
-    private static void hideDuelBoss(PokemonEntity boss) {
+    public static void hideDuelBoss(PokemonEntity boss) {
         boss.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.INVISIBILITY,
                 net.minecraft.world.effect.MobEffectInstance.INFINITE_DURATION, 0, false, false, false));
     }

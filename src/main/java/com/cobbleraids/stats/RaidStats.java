@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -77,6 +78,29 @@ public final class RaidStats {
         Set<UUID> remaining = new HashSet<>(raid.getActiveParticipants());
         RaidStatsStore.book().loss(remaining, damageOf(raid), names(server), window());
         RaidStatsStore.touch(server);
+    }
+
+    /**
+     * Balance phase 3: a duel raid's end, from explicit figures (its copies are owned encounters and never counted). Logged in the
+     * phase-0 format, marked {@code duel}, so the run-time report reads it like any raid.
+     */
+    public static void onDuelRaidEnd(MinecraftServer server, ResourceLocation definitionId, boolean won, Set<UUID> players,
+                                     Map<UUID, Float> damage, int seconds, boolean renown) {
+        try {
+            RaidDefinition definition = RaidDefinitionRegistry.get(definitionId);
+            String tier = definition == null ? "unknown" : definition.rarityTier().name().toLowerCase(java.util.Locale.ROOT);
+            int dealers = (int) damage.values().stream().filter(d -> d != null && d > 0f).count();
+            RaidLog.info("Raid {} ({}, duel) ended {} after {} s with {} player(s), {} dealing damage",
+                    definitionId, tier, won ? "victory" : "loss", seconds, players.size(), dealers);
+            if (won && definition != null) {
+                RaidStatsStore.book().victory(definition.rarityTier(), new HashSet<>(players), damage, seconds, renown, names(server), window());
+            } else {
+                RaidStatsStore.book().loss(new HashSet<>(players), damage, names(server), window());
+            }
+            RaidStatsStore.touch(server);
+        } catch (RuntimeException ex) {
+            RaidLog.error("Recording a duel raid's stats failed", ex);
+        }
     }
 
     /** A player withdrew, disconnected for good, or fled. */

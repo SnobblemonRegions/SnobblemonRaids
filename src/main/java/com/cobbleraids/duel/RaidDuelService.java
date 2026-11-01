@@ -8,8 +8,6 @@ import com.cobbleraids.api.encounter.EncounterRequest;
 import com.cobbleraids.api.encounter.EncounterResult;
 import com.cobbleraids.api.encounter.EncounterRules;
 import com.cobbleraids.api.encounter.StartResult;
-import com.cobbleraids.catching.RaidCaptureSessionService;
-import com.cobbleraids.catching.RaidPlayerRecords;
 import com.cobbleraids.config.RaidDefinition;
 import com.cobbleraids.config.RaidDefinitionRegistry;
 import com.cobbleraids.encounter.EncounterService;
@@ -53,12 +51,15 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class RaidDuelService {
 
+    /** Owns each player's hidden copy. */
     public static final ResourceLocation OWNER = ResourceLocation.fromNamespaceAndPath("cobbleraids", "duel_raid");
+    /** Owns the raid boss the players walked up to, which stays visible and is never recruitable again. */
+    public static final ResourceLocation FACE_OWNER = ResourceLocation.fromNamespaceAndPath("cobbleraids", "duel_raid_face");
     private static final int SECOND = 20;
     /** A short breather between a won duel and the next, so the reward of the last one can be seen. */
     private static final int CHAIN_DELAY_TICKS = 3 * SECOND;
-    /** Each duel's boss stands this far in front of its player. */
-    private static final double DUEL_DISTANCE = 7.0;
+    /** Closer than this to the raid boss and a player's copy stands on a ground-checked spot beside them instead. */
+    private static final double MIN_COPY_DISTANCE = 4.0;
 
     /** One raid in progress. */
     private static final class DuelRaid {
@@ -72,6 +73,8 @@ public final class RaidDuelService {
         final Map<UUID, UUID> duelOfPlayer = new ConcurrentHashMap<>();
         final Map<UUID, Long> chainAt = new ConcurrentHashMap<>();
         final long startedTick;
+        final String renownTitle;
+        final String renownBoon;
         boolean finished;
 
         DuelRaid(RaidDefinition definition, PokemonEntity boss, List<ServerPlayer> players, long startedTick) {
@@ -81,6 +84,9 @@ public final class RaidDuelService {
             this.players = new LinkedHashSet<>(players.stream().map(ServerPlayer::getUUID).toList());
             this.pool = new WorldBossPool(RaidDuelRules.poolFor(definition.rarityTier(), players.size()));
             this.startedTick = startedTick;
+            var renown = com.cobbleraids.renown.RaidRenownMarker.read(boss);
+            this.renownTitle = renown.map(com.cobbleraids.renown.RaidRenown::title).orElse("");
+            this.renownBoon = renown.map(r -> r.boon().encode()).orElse("");
         }
     }
 
@@ -99,7 +105,7 @@ public final class RaidDuelService {
         long now = server.overworld().getGameTime();
         DuelRaid raid = new DuelRaid(definition, boss, players, now);
         // Never recruitable again, and never wandering off while its copies are fought.
-        RaidBossEntityMarker.markOwned(boss, OWNER);
+        RaidBossEntityMarker.markOwned(boss, FACE_OWNER);
         boss.setNoAi(true);
         AscensionLibArming.declare(raid.players, boss.getPokemon().getUuid(),
                 boss.getPokemon().getSpecies().getResourceIdentifier().toString(), raid.bossLevel,
@@ -127,8 +133,8 @@ public final class RaidDuelService {
         if (Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player) != null) return "finish your current battle first";
         if (!hasFightingPokemon(player)) return "none of your Pokemon can fight";
         UUID encounterId = UUID.randomUUID();
-        Vec3 look = player.getLookAngle();
-        Vec3 position = new Vec3(player.getX() + look.x * DUEL_DISTANCE, player.getY(), player.getZ() + look.z * DUEL_DISTANCE);
+        Vec3 position = copyPosition(raid, player);
+        if (position == null) return "there is no room for the duel where you are standing";
         EncounterRequest request = new EncounterRequest(OWNER, encounterId, List.of(player), raid.definition.id(),
                 player.serverLevel(), position, raid.bossLevel, OptionalLong.of(RaidDuelRules.duelHealth(raid.definition.rarityTier())),
                 EncounterPolicy.none().withCarryover(true, true), EncounterRules.none());
@@ -145,10 +151,24 @@ public final class RaidDuelService {
             AscensionLibArming.disarmAll(self);
         }
         if (result instanceof StartResult.Refused refused) return refused.reason();
+        // Hidden, so the player sees their Pokemon fight the raid boss they walked up to (re-applied by the attribute-reset mixin).
+        PokemonEntity copy = EncounterService.bossOf(encounterId);
+        if (copy != null) com.cobbleraids.worldboss.WorldBossService.hideDuelBoss(copy);
         BY_DUEL.put(encounterId, raid);
         DUEL_PLAYER.put(encounterId, player.getUUID());
         raid.duelOfPlayer.put(player.getUUID(), encounterId);
         return null;
+    }
+
+    /**
+     * Where a player's hidden copy stands: on the raid boss itself, so the illusion holds and the battle camera faces the real boss.
+     * A player standing within a few blocks of it gets the World Boss's ground-checked spot instead, because a copy on top of its
+     * player makes Cobblemon divide by a zero distance (see {@code WorldBossService.duelPosition}).
+     */
+    private static Vec3 copyPosition(DuelRaid raid, ServerPlayer player) {
+        Vec3 face = raid.boss.position();
+        if (player.position().distanceTo(face) >= MIN_COPY_DISTANCE) return face;
+        return com.cobbleraids.worldboss.WorldBossService.duelPosition(player);
     }
 
     private static final EncounterListener LISTENER = new EncounterListener() {
@@ -217,6 +237,8 @@ public final class RaidDuelService {
         int elapsed = (int) Math.min(Integer.MAX_VALUE, server.overworld().getGameTime() - raid.startedTick);
         RaidLog.info("Duel raid {} ({}) {} after {}s: {} of {} pool dealt", raid.raidId, raid.definition.id(),
                 won ? "won" : "lost", elapsed / SECOND, raid.pool.max() - raid.pool.current(), raid.pool.max());
+        RaidFaultBarrier.guard("duel-raid:stats", () -> com.cobbleraids.stats.RaidStats.onDuelRaidEnd(server, raid.definition.id(), won,
+                raid.players, damage, elapsed / SECOND, !raid.renownTitle.isEmpty()));
         if (won) RaidFaultBarrier.guard("duel-raid:victory", () -> payVictory(server, raid, damage, elapsed));
         else for (UUID id : raid.players) {
             ServerPlayer player = server.getPlayerList().getPlayer(id);
@@ -234,10 +256,14 @@ public final class RaidDuelService {
         Pokemon bossPokemon = raid.boss.getPokemon();
         Map<UUID, Double> percent = ContributionMath.percentages(damage, victors);
         final RaidDefinition def = definition;
-        RaidFaultBarrier.guard("duel-raid:history", () -> RaidPlayerRecords.recordWins(server, def.rarityTier(), def.id(), percent));
-        RaidFaultBarrier.guard("duel-raid:capture", () -> RaidCaptureSessionService.offer(server, def, bossPokemon, raid.raidId, victors));
+        // Experience first, as a party raid pays it before the reward screen, so level-ups reach chat ahead of it.
+        RaidFaultBarrier.guard("duel-raid:experience", () -> PoolExperience.grant(server, bossPokemon,
+                PoolExperienceRules.tierMultiplier(def.rarityTier()), damage, victors));
+        // Wins, titles, trophy room, Hall of Legends for a renown boss, and the capture offer: exactly the party raid's path.
+        RaidFaultBarrier.guard("duel-raid:history", () -> com.cobbleraids.lifecycle.RaidLifecycleCoordinator.recordAndOfferCatch(server, def,
+                bossPokemon, raid.raidId, victors, damage, raid.renownTitle, raid.renownBoon, true, true));
         RaidFaultBarrier.guard("duel-raid:rewards", () -> RaidRewardService.grant(new RaidRewardEligibility(raid.raidId, def.id(),
-                RaidOutcome.VICTORY, damage, victors, elapsed, "", ""), server));
+                RaidOutcome.VICTORY, damage, victors, elapsed, raid.renownTitle, raid.renownBoon), server));
         RaidFaultBarrier.guard("duel-raid:ascensionlib", () ->
                 AscensionLibArming.settleVictory(bossPokemon.getUuid(), def.rarityTier(), damage, victors));
         for (UUID id : victors) {

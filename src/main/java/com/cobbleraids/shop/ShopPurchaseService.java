@@ -59,6 +59,12 @@ public final class ShopPurchaseService {
     }
 
     private static ShopPurchaseResult giveItem(ServerPlayer player, ShopEntry entry, Instant now) {
+        if (AscensionShopHook.isMaterial(entry.item().itemId())) {
+            if (!AscensionShopHook.canSellMaterial()) return ShopPurchaseResult.UNRESOLVED;
+            settle(player, entry, now);
+            AscensionShopHook.creditMaterial(player.getUUID(), entry.item().itemId(), entry.item().count(), entry.id());
+            return ShopPurchaseResult.BOUGHT;
+        }
         ResourceLocation itemId = ResourceLocation.tryParse(entry.item().itemId());
         if (itemId == null) return ShopPurchaseResult.UNRESOLVED;
         Item item = BuiltInRegistries.ITEM.get(itemId);
