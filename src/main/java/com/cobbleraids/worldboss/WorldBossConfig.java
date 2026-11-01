@@ -41,6 +41,7 @@ import java.util.Optional;
  * @param autoStart                whether a boss may start by itself in the window; false means it only starts by command or from another mod
  *                                 through {@code CobbleRaidsWorldBoss.start} (the Spooky Surge's top tier does this)
  * @param spawnLifetimeMinutes     how long one World Boss stays before it leaves undefeated
+ * @param joinCountdownSeconds     how long players have to gather after the boss appears before duels open for everyone at once (0 = no countdown)
  * @param minPercentOfAverage      least damage, as a percent of the average per player who dealt any, that earns the defeat reward
  * @param rewardRaidPoints         Raid Points paid to each qualifying player
  * @param borderParticles          draw the zone as a wall of soul particles for players near its edge
@@ -79,6 +80,7 @@ public record WorldBossConfig(
         int spawnIntervalMinutes,
         boolean autoStart,
         int spawnLifetimeMinutes,
+        int joinCountdownSeconds,
         float minPercentOfAverage,
         int rewardRaidPoints,
         boolean borderParticles,
@@ -217,6 +219,7 @@ public record WorldBossConfig(
         require(spawnAttempts >= 1, "spawn.attempts", "must be at least 1");
         require(spawnIntervalMinutes >= 0, "spawn.interval_minutes", "must not be negative");
         require(spawnLifetimeMinutes >= 1, "spawn.lifetime_minutes", "must be at least 1");
+        require(joinCountdownSeconds >= 0 && joinCountdownSeconds <= 600, "spawn.join_countdown_seconds", "must be 0 to 600");
         require(minPercentOfAverage >= 0f && minPercentOfAverage <= 100f, "reward.min_percent_of_average", "must be 0 to 100");
         require(rewardRaidPoints >= 0, "reward.raid_points", "must not be negative");
         require(borderViewDistance >= 16 && borderViewDistance <= 96, "visual.view_distance", "must be 16 to 96");
@@ -235,7 +238,7 @@ public record WorldBossConfig(
                 "cobbleraids:chandelure", "cobbleraids:giratina", "cobbleraids:darkrai"), Optional.empty(), Optional.empty(),
                 20_000f, 6_000f, 1f, 20f, 900,
                 70, 3_000L, 240, 30, 45, true, 128.0,
-                "minecraft:overworld", 300, 1500, 30, 30, true, 40,
+                "minecraft:overworld", 300, 1500, 30, 30, true, 40, 60,
                 5f, 200, true, 40, 8f, 3f, "#9A5CC6", 50, Music.defaults(), Dome.defaults(), Look.defaults(), Night.defaults(), Arena.defaults());
     }
 
@@ -302,6 +305,7 @@ public record WorldBossConfig(
                 (int) num(spawn, "spawn.interval_minutes", d.spawnIntervalMinutes),
                 bool(spawn, "spawn.auto_start", d.autoStart),
                 (int) num(spawn, "spawn.lifetime_minutes", d.spawnLifetimeMinutes),
+                (int) num(spawn, "spawn.join_countdown_seconds", d.joinCountdownSeconds),
                 num(reward, "reward.min_percent_of_average", d.minPercentOfAverage),
                 (int) num(reward, "reward.raid_points", d.rewardRaidPoints),
                 bool(visual, "visual.border_particles", d.borderParticles),
@@ -363,6 +367,7 @@ public record WorldBossConfig(
         spawn.addProperty("interval_minutes", spawnIntervalMinutes);
         spawn.addProperty("auto_start", autoStart);
         spawn.addProperty("lifetime_minutes", spawnLifetimeMinutes);
+        spawn.addProperty("join_countdown_seconds", joinCountdownSeconds);
         spawn.addProperty("night_only", night.only());
         spawn.addProperty("night_from_tick", night.fromTick());
         spawn.addProperty("night_to_tick", night.toTick());

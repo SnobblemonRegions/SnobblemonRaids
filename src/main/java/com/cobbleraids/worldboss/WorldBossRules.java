@@ -121,6 +121,13 @@ public final class WorldBossRules {
         return nowMillis - lastEndedMillis >= config.spawnIntervalMinutes() * 60_000L;
     }
 
+    /** Whole seconds left of the join countdown that began when the boss appeared (rounded up), or 0 when it is over or switched off. */
+    public static int joinSecondsLeft(long startedAtMillis, int countdownSeconds, long nowMillis) {
+        if (countdownSeconds <= 0) return 0;
+        long left = startedAtMillis + countdownSeconds * 1000L - nowMillis;
+        return left <= 0L ? 0 : (int) Math.min(countdownSeconds, (left + 999L) / 1000L);
+    }
+
     /**
      * Whether a day time (game ticks, any size) falls in the night that runs from {@code from} to {@code to} in a 24000-tick day. The range may
      * wrap past midnight (22000 to 2000 is a night too); equal ends are rejected by the config, so they cannot mean "always" or "never" here.

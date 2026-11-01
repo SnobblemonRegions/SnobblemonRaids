@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '0.8.198-halloween-skins'
+version = '0.8.199-worldboss-win'
 group = 'com.cobbleraids'
 
 base {

@@ -44,6 +44,11 @@ public final class WorldBossCommand {
                         .then(Commands.literal("stop")
                                 .requires(source -> source.hasPermission(ADMIN_PERMISSION_LEVEL))
                                 .executes(WorldBossCommand::stop))
+                        .then(Commands.literal("win")
+                                .requires(source -> source.hasPermission(ADMIN_PERMISSION_LEVEL))
+                                .executes(ctx -> win(ctx, ctx.getSource().getPlayerOrException()))
+                                .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
+                                        .executes(ctx -> win(ctx, net.minecraft.commands.arguments.EntityArgument.getPlayer(ctx, "player")))))
                         .then(Commands.literal("reload")
                                 .requires(source -> source.hasPermission(ADMIN_PERMISSION_LEVEL))
                                 .executes(WorldBossCommand::reload))));
@@ -76,6 +81,18 @@ public final class WorldBossCommand {
             player.sendSystemMessage(Component.literal(problem).withStyle(ChatFormatting.RED));
             return 0;
         }
+        return 1;
+    }
+
+    /** Admin test tool: wins the active fight, crediting the rest of the pool to the chosen player (default: you). */
+    private static int win(CommandContext<CommandSourceStack> ctx, ServerPlayer credit) {
+        String problem = WorldBossService.forceWin(ctx.getSource().getServer(), credit);
+        if (problem != null) {
+            ctx.getSource().sendFailure(Component.literal(problem));
+            return 0;
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal("World Boss won; the remaining damage went to " + credit.getGameProfile().getName()
+                + ". Rewards are being paid through the normal defeat path.").withStyle(ChatFormatting.YELLOW), true);
         return 1;
     }
 

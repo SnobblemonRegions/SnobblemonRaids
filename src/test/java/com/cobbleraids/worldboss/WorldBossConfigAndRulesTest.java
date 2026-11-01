@@ -347,4 +347,26 @@ class WorldBossConfigAndRulesTest {
         assertThrows(IllegalArgumentException.class, () -> WorldBossConfig.fromJson(json("{\"visual\":{\"view_distance\":8}}")));
         assertThrows(IllegalArgumentException.class, () -> WorldBossConfig.fromJson(json("{\"visual\":{\"view_distance\":200}}")));
     }
+    @Test
+    void theJoinCountdownIsAMinuteByDefaultAndBounded() {
+        assertEquals(60, WorldBossConfig.defaults().joinCountdownSeconds());
+        WorldBossConfig off = WorldBossConfig.fromJson(json("{\"spawn\":{\"join_countdown_seconds\":0}}"));
+        assertEquals(0, off.joinCountdownSeconds());
+        assertEquals(off, WorldBossConfig.fromJson(off.toJson()));
+        assertThrows(IllegalArgumentException.class, () -> WorldBossConfig.fromJson(json("{\"spawn\":{\"join_countdown_seconds\":-1}}")));
+        assertThrows(IllegalArgumentException.class, () -> WorldBossConfig.fromJson(json("{\"spawn\":{\"join_countdown_seconds\":601}}")));
+    }
+
+    @Test
+    void theJoinCountdownCountsDownFromTheBossAppearingAndStopsAtZero() {
+        long start = 1_000_000L;
+        assertEquals(60, WorldBossRules.joinSecondsLeft(start, 60, start));
+        assertEquals(60, WorldBossRules.joinSecondsLeft(start, 60, start + 1), "a part second counts as a whole one");
+        assertEquals(30, WorldBossRules.joinSecondsLeft(start, 60, start + 30_000L));
+        assertEquals(1, WorldBossRules.joinSecondsLeft(start, 60, start + 59_001L));
+        assertEquals(0, WorldBossRules.joinSecondsLeft(start, 60, start + 60_000L));
+        assertEquals(0, WorldBossRules.joinSecondsLeft(start, 60, start + 600_000L));
+        assertEquals(0, WorldBossRules.joinSecondsLeft(start, 0, start), "0 switches the countdown off");
+        assertEquals(60, WorldBossRules.joinSecondsLeft(start, 60, start - 5_000L), "never more than the configured length");
+    }
 }

@@ -97,6 +97,8 @@ public final class WorldBossService {
     private static final Map<UUID, Long> CHAIN = new ConcurrentHashMap<>();
     /** Wall-clock millis each player last started a duel; sizes the pool. */
     private static final Map<UUID, Long> LAST_DUEL_START = new ConcurrentHashMap<>();
+    /** Players who joined during the join countdown; their duels all start when it ends. */
+    private static final Map<UUID, Long> GATHERED = new ConcurrentHashMap<>();
     /** Players last seen inside the zone, so crossing the wall can be announced once. Only touched on the server thread. */
     private static final Map<UUID, Boolean> LAST_INSIDE = new HashMap<>();
 
@@ -235,6 +237,7 @@ public final class WorldBossService {
             return;
         }
         WorldBossMusic.tick(current, s, config, DUELS.keySet(), CHAIN.keySet());
+        openGathered(current, config);
         tickDuels(current, config);
         tickChains(current, config);
         refreshBar(current);
@@ -314,6 +317,7 @@ public final class WorldBossService {
         DUELS.clear();
         DUEL_PLAYER.clear();
         CHAIN.clear();
+        GATHERED.clear();
         LAST_DUEL_START.clear();
         flush(current);
         try {
@@ -368,6 +372,7 @@ public final class WorldBossService {
                     () -> listener.onEnded(bossId, definitionId, damage, total));
         }
         CHAIN.clear();
+        GATHERED.clear();
         RaidLog.info("World Boss {} ended undefeated: {} damage of {}; {} leftover boss(es) swept", bossId,
                 Math.round(pool == null ? 0f : pool.totalDamage()), Math.round(total), swept);
         return swept;
@@ -385,7 +390,34 @@ public final class WorldBossService {
         String why = cannotDuel(player, s, config);
         if (why != null) return why;
         CHAIN.remove(player.getUUID());
+        int gatherLeft = joinSecondsLeft(s, config);
+        if (gatherLeft > 0) {
+            if (GATHERED.putIfAbsent(player.getUUID(), System.currentTimeMillis()) == null) barDirty = true;
+            say(player, "You are in. The fight opens in " + gatherLeft + " s, so everyone can join.", ChatFormatting.LIGHT_PURPLE);
+            return null;
+        }
         return startDuel(player, s, config);
+    }
+
+    /** Seconds left before duels open for this boss (0 once open). Counted from when the boss appeared, so a restart does not restart it. */
+    private static int joinSecondsLeft(WorldBossState s, WorldBossConfig config) {
+        return WorldBossRules.joinSecondsLeft(s.startedAtMillis(), config.joinCountdownSeconds(), System.currentTimeMillis());
+    }
+
+    /** When the countdown ends, starts the duel of everyone who joined during it, all in the same second. */
+    private static void openGathered(MinecraftServer current, WorldBossConfig config) {
+        WorldBossState s = state;
+        if (GATHERED.isEmpty() || joinSecondsLeft(s, config) > 0) return;
+        List<UUID> waiting = new ArrayList<>(GATHERED.keySet());
+        GATHERED.clear();
+        broadcast(current, Component.literal("[World Boss] ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                .append(Component.literal("The fight is open! " + waiting.size() + " fighter(s) go in together.").withStyle(ChatFormatting.YELLOW)));
+        for (UUID id : waiting) {
+            ServerPlayer player = current.getPlayerList().getPlayer(id);
+            if (player == null) continue;
+            String problem = join(player);
+            if (problem != null) say(player, problem, ChatFormatting.YELLOW);
+        }
     }
 
     /** Leaves the chain: no more automatic duels. Damage already dealt is kept. */
@@ -571,6 +603,25 @@ public final class WorldBossService {
         s.touch();
         flush(current);
         finishDefeat(current);
+    }
+
+    /**
+     * Admin test tool: wins the active fight now. The pool's remaining health is dealt in one strike and credited to {@code credit}, then the
+     * ordinary defeat path runs, so Raid Points, the announcement and every listener (the Spooky Essence payout among them) behave exactly as
+     * after a real win. Damage already dealt by others is kept, so a test with several players still splits as it would have.
+     *
+     * @return null on success, otherwise why nothing happened
+     */
+    public static String forceWin(MinecraftServer current, ServerPlayer credit) {
+        WorldBossState s = state;
+        if (s == null || !s.active() || s.pool() == null) return "no World Boss is active";
+        if (s.pool().isDefeated()) return "the World Boss is already defeated";
+        float left = s.pool().current();
+        if (left > 0f) s.pool().strike(credit.getUUID(), left);
+        RaidLog.warn("World Boss {} was won by admin command, the last {} damage credited to {}", s.bossId(), Math.round(left),
+                credit.getGameProfile().getName());
+        handleDefeat(current);
+        return null;
     }
 
     /**
@@ -826,6 +877,11 @@ public final class WorldBossService {
                             + level.dimension().location().getPath() + "). Right-click it to duel, together we bring it down.")
                     .withStyle(ChatFormatting.YELLOW));
         }
+        int countdown = WorldBossConfigManager.get().joinCountdownSeconds();
+        if (countdown > 0) {
+            message.append(Component.literal(" The fight opens in " + countdown + " s: join now and everyone goes in together.")
+                    .withStyle(ChatFormatting.GREEN));
+        }
         broadcast(current, message);
     }
 
@@ -994,8 +1050,14 @@ public final class WorldBossService {
         Set<UUID> fighting = new HashSet<>(DUELS.keySet());
         fighting.addAll(CHAIN.keySet());
         long minutesLeft = s.endsAtMillis() > 0L ? Math.max(0L, (s.endsAtMillis() - System.currentTimeMillis() + 59_999L) / 60_000L) : -1L;
-        event.setName(WorldBossBarText.build(speciesName(ResourceLocation.parse(s.definitionId())), pool.current(), pool.max(),
-                percentLeft(pool), fighting.size(), minutesLeft));
+        int gatherLeft = joinSecondsLeft(s, config);
+        if (gatherLeft > 0) {
+            event.setName(Component.literal(speciesName(ResourceLocation.parse(s.definitionId())) + " - gathering, the fight opens in "
+                    + gatherLeft / 60 + ":" + String.format("%02d", gatherLeft % 60) + " (" + GATHERED.size() + " ready)"));
+        } else {
+            event.setName(WorldBossBarText.build(speciesName(ResourceLocation.parse(s.definitionId())), pool.current(), pool.max(),
+                    percentLeft(pool), fighting.size(), minutesLeft));
+        }
         for (ServerPlayer player : current.getPlayerList().getPlayers()) {
             boolean show = !pool.isDefeated() && (DUELS.containsKey(player.getUUID())
                     || CHAIN.containsKey(player.getUUID()) || inRange(player, s, config));
