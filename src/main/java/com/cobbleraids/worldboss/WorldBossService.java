@@ -963,6 +963,13 @@ public final class WorldBossService {
         return null;
     }
 
+    /** The boss as players read it: its species ("Phantump"), not the raid definition id, which for a skin is "worldboss_halloween_phantump". */
+    private static String bossName(WorldBossState s) {
+        ResourceLocation id = ResourceLocation.parse(s.definitionId());
+        RaidDefinition definition = RaidDefinitionRegistry.get(id);
+        return speciesName(definition != null ? definition.species() : id);
+    }
+
     private static String speciesName(ResourceLocation species) {
         String path = species.getPath();
         return path.isEmpty() ? path : Character.toUpperCase(path.charAt(0)) + path.substring(1);
@@ -1052,10 +1059,10 @@ public final class WorldBossService {
         long minutesLeft = s.endsAtMillis() > 0L ? Math.max(0L, (s.endsAtMillis() - System.currentTimeMillis() + 59_999L) / 60_000L) : -1L;
         int gatherLeft = joinSecondsLeft(s, config);
         if (gatherLeft > 0) {
-            event.setName(Component.literal(speciesName(ResourceLocation.parse(s.definitionId())) + " - gathering, the fight opens in "
+            event.setName(Component.literal(bossName(s) + " - gathering, the fight opens in "
                     + gatherLeft / 60 + ":" + String.format("%02d", gatherLeft % 60) + " (" + GATHERED.size() + " ready)"));
         } else {
-            event.setName(WorldBossBarText.build(speciesName(ResourceLocation.parse(s.definitionId())), pool.current(), pool.max(),
+            event.setName(WorldBossBarText.build(bossName(s), pool.current(), pool.max(),
                     percentLeft(pool), fighting.size(), minutesLeft));
         }
         for (ServerPlayer player : current.getPlayerList().getPlayers()) {

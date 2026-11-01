@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '0.8.199-worldboss-win'
+version = '0.8.200-bossbar-name'
 group = 'com.cobbleraids'
 
 base {
