@@ -589,6 +589,10 @@ public final class WorldBossService {
             }
             RaidLog.info("World Boss {} defeated: {} player(s) paid {} Raid Points each", s.bossId(), paid,
                     config.rewardRaidPoints());
+            // Balance phase 3: AscensionLib pays Apex Shards, attunement and dust by damage share (nothing with Threat off or no library).
+            final UUID worldBossId = s.bossId();
+            RaidFaultBarrier.guard("worldboss:ascensionlib", () -> com.cobbleraids.raid.AscensionLibArming.settleVictory(
+                    "worldboss:" + worldBossId, "world_boss", damage, damage.keySet(), () -> {}));
         }
         if (!s.defeatAnnounced()) {
             announceDefeat(current, damage, total);

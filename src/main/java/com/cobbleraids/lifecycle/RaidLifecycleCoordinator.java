@@ -243,6 +243,12 @@ public final class RaidLifecycleCoordinator {
         }
     }
 
+    /** The raid's tier for AscensionLib's raid pay; starter when the definition has gone (a reload mid-raid). */
+    private static com.cobbleraids.config.RaidRarityTier tierOf(RaidSession raid) {
+        var definition = com.cobbleraids.config.RaidDefinitionRegistry.get(raid.getDefinitionId());
+        return definition == null ? com.cobbleraids.config.RaidRarityTier.STARTER : definition.rarityTier();
+    }
+
     private static void finalizeVictory(RaidSession raid) {
         RaidThreadGuard.expectServerThread("finalize-victory");
         RaidCombatRuleService.forget(raid.getId());
@@ -265,7 +271,8 @@ public final class RaidLifecycleCoordinator {
             if (policy == null || policy.raidRewards()) RaidRewardService.grant(RaidRewardEligibility.victory(raid), server);
             // An ordinary raid also moves its victors' Pokemon toward promotion (an owned one pays through its owner).
             if (policy == null) RaidFaultBarrier.guard("ascensionlib:attunement",
-                    () -> com.cobbleraids.raid.AscensionLibArming.settleVictory(raid.getBossActorId(), raid.getActiveParticipants()));
+                    () -> com.cobbleraids.raid.AscensionLibArming.settleVictory(raid.getBossActorId(), tierOf(raid),
+                            raid.getContributionSnapshot(), raid.getActiveParticipants()));
         },
                 // Separate steps, so one that throws cannot skip the others; see RaidFinalizationGuard.
                 () -> RaidRegistry.remove(raid.getBattle()),
