@@ -1,5 +1,6 @@
 package com.cobbleraids.stats;
 
+import com.cobbleraids.RaidLog;
 import com.cobbleraids.config.RaidDefinition;
 import com.cobbleraids.config.RaidDefinitionRegistry;
 import com.cobbleraids.raid.RaidSession;
@@ -59,6 +60,7 @@ public final class RaidStats {
     }
 
     public static void onVictory(MinecraftServer server, RaidSession raid) {
+        logRaidEnd(raid, "victory");
         if (!counts(raid)) return;
         RaidDefinition definition = RaidDefinitionRegistry.get(raid.getDefinitionId());
         if (definition == null) return;
@@ -70,6 +72,7 @@ public final class RaidStats {
     }
 
     public static void onLoss(MinecraftServer server, RaidSession raid) {
+        logRaidEnd(raid, "loss");
         if (!counts(raid)) return;
         Set<UUID> remaining = new HashSet<>(raid.getActiveParticipants());
         RaidStatsStore.book().loss(remaining, damageOf(raid), names(server), window());
@@ -94,6 +97,24 @@ public final class RaidStats {
     }
 
     // ---------------------------------------------------------------- helpers
+
+    /**
+     * One log line per finished raid for the balance pass (phase 0): tier, outcome, fight length and how many players
+     * dealt damage. Tower boss floors run as owned raids, so they are logged too, marked {@code owned}. Never throws.
+     */
+    private static void logRaidEnd(RaidSession raid, String outcome) {
+        try {
+            RaidDefinition definition = RaidDefinitionRegistry.get(raid.getDefinitionId());
+            String tier = definition == null ? "unknown" : definition.rarityTier().name().toLowerCase(java.util.Locale.ROOT);
+            int seconds = raid.getElapsedCombatTicks() / 20;
+            int dealers = (int) damageOf(raid).values().stream().filter(d -> d != null && d > 0f).count();
+            RaidLog.info("Raid {} ({}{}) ended {} after {} s with {} player(s), {} dealing damage",
+                    raid.getDefinitionId(), tier, raid.isOwned() ? ", owned" : "", outcome, seconds,
+                    raid.getActiveParticipants().size(), dealers);
+        } catch (RuntimeException ex) {
+            // Telemetry only.
+        }
+    }
 
     private static Map<UUID, Float> damageOf(RaidSession raid) {
         return raid.getContributionSnapshot();
