@@ -1,0 +1,23 @@
+{
+  "order": 1,
+  "species": "cobblemon:mew",
+  "variations": [
+    {
+      "aspects": [
+        "halloween"
+      ],
+      "texture": "cobblemon:textures/pokemon/0151_mew/mew_halloween.png",
+      "layers": [],
+      "model": "cobblemon:mew_halloween.geo"
+    },
+    {
+      "aspects": [
+        "halloween",
+        "shiny"
+      ],
+      "texture": "cobblemon:textures/pokemon/0151_mew/mew_halloween_shiny.png",
+      "layers": [],
+      "model": "cobblemon:mew_halloween.geo"
+    }
+  ]
+}

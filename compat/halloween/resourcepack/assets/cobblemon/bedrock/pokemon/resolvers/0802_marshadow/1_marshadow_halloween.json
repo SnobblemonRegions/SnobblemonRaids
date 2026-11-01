@@ -1,0 +1,21 @@
+{
+  "order": 1,
+  "species": "cobblemon:marshadow",
+  "variations": [
+    {
+      "aspects": [
+        "halloween"
+      ],
+      "texture": "cobblemon:textures/pokemon/0802_marshadow/marshadow_halloween.png",
+      "layers": []
+    },
+    {
+      "aspects": [
+        "halloween",
+        "shiny"
+      ],
+      "texture": "cobblemon:textures/pokemon/0802_marshadow/marshadow_halloween_shiny.png",
+      "layers": []
+    }
+  ]
+}

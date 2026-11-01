@@ -197,6 +197,11 @@ public final class RaidBossSpawner {
         }
 
         if (any) properties.apply(pokemon);
+        // Skins: a resolver variation is chosen by aspect, so forcing the aspect is what selects the look.
+        if (!traits.aspects().isEmpty()) {
+            pokemon.setForcedAspects(new java.util.HashSet<>(traits.aspects()));
+            pokemon.updateAspects();
+        }
     }
 
     /**

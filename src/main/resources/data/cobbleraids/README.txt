@@ -1,6 +1,6 @@
 CobbleRaids raid definitions — Spawn Director
 
-The core JAR contains 130 unique raid definitions under data/cobbleraids/raids.
+The core JAR contains 139 unique raid definitions under data/cobbleraids/raids.
 Each definition references one or two type-based biome tags under:
 
   data/cobbleraids/tags/worldgen/biome/raid_types/
