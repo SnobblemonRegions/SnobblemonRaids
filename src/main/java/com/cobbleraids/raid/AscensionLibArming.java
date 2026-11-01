@@ -142,6 +142,35 @@ public final class AscensionLibArming {
         settleVictory(encounterId(bossPokemonId), tier.serializedName(), damage, victors, () -> settleVictory(bossPokemonId, victors));
     }
 
+    /**
+     * Balance phase 3, for duel raids: declares the raid's boss once for every player, keyed by the lobby boss's Pokemon. Each duel
+     * then arms its one player with {@link #arm} just before its battle starts. Returns whether the boss was declared.
+     */
+    public static boolean declare(Collection<UUID> players, UUID bossPokemonId, String speciesId, int level, int threat) {
+        if (!resolve()) return false;
+        try {
+            Object status = declare.invoke(null, encounterId(bossPokemonId), players, 0, enemyTier(threat), true, null, speciesId, level);
+            return "DECLARED".equals(String.valueOf(status));
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError ex) {
+            RaidLog.error("Declaring the duel raid of " + speciesId + " to AscensionLib failed; it fights natively", ex);
+            return false;
+        }
+    }
+
+    /** Arms the next battle of {@code players} for a boss already {@link #declare declared}. Pair with {@link #disarmAll}. */
+    public static void arm(Collection<UUID> players, UUID bossPokemonId) {
+        if (!resolve()) return;
+        try {
+            arm.invoke(null, players, encounterId(bossPokemonId));
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError ex) {
+            RaidLog.error("Arming a duel for ascension effects failed; it fights natively", ex);
+        }
+    }
+
+    public static void disarmAll(Collection<UUID> players) { disarm(players); }
+
+    public static void endEncounter(UUID bossPokemonId) { end(bossPokemonId); }
+
     /** The raid is over: the library forgets the boss and every reveal. Safe to repeat. */
     static void end(UUID bossPokemonId) {
         if (!resolve()) return;

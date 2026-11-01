@@ -84,19 +84,19 @@ public final class RaidLobbyManager {
             player.sendSystemMessage(Component.literal("You are already in this raid. Starts in " + seconds + "s."));
             return JoinResult.ALREADY_JOINED;
         }
-        if (lobby.joinedCount() >= definition.recruitment().maxPlayers()) {
+        if (lobby.joinedCount() >= com.cobbleraids.duel.RaidDuelRules.MAX_PLAYERS) {
             player.sendSystemMessage(Component.literal("This raid lobby is full.").withStyle(ChatFormatting.RED));
             return JoinResult.FULL;
         }
         if (!lobby.join(player.getUUID())) return JoinResult.UNAVAILABLE;
 
         long seconds = Math.max(0L, (lobby.closesAtTick() - now + 19L) / 20L);
-        player.sendSystemMessage(Component.literal("Joined raid: " + lobby.joinedCount() + "/" + definition.recruitment().maxPlayers()
+        player.sendSystemMessage(Component.literal("Joined raid: " + lobby.joinedCount() + "/" + com.cobbleraids.duel.RaidDuelRules.MAX_PLAYERS
                 + " players. Starts in " + seconds + "s.").withStyle(ChatFormatting.GOLD));
         // Everyone nearby but the joiner, who was just told directly: they would otherwise read the
         // same count twice in a row.
         broadcastNearby(lobby, Component.literal(player.getGameProfile().getName() + " joined the raid ("
-                + lobby.joinedCount() + "/" + definition.recruitment().maxPlayers() + ").").withStyle(ChatFormatting.YELLOW),
+                + lobby.joinedCount() + "/" + com.cobbleraids.duel.RaidDuelRules.MAX_PLAYERS + ").").withStyle(ChatFormatting.YELLOW),
                 player.getUUID());
         return created ? JoinResult.STARTED_RECRUITMENT : JoinResult.JOINED;
     }
@@ -154,7 +154,11 @@ public final class RaidLobbyManager {
         int bossLevel = applyDynamicLevel(boss, definition, eligible);
         long scaledHealth = withRenownHealth(boss, RaidScalingPolicy.maxHealth(definition, eligible.size(), bossLevel));
         try {
-            RaidFactory.startFromWildBoss(eligible, definition, boss, scaledHealth);
+            // Balance phase 3: every ordinary raid is fought as duels against one shared pool (RaidDuelService); the pool is sized by
+            // RaidDuelRules, so the party-raid health above is only used for the log.
+            String refused = com.cobbleraids.duel.RaidDuelService.start(server, eligible, definition, boss);
+            if (refused != null) throw new IllegalStateException(refused);
+            RaidLog.info("Duel raid {} started for {} player(s) (a party raid would have had {} HP)", definition.id(), eligible.size(), scaledHealth);
             lobby.started();
             // After the raid exists, so a raid that failed to start never counts as one that began.
             RaidFaultBarrier.guard("stats:start", () ->

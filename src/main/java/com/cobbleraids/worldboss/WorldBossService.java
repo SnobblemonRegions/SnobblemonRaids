@@ -364,10 +364,20 @@ public final class WorldBossService {
         if (s == null || !s.active() || s.pool() == null) return "There is no World Boss right now.";
         if (s.pool().isDefeated() || s.pool().current() <= 0f) return "The World Boss has already fallen.";
         if (DUELS.containsKey(player.getUUID())) return "You are already in a duel.";
+        if (!WorldBossRules.hasRoom(fighters(s), player.getUUID()))
+            return "The World Boss already has " + WorldBossRules.MAX_PLAYERS + " challengers.";
         String why = cannotDuel(player, s, config);
         if (why != null) return why;
         CHAIN.remove(player.getUUID());
         return startDuel(player, s, config);
+    }
+
+    /** Everyone taking part: anyone who dealt damage, is dueling, or is waiting for their next duel. */
+    private static Set<UUID> fighters(WorldBossState s) {
+        Set<UUID> all = new HashSet<>(s.pool().contributions().keySet());
+        all.addAll(DUELS.keySet());
+        all.addAll(CHAIN.keySet());
+        return all;
     }
 
     /** Leaves the chain: no more automatic duels. Damage already dealt is kept. */

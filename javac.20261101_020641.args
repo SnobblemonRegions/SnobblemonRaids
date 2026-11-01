@@ -1,0 +1,13 @@
+-Xmaxerrs
+9999
+-proc:none
+-nowarn
+-encoding
+UTF-8
+-cp
+/opt/gradle-8.14.3/lib/gson-2.10.jar:/tmp/claude-0/-home-claude/01a24c42-f029-5c06-9354-48717b02a2c3/scratchpad/mcstub/classes
+-sourcepath
+src/main/java
+-d
+/tmp/claude-0/-home-claude/01a24c42-f029-5c06-9354-48717b02a2c3/scratchpad/rdx
+src/main/java/com/cobbleraids/duel/RaidDuelService.java
