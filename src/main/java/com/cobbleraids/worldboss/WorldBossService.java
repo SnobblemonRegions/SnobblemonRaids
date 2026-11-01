@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.ChatFormatting;
@@ -617,9 +618,22 @@ public final class WorldBossService {
         if (s == null || !s.active() || s.pool() == null) return "no World Boss is active";
         if (s.pool().isDefeated()) return "the World Boss is already defeated";
         float left = s.pool().current();
-        if (left > 0f) s.pool().strike(credit.getUUID(), left);
-        RaidLog.warn("World Boss {} was won by admin command, the last {} damage credited to {}", s.bossId(), Math.round(left),
-                credit.getGameProfile().getName());
+        // Split the rest across everyone taking part. Crediting it all to one player would make the average huge and push everybody else under
+        // the pay threshold (a fraction of the average), so a test with several players would pay only the admin.
+        Set<UUID> takingPart = new LinkedHashSet<>(s.pool().contributions().keySet());
+        takingPart.add(credit.getUUID());
+        takingPart.addAll(GATHERED.keySet());
+        WorldBossConfig config = WorldBossConfigManager.get();
+        for (ServerPlayer player : current.getPlayerList().getPlayers()) {
+            if (inRange(player, s, config)) takingPart.add(player.getUUID());
+        }
+        if (left > 0f) {
+            float each = left / takingPart.size();
+            for (UUID id : takingPart) s.pool().strike(id, each);
+            if (s.pool().current() > 0f) s.pool().strike(credit.getUUID(), s.pool().current());
+        }
+        RaidLog.warn("World Boss {} was won by admin command, the last {} damage split across {} player(s)", s.bossId(), Math.round(left),
+                takingPart.size());
         handleDefeat(current);
         return null;
     }

@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '0.8.201-halloween-pack'
+version = '0.8.202-win-splits-damage'
 group = 'com.cobbleraids'
 
 base {
