@@ -310,7 +310,7 @@ public final class WorldBossService {
 
         long now = System.currentTimeMillis();
         float pool = WorldBossScaling.poolSize(config.poolBase(), config.damagePerPlayerMinute(), 1,
-                config.minutesPerPlayer(), config.maxMinutes());
+                config.minutesPerPlayer(), config.maxMinutes(), config.poolMax());
         WorldBossState s = state;
         s.begin(UUID.randomUUID(), definition.id().toString(), level.dimension().location().toString(),
                 spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, now, WorldBossRules.endMillis(config, now),
@@ -444,7 +444,7 @@ public final class WorldBossService {
         LAST_DUEL_START.put(player.getUUID(), nowMillis);
         int active = WorldBossRules.activePlayers(LAST_DUEL_START, nowMillis, config.activeWindowSeconds() * 1000L);
         s.pool().growTo(WorldBossScaling.poolSize(config.poolBase(), config.damagePerPlayerMinute(), active,
-                config.minutesPerPlayer(), config.maxMinutes()));
+                config.minutesPerPlayer(), config.maxMinutes(), config.poolMax()));
         s.touch();
         stateDirty = true;
         barDirty = true;
@@ -458,7 +458,8 @@ public final class WorldBossService {
                 policy, EncounterRules.none());
         StartResult result;
         try {
-            result = EncounterService.start(request, DUEL_LISTENER);
+            result = com.cobbleraids.spawn.RaidBossSpawner.withoutMoves(config.bossBannedMoves(),
+                    () -> EncounterService.start(request, DUEL_LISTENER));
         } catch (RuntimeException ex) {
             RaidLog.error("World Boss duel for {} could not start", player.getGameProfile().getName(), ex);
             return "The duel could not start. Tell an administrator.";

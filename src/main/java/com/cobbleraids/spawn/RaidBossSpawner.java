@@ -60,6 +60,38 @@ public final class RaidBossSpawner {
     /** Whether a boss is being created by {@link #spawnAt} right now, on this same thread. */
     public static boolean isSpawning() { return spawning; }
 
+    /** Moves the boss now being built must not keep; set by {@link #withoutMoves} for the length of one spawn, on the server thread. */
+    private static java.util.Set<String> excludedMoves = java.util.Set.of();
+
+    /**
+     * Runs {@code action} with every boss it spawns stripped of {@code moves} (Showdown ids). The one caller is a World Boss duel, whose copy of
+     * the boss must not heal itself; ordinary raids, which do not use this, keep their definition's moves.
+     */
+    public static <T> T withoutMoves(java.util.Collection<String> moves, java.util.function.Supplier<T> action) {
+        java.util.Set<String> before = excludedMoves;
+        excludedMoves = java.util.Set.copyOf(moves);
+        try {
+            return action.get();
+        } finally {
+            excludedMoves = before;
+        }
+    }
+
+    /** Drops the excluded moves from a built moveset, keeping at least one so a boss is never left with nothing to use. */
+    private static void removeExcludedMoves(Pokemon pokemon, RaidDefinition definition) {
+        if (excludedMoves.isEmpty()) return;
+        List<Move> kept = new ArrayList<>();
+        for (Move move : pokemon.getMoveSet().getMoves()) {
+            if (!excludedMoves.contains(move.getName().toLowerCase(java.util.Locale.ROOT))) kept.add(move);
+        }
+        if (kept.isEmpty() || kept.size() == pokemon.getMoveSet().getMoves().size()) {
+            if (kept.isEmpty()) RaidLog.warn("{} has only excluded moves; leaving its moveset alone.", definition.id());
+            return;
+        }
+        pokemon.getMoveSet().clear();
+        for (Move move : kept) pokemon.getMoveSet().add(move);
+    }
+
     public static PokemonEntity spawnAt(ServerLevel level, Vec3 position, RaidDefinition definition) {
         return spawnAt(level, position, definition, RenownRequest.ROLL);
     }
@@ -84,6 +116,7 @@ public final class RaidBossSpawner {
         pokemon.setLevel(definition.level());
         pokemon.initializeMoveset(false);
         applyFixedMoveset(pokemon, definition);
+        removeExcludedMoves(pokemon, definition);
         // Strictly before the health line below: IVs, EVs and nature all change getMaxHealth(), so
         // applying them afterwards would spawn every boss already damaged.
         applyTraits(pokemon, definition);

@@ -55,6 +55,8 @@ import java.util.Optional;
  * @param look                     what players see of the bosses inside the zone
  * @param night                    whether the boss may only start by itself at night
  * @param arena                    the arena: when spawn marker blocks are placed, the boss starts at one of them and players can warp in
+ * @param poolMax                  the most health the World Pool may ever have, however many players join (pool.max)
+ * @param bossBannedMoves          Showdown move ids a World Boss duel's boss may not know, so it cannot heal itself back up (duel.boss_banned_moves)
  */
 public record WorldBossConfig(
         boolean enabled,
@@ -93,7 +95,9 @@ public record WorldBossConfig(
         Dome dome,
         Look look,
         Night night,
-        Arena arena) {
+        Arena arena,
+        float poolMax,
+        List<String> bossBannedMoves) {
 
     /**
      * When the boss may start by itself: only at night when {@code only} is set. A command start ignores this. A dimension with a fixed time
@@ -205,6 +209,9 @@ public record WorldBossConfig(
         require(minutesPerPlayer > 0f, "pool.minutes_per_player", "must be positive");
         require(maxMinutes > 0f, "pool.max_minutes", "must be positive");
         require(activeWindowSeconds >= 10, "pool.active_window_seconds", "must be at least 10");
+        require(poolMax >= poolBase && Float.isFinite(poolMax), "pool.max", "must be at least pool.base");
+        require(bossBannedMoves != null, "duel.boss_banned_moves", "must be a list");
+        bossBannedMoves = bossBannedMoves.stream().map(m -> m == null ? "" : m.trim().toLowerCase(java.util.Locale.ROOT)).filter(m -> !m.isEmpty()).distinct().toList();
         require(duelBossLevel >= 1 && duelBossLevel <= 100, "duel.boss_level", "must be 1 to 100");
         require(duelBossHealth >= 1, "duel.boss_health", "must be at least 1");
         require(duelTimeLimitSeconds >= 30, "duel.time_limit_seconds", "must be at least 30");
@@ -232,6 +239,16 @@ public record WorldBossConfig(
         }
     }
 
+    /**
+     * Moves that restore the user's own health, which a World Boss must not use: the pool is the whole event's health, and a boss that heals
+     * itself back up turns a long fight into one nobody can finish. Recovery moves, draining moves, and the passive regeneration setups.
+     */
+    public static final List<String> HEALING_MOVES = List.of(
+            "recover", "roost", "softboiled", "slackoff", "milkdrink", "moonlight", "morningsun", "synthesis", "shoreup", "healorder",
+            "wish", "rest", "strengthsap", "junglehealing", "lifedew", "healpulse", "floralhealing", "lunarblessing", "painsplit", "purify",
+            "absorb", "megadrain", "gigadrain", "drainpunch", "leechlife", "hornleech", "drainingkiss", "paraboliccharge", "oblivionwing",
+            "dreameater", "bitterblade", "matchagotcha", "leechseed", "ingrain", "aquaring", "swallow");
+
     /** What a fresh install gets: disabled, with numbers that are a starting point for a bot test. */
     public static WorldBossConfig defaults() {
         return new WorldBossConfig(false, List.of("cobbleraids:marshadow", "cobbleraids:gengar",
@@ -239,7 +256,8 @@ public record WorldBossConfig(
                 20_000f, 6_000f, 1f, 20f, 900,
                 70, 3_000L, 240, 30, 45, true, 128.0,
                 "minecraft:overworld", 300, 1500, 30, 30, true, 40, 60,
-                5f, 200, true, 40, 8f, 3f, "#9A5CC6", 50, Music.defaults(), Dome.defaults(), Look.defaults(), Night.defaults(), Arena.defaults());
+                5f, 200, true, 40, 8f, 3f, "#9A5CC6", 50, Music.defaults(), Dome.defaults(), Look.defaults(), Night.defaults(), Arena.defaults(),
+                150_000f, HEALING_MOVES);
     }
 
     /**
@@ -329,7 +347,9 @@ public record WorldBossConfig(
                 new Night(bool(spawn, "spawn.night_only", dn.only),
                         (int) num(spawn, "spawn.night_from_tick", dn.fromTick),
                         (int) num(spawn, "spawn.night_to_tick", dn.toTick)),
-                new Arena(bool(arenaJson, "arena.enabled", d.arena.enabled()), num(arenaJson, "arena.radius", (float) d.arena.radius())));
+                new Arena(bool(arenaJson, "arena.enabled", d.arena.enabled()), num(arenaJson, "arena.radius", (float) d.arena.radius())),
+                num(pool, "pool.max", d.poolMax),
+                idList(duel, "duel.boss_banned_moves", d.bossBannedMoves));
     }
 
     /** The defaults written back as JSON, with the keys in the same grouping the parser reads. */
@@ -350,6 +370,7 @@ public record WorldBossConfig(
         pool.addProperty("minutes_per_player", minutesPerPlayer);
         pool.addProperty("max_minutes", maxMinutes);
         pool.addProperty("active_window_seconds", activeWindowSeconds);
+        pool.addProperty("max", poolMax);
         root.add("pool", pool);
         JsonObject duel = new JsonObject();
         duel.addProperty("boss_level", duelBossLevel);
@@ -358,6 +379,9 @@ public record WorldBossConfig(
         duel.addProperty("breather_seconds", breatherSeconds);
         duel.addProperty("all_fainted_breather_seconds", allFaintedBreatherSeconds);
         duel.addProperty("chain", chain);
+        com.google.gson.JsonArray bannedOut = new com.google.gson.JsonArray();
+        bossBannedMoves.forEach(bannedOut::add);
+        duel.add("boss_banned_moves", bannedOut);
         root.add("duel", duel);
         JsonObject spawn = new JsonObject();
         spawn.addProperty("dimension", spawnDimension);
@@ -427,6 +451,22 @@ public record WorldBossConfig(
             return List.of(str(root, "raid_definition", fallback.get(0)));
         }
         return fallback;
+    }
+
+    /** A list of text ids under {@code path}'s leaf key, or {@code fallback} when it is not there. */
+    private static List<String> idList(JsonObject parent, String path, List<String> fallback) {
+        String key = leaf(path);
+        if (!parent.has(key) || parent.get(key).isJsonNull()) return fallback;
+        if (!parent.get(key).isJsonArray()) throw new IllegalArgumentException(path + " must be a list of move ids");
+        List<String> out = new ArrayList<>();
+        for (var element : parent.getAsJsonArray(key)) {
+            try {
+                out.add(element.getAsString());
+            } catch (RuntimeException ex) {
+                throw new IllegalArgumentException(path + " must be a list of text ids");
+            }
+        }
+        return out;
     }
 
     private static JsonObject obj(JsonObject parent, String key) {

@@ -1,6 +1,7 @@
 package com.cobbleraids.worldboss;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -58,5 +59,28 @@ class WorldBossScalingTest {
     void theCeilingIsTheDefinitionsToChoose() {
         float pool = WorldBossScaling.poolSize(BASE, PER_MINUTE, 10, 1f, 5f);
         assertEquals(5f, pool / (PER_MINUTE * 10), 0.001f);
+    }
+
+    @Test
+    void poolNeverExceedsTheCeiling() {
+        assertEquals(150_000f, WorldBossScaling.poolSize(20_000f, 6_000f, 40, 1f, 20f, 150_000f));
+        assertEquals(20_000f, WorldBossScaling.poolSize(20_000f, 6_000f, 1, 1f, 20f, 150_000f));
+    }
+
+    @Test
+    void shippedDefaultsCapAt150kAndBanHealing() {
+        var config = WorldBossConfig.defaults();
+        assertEquals(150_000f, config.poolMax());
+        assertTrue(config.bossBannedMoves().containsAll(java.util.List.of("recover", "roost", "hornleech", "gigadrain", "leechseed")));
+        var reread = WorldBossConfig.fromJson(config.toJson());
+        assertEquals(config.bossBannedMoves(), reread.bossBannedMoves());
+        assertEquals(150_000f, reread.poolMax());
+    }
+
+    @Test
+    void anOlderConfigWithoutTheNewKeysGetsTheDefaults() {
+        var config = WorldBossConfig.fromJson(new com.google.gson.JsonObject());
+        assertEquals(150_000f, config.poolMax());
+        assertFalse(config.bossBannedMoves().isEmpty());
     }
 }
