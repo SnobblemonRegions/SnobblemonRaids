@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '0.8.203-boss-hp-cap-no-heals'
+version = '0.8.204-mew-model-fix'
 group = 'com.cobbleraids'
 
 base {
