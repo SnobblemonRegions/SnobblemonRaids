@@ -56,6 +56,7 @@ public final class WebUi {
                 RaidFaultBarrier.guard("player-disconnect:web-icons",
                         () -> {
                             WebIconFeed.forgetEverywhere(handler.getPlayer().getUUID());
+                            WebGuiBridge.forget(handler.getPlayer().getUUID());
                             RewardWebPage.forget(handler.getPlayer().getUUID());
                             CaptureWebPage.forget(handler.getPlayer().getUUID());
                             LeaderboardWebPage.forget(handler.getPlayer().getUUID());

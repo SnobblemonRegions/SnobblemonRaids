@@ -1,10 +1,12 @@
 package com.cobbleraids.web;
 
 import com.cobbleraids.RaidLog;
+import com.cobbleraids.network.RequestThrottle;
 import com.cobbleraids.perf.RaidPerf;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.resources.ResourceLocation;
@@ -102,10 +104,25 @@ final class WebGuiBridge {
         }
     }
 
+    /**
+     * One flood budget per player across every page, applied here because every page's events pass
+     * through {@link #onPageEvent}. A page event is a few dozen bytes but can make the server rebuild a
+     * page and resend its icons, so a client that fires them in a loop would otherwise cost far more to
+     * answer than to send. Far above anything a person does: pages send one event at a time and wait.
+     * Not thread-safe by design, like {@link RequestThrottle}: events arrive on the server thread.
+     */
+    private static final RequestThrottle EVENT_BUDGET = new RequestThrottle(30, 1000);
+
+    /** Drops a disconnected player's budget so the map cannot grow without bound. */
+    static void forget(UUID player) {
+        EVENT_BUDGET.forget(player);
+    }
+
     static void onPageEvent(String channel, BiConsumer<ServerPlayer, String> handler) {
         // Built once per channel rather than per event, so timing a page event allocates nothing.
         String section = "web:" + channel;
         BiConsumer<ServerPlayer, String> guarded = (player, json) -> {
+            if (!EVENT_BUDGET.allow(player.getUUID(), System.currentTimeMillis())) return;
             long started = RaidPerf.start();
             try {
                 handler.accept(player, json);
