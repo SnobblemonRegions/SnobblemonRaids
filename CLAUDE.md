@@ -53,3 +53,11 @@ Say what was and was not verified in-game.
 
 Use the project skill `cobbleraids-dev` for any feature or fix: read domain docs → verify APIs
 against decompiled source → tests first for logic → implement → run the gate → review.
+
+## Merging and backups
+
+The `post-commit` hook backup-pushes feature branches with `SKIP_LOCAL_CI=1`, so a branch on
+GitHub is **unvalidated** by default. Before merging a branch, opening a PR, or pushing `main`:
+run the tiered gate above (at minimum `bash validation/ci_local.sh`) on the final tree and report
+the real output. Never merge on the strength of the backup push, and never use `SKIP_LOCAL_CI=1`
+or `--no-verify` for anything but that backup hook unless asked.
