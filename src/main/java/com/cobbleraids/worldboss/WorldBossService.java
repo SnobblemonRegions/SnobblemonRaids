@@ -211,6 +211,15 @@ public final class WorldBossService {
         long now = System.currentTimeMillis();
         WorldBossState s = state;
 
+        // The fall is noticed inside a battle's damage callback and the state is closed in the same call, so the other players' copies
+        // are cleaned up here, a second later and outside any battle: nobody keeps fighting a clone of a boss that is already dead.
+        if (!s.active() || (s.pool() != null && s.pool().isDefeated())) {
+            if (!DUELS.isEmpty() || !CHAIN.isEmpty()) {
+                abortDuels();
+                CHAIN.clear();
+            }
+        }
+
         if (!s.active()) {
             WorldBossMusic.stopAll(current);
             WorldBossRules.Window window = WorldBossRules.window(config, Instant.ofEpochMilli(now));
