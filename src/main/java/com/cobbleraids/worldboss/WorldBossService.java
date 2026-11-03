@@ -415,14 +415,27 @@ public final class WorldBossService {
         EncounterRequest request = new EncounterRequest(OWNER, encounterId, List.of(player), definitionId,
                 player.serverLevel(), position, config.duelBossLevel(), OptionalLong.of(config.duelBossHealth()),
                 policy, EncounterRules.none());
+        // Threat VII: owned encounters are not armed by the factory, so each duel declares itself to AscensionLib under its own key
+        // (the encounter id stands in for the boss Pokemon's UUID) and arms its one player. Nothing happens with Threat off.
+        List<UUID> self = List.of(player.getUUID());
+        RaidDefinition fought = RaidDefinitionRegistry.get(definitionId);
+        boolean armed = fought != null && com.cobbleraids.raid.AscensionLibArming.declare(self, encounterId,
+                fought.species().toString(), config.duelBossLevel(), com.cobbleraids.raid.AscensionLibArming.WORLD_BOSS_THREAT);
+        if (armed) com.cobbleraids.raid.AscensionLibArming.arm(self, encounterId);
         StartResult result;
         try {
             result = EncounterService.start(request, DUEL_LISTENER);
         } catch (RuntimeException ex) {
             RaidLog.error("World Boss duel for {} could not start", player.getGameProfile().getName(), ex);
+            if (armed) com.cobbleraids.raid.AscensionLibArming.endEncounter(encounterId);
             return "The duel could not start. Tell an administrator.";
+        } finally {
+            if (armed) com.cobbleraids.raid.AscensionLibArming.disarmAll(self);
         }
-        if (result instanceof StartResult.Refused refused) return refused.reason();
+        if (result instanceof StartResult.Refused refused) {
+            if (armed) com.cobbleraids.raid.AscensionLibArming.endEncounter(encounterId);
+            return refused.reason();
+        }
         long gameTick = player.serverLevel().getGameTime();
         DUELS.put(player.getUUID(), new Duel(encounterId, gameTick));
         PokemonEntity duelBoss = EncounterService.bossOf(encounterId);
@@ -489,6 +502,7 @@ public final class WorldBossService {
     }
 
     private static void duelEnded(EncounterResult result) {
+        com.cobbleraids.raid.AscensionLibArming.endEncounter(result.encounterId());   // the duel's own Threat declaration; harmless if it had none
         UUID playerId = DUEL_PLAYER.remove(result.encounterId());
         if (playerId == null) return;
         DUELS.remove(playerId);

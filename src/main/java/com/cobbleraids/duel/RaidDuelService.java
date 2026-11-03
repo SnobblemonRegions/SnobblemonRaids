@@ -72,6 +72,12 @@ public final class RaidDuelService {
         final Set<UUID> out = ConcurrentHashMap.newKeySet();
         final Map<UUID, UUID> duelOfPlayer = new ConcurrentHashMap<>();
         final Map<UUID, Long> chainAt = new ConcurrentHashMap<>();
+        /** Game tick each live duel began, and the ticks its player spent offline (reconnect grace), which do not count against it. */
+        final Map<UUID, Long> duelStarted = new ConcurrentHashMap<>();
+        final Map<UUID, Long> pausedTicks = new ConcurrentHashMap<>();
+        /** Players whose duel ran out of time: they chain to a fresh copy instead of being out. */
+        final Set<UUID> timedOut = ConcurrentHashMap.newKeySet();
+        long lastTick;
         final long startedTick;
         final String renownTitle;
         final String renownBoon;
@@ -84,6 +90,7 @@ public final class RaidDuelService {
             this.players = new LinkedHashSet<>(players.stream().map(ServerPlayer::getUUID).toList());
             this.pool = new WorldBossPool(RaidDuelRules.poolFor(definition.rarityTier(), players.size()));
             this.startedTick = startedTick;
+            this.lastTick = startedTick;
             var renown = com.cobbleraids.renown.RaidRenownMarker.read(boss);
             this.renownTitle = renown.map(com.cobbleraids.renown.RaidRenown::title).orElse("");
             this.renownBoon = renown.map(r -> r.boon().encode()).orElse("");
@@ -91,6 +98,8 @@ public final class RaidDuelService {
     }
 
     private static final Map<UUID, DuelRaid> RAIDS = new ConcurrentHashMap<>();
+    /** Entity UUIDs of the raid bosses duel raids stand on, so the despawn timers leave them alone (see {@link #isFace}). */
+    private static final Set<UUID> FACES = ConcurrentHashMap.newKeySet();
     /** Duel encounter id to its raid. */
     private static final Map<UUID, DuelRaid> BY_DUEL = new ConcurrentHashMap<>();
     /** Duel encounter id to its player. */
@@ -107,6 +116,7 @@ public final class RaidDuelService {
         // Never recruitable again, and never wandering off while its copies are fought.
         RaidBossEntityMarker.markOwned(boss, FACE_OWNER);
         boss.setNoAi(true);
+        FACES.add(boss.getUUID());
         AscensionLibArming.declare(raid.players, boss.getPokemon().getUuid(),
                 boss.getPokemon().getSpecies().getResourceIdentifier().toString(), raid.bossLevel,
                 AscensionLibArming.threatFor(definition.rarityTier()));
@@ -122,6 +132,7 @@ public final class RaidDuelService {
         }
         if (started == 0) {
             RAIDS.remove(raid.raidId);
+            FACES.remove(boss.getUUID());
             AscensionLibArming.endEncounter(boss.getPokemon().getUuid());
             return "no duel could start";
         }
@@ -157,6 +168,8 @@ public final class RaidDuelService {
         BY_DUEL.put(encounterId, raid);
         DUEL_PLAYER.put(encounterId, player.getUUID());
         raid.duelOfPlayer.put(player.getUUID(), encounterId);
+        raid.duelStarted.put(player.getUUID(), raid.boss.level().getGameTime());
+        raid.pausedTicks.remove(player.getUUID());
         return null;
     }
 
@@ -189,10 +202,13 @@ public final class RaidDuelService {
             UUID playerId = DUEL_PLAYER.remove(result.encounterId());
             if (raid == null || playerId == null) return;
             raid.duelOfPlayer.remove(playerId, result.encounterId());
+            raid.duelStarted.remove(playerId);
+            raid.pausedTicks.remove(playerId);
+            boolean timedOut = raid.timedOut.remove(playerId);
             if (raid.finished) return;
             MinecraftServer server = raid.boss.getServer();
             if (server == null) return;
-            if (result.outcome() == EncounterOutcome.VICTORY) {
+            if (result.outcome() == EncounterOutcome.VICTORY || timedOut) {
                 // Their copy fell but the pool did not: the next copy, after a breather.
                 raid.chainAt.put(playerId, server.overworld().getGameTime() + CHAIN_DELAY_TICKS);
             } else {
@@ -213,6 +229,9 @@ public final class RaidDuelService {
                 finish(server, raid, false);
                 continue;
             }
+            long delta = Math.max(0L, now - raid.lastTick);
+            raid.lastTick = now;
+            for (Map.Entry<UUID, UUID> duel : List.copyOf(raid.duelOfPlayer.entrySet())) enforceDuel(server, raid, duel.getKey(), duel.getValue(), now, delta);
             for (Map.Entry<UUID, Long> entry : List.copyOf(raid.chainAt.entrySet())) {
                 if (entry.getValue() > now) continue;
                 raid.chainAt.remove(entry.getKey());
@@ -227,10 +246,39 @@ public final class RaidDuelService {
         }
     }
 
+    /**
+     * One live duel's rules: a player who walked off (or left the dimension) is out; a duel past its own time limit is ended and the
+     * player chains to a fresh copy. A player who is offline is under reconnect grace, so their duel's clock stands still.
+     */
+    private static void enforceDuel(MinecraftServer server, DuelRaid raid, UUID playerId, UUID duel, long now, long delta) {
+        ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+        if (player == null) {
+            raid.pausedTicks.merge(playerId, delta, Long::sum);
+            return;
+        }
+        if (player.level() != raid.boss.level() || player.distanceToSqr(raid.boss) > RaidDuelRules.LEASH_BLOCKS * RaidDuelRules.LEASH_BLOCKS) {
+            say(player, "You walked away from the raid.", ChatFormatting.YELLOW);
+            EncounterService.abort(duel);
+            return;
+        }
+        long used = now - raid.duelStarted.getOrDefault(playerId, now) - raid.pausedTicks.getOrDefault(playerId, 0L);
+        if (used > RaidDuelRules.DUEL_LIMIT_SECONDS * (long) SECOND) {
+            raid.timedOut.add(playerId);
+            say(player, "Your duel ran out of time. Your damage still counts; a fresh duel is coming.", ChatFormatting.YELLOW);
+            EncounterService.abort(duel);
+        }
+    }
+
+    /** Whether this entity is the raid boss of a duel raid in progress (it is never battling itself: its players fight hidden copies). */
+    public static boolean isFace(PokemonEntity boss) {
+        return boss != null && FACES.contains(boss.getUUID());
+    }
+
     private static void finish(MinecraftServer server, DuelRaid raid, boolean won) {
         if (raid.finished) return;
         raid.finished = true;
         RAIDS.remove(raid.raidId);
+        FACES.remove(raid.boss.getUUID());
         for (UUID duel : List.copyOf(raid.duelOfPlayer.values())) EncounterService.abort(duel);
         Map<UUID, Float> damage = new LinkedHashMap<>(raid.pool.contributions());
         for (UUID player : raid.players) damage.putIfAbsent(player, 0f);
