@@ -44,6 +44,7 @@ import java.util.Optional;
  * @param joinCountdownSeconds     how long players have to gather after the boss appears before duels open for everyone at once (0 = no countdown)
  * @param minPercentOfAverage      least damage, as a percent of the average per player who dealt any, that earns the defeat reward
  * @param rewardRaidPoints         Raid Points paid to each qualifying player
+ * @param rewardMaxPerDay          the most defeat rewards one player is paid per UTC day (0 = no cap); per account, so it limits farming, not alts
  * @param borderParticles          draw the zone as a wall of soul particles for players near its edge
  * @param borderViewDistance       how far along the wall, in blocks, a player is shown it
  * @param bossScale                size multiplier of the World Boss standing in the world (1 is the species' normal size)
@@ -85,6 +86,7 @@ public record WorldBossConfig(
         int joinCountdownSeconds,
         float minPercentOfAverage,
         int rewardRaidPoints,
+        int rewardMaxPerDay,
         boolean borderParticles,
         int borderViewDistance,
         float bossScale,
@@ -229,6 +231,7 @@ public record WorldBossConfig(
         require(joinCountdownSeconds >= 0 && joinCountdownSeconds <= 600, "spawn.join_countdown_seconds", "must be 0 to 600");
         require(minPercentOfAverage >= 0f && minPercentOfAverage <= 100f, "reward.min_percent_of_average", "must be 0 to 100");
         require(rewardRaidPoints >= 0, "reward.raid_points", "must not be negative");
+        require(rewardMaxPerDay >= 0, "reward.max_per_player_per_day", "must not be negative (0 = no cap)");
         require(borderViewDistance >= 16 && borderViewDistance <= 96, "visual.view_distance", "must be 16 to 96");
         require(bossScale >= 0.1f && bossScale <= 30f, "visual.boss_scale", "must be 0.1 to 30");
         require(duelBossScale >= 0.1f && duelBossScale <= 30f, "visual.duel_boss_scale", "must be 0.1 to 30");
@@ -256,7 +259,7 @@ public record WorldBossConfig(
                 20_000f, 6_000f, 1f, 20f, 900,
                 70, 3_000L, 240, 30, 45, true, 128.0,
                 "minecraft:overworld", 300, 1500, 30, 30, true, 40, 60,
-                5f, 200, true, 40, 8f, 3f, "#9A5CC6", 50, Music.defaults(), Dome.defaults(), Look.defaults(), Night.defaults(), Arena.defaults(),
+                5f, 200, 0, true, 40, 8f, 3f, "#9A5CC6", 50, Music.defaults(), Dome.defaults(), Look.defaults(), Night.defaults(), Arena.defaults(),
                 150_000f, HEALING_MOVES);
     }
 
@@ -326,6 +329,7 @@ public record WorldBossConfig(
                 (int) num(spawn, "spawn.join_countdown_seconds", d.joinCountdownSeconds),
                 num(reward, "reward.min_percent_of_average", d.minPercentOfAverage),
                 (int) num(reward, "reward.raid_points", d.rewardRaidPoints),
+                (int) num(reward, "reward.max_per_player_per_day", d.rewardMaxPerDay),
                 bool(visual, "visual.border_particles", d.borderParticles),
                 (int) num(visual, "visual.view_distance", d.borderViewDistance),
                 num(visual, "visual.boss_scale", d.bossScale),
@@ -399,6 +403,7 @@ public record WorldBossConfig(
         JsonObject reward = new JsonObject();
         reward.addProperty("min_percent_of_average", minPercentOfAverage);
         reward.addProperty("raid_points", rewardRaidPoints);
+        reward.addProperty("max_per_player_per_day", rewardMaxPerDay);
         root.add("reward", reward);
         JsonObject visual = new JsonObject();
         visual.addProperty("border_particles", borderParticles);

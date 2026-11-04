@@ -652,14 +652,31 @@ public final class WorldBossService {
         float total = pool.max();
 
         if (!s.rewardsPaid()) {
-            s.markRewardsPaid();
-            flush(current);
+            // Each player is marked paid and saved just before their own payment (at most once for them), and the whole step is marked done only
+            // when the loop ends. A crash half way therefore costs the one player in flight, and the rerun after the restart pays the rest.
             int paid = 0;
             float average = WorldBossRules.averageDamage(damage);
+            WorldBossPayoutStore payouts = WorldBossPayoutStore.get(current);
+            String day = WorldBossPayoutStore.today();
             for (Map.Entry<UUID, Float> entry : damage.entrySet()) {
                 float share = total <= 0f ? 0f : entry.getValue() / total;
                 if (!WorldBossRules.qualifies(entry.getValue(), average, config.minOfAverage())) continue;
                 final UUID playerId = entry.getKey();
+                if (!WorldBossRules.mayBePaid(payouts.paidOn(playerId, day), config.rewardMaxPerDay())) {
+                    ServerPlayer capped = current.getPlayerList().getPlayer(playerId);
+                    if (capped != null) {
+                        say(capped, "You have already earned " + config.rewardMaxPerDay() + " World Boss reward(s) today. This one pays nothing.", ChatFormatting.YELLOW);
+                    }
+                    continue;
+                }
+                if (!s.markPlayerPaid(playerId)) continue;   // paid before a restart
+                payouts.record(playerId, day);
+                flush(current);
+                try {
+                    payouts.flush(current);
+                } catch (java.io.IOException ex) {
+                    RaidLog.error("Could not save the World Boss payout count", ex);
+                }
                 final int amount = config.rewardRaidPoints();
                 if (amount > 0) {
                     RaidFaultBarrier.guard("worldboss:award", () -> CobbleRaidsPoints.award(current, playerId, amount));
@@ -671,6 +688,8 @@ public final class WorldBossService {
                             + "% of the damage.", ChatFormatting.GREEN);
                 }
             }
+            s.markRewardsPaid();
+            flush(current);
             RaidLog.info("World Boss {} defeated: {} player(s) paid {} Raid Points each", s.bossId(), paid,
                     config.rewardRaidPoints());
         }
@@ -920,7 +939,7 @@ public final class WorldBossService {
     }
 
     /** Where a player was before warping in, so {@link #returnHome} can send them back. Server thread only; lost on restart. */
-    private record Origin(ResourceKey<net.minecraft.world.level.Level> dimension, double x, double y, double z, float yaw, float pitch) {}
+    private record Origin(ResourceKey<net.minecraft.world.level.Level> dimension, double x, double y, double z, float yaw, float pitch, long savedAt) {}
 
     private static final Map<UUID, Origin> RETURN_TO = new HashMap<>();
 
@@ -941,7 +960,9 @@ public final class WorldBossService {
         BlockPos boss = BlockPos.containing(s.x(), s.y(), s.z());
         BlockPos target = arenaEntrance(level, boss);
         if (target == null) return "No safe place to arrive was found in the arena. Tell an administrator.";
-        RETURN_TO.put(player.getUUID(), new Origin(player.level().dimension(), player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot()));
+        long now = System.currentTimeMillis();
+        RETURN_TO.values().removeIf(old -> WorldBossRules.originExpired(old.savedAt(), now));   // stale origins are forgotten, not kept forever
+        RETURN_TO.put(player.getUUID(), new Origin(player.level().dimension(), player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot(), now));
         double dx = boss.getX() - target.getX(), dz = boss.getZ() - target.getZ();
         float yaw = (float) (Math.toDegrees(Math.atan2(-dx, dz)));
         player.teleportTo(level, target.getX() + 0.5, target.getY(), target.getZ() + 0.5, yaw, 0f);
@@ -968,6 +989,13 @@ public final class WorldBossService {
         if (DUELS.containsKey(player.getUUID())) return "Finish your duel first.";
         if (Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player) != null) return "Finish your current battle first.";
         Origin origin = RETURN_TO.remove(player.getUUID());
+        if (origin != null && WorldBossRules.originExpired(origin.savedAt(), System.currentTimeMillis())) origin = null;
+        // Not a spawn teleport for anyone who asks: with no live origin it only helps a player stranded in the arena (a restart forgets origins).
+        WorldBossState arenaState = state;
+        boolean inArenaZone = arenaState != null && arenaState.arena() && inRange(player, arenaState, WorldBossConfigManager.get());
+        if (!WorldBossRules.mayReturn(origin != null, inArenaZone)) {
+            return "You have not warped to the arena, so there is nowhere to return to.";
+        }
         if (origin == null) {
             ServerLevel overworld = server.overworld();
             BlockPos spawn = overworld.getSharedSpawnPos();

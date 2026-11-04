@@ -128,13 +128,28 @@ public final class WorldBossCommand {
         int minY = Math.max(level.getMinBuildHeight(), player.getBlockY() - 96), maxY = Math.min(level.getMaxBuildHeight() - 1, player.getBlockY() + 96);
         int added = 0;
         var pos = new net.minecraft.core.BlockPos.MutableBlockPos();
-        for (int x = player.getBlockX() - radius; x <= player.getBlockX() + radius; x++) {
-            for (int z = player.getBlockZ() - radius; z <= player.getBlockZ() + radius; z++) {
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
-                for (int y = minY; y <= maxY; y++) {
-                    pos.set(x, y, z);
-                    if (level.getBlockState(pos).getBlock() instanceof com.cobbleraids.worldboss.arena.ArenaMarkerBlock marker
-                            && markers.add(marker.kind(), new com.cobbleraids.worldboss.arena.ArenaMarkers.Spot(dimension, pos.immutable()))) added++;
+        int minX = player.getBlockX() - radius, maxX = player.getBlockX() + radius;
+        int minZ = player.getBlockZ() - radius, maxZ = player.getBlockZ() + radius;
+        // Walk the loaded chunks and skip every section that is only air: a marker is a block, so it is never in one. A radius of 128 is otherwise
+        // some twelve million block reads on the server thread, nearly all of them air.
+        for (int cx = minX >> 4; cx <= maxX >> 4; cx++) {
+            for (int cz = minZ >> 4; cz <= maxZ >> 4; cz++) {
+                var chunk = level.getChunkSource().getChunkNow(cx, cz);
+                if (chunk == null) continue;
+                var sections = chunk.getSections();
+                for (int i = 0; i < sections.length; i++) {
+                    if (sections[i].hasOnlyAir()) continue;
+                    int baseY = (chunk.getMinSection() + i) << 4;
+                    if (baseY + 15 < minY || baseY > maxY) continue;
+                    for (int x = Math.max(minX, cx << 4); x <= Math.min(maxX, (cx << 4) + 15); x++) {
+                        for (int z = Math.max(minZ, cz << 4); z <= Math.min(maxZ, (cz << 4) + 15); z++) {
+                            for (int y = Math.max(minY, baseY); y <= Math.min(maxY, baseY + 15); y++) {
+                                pos.set(x, y, z);
+                                if (level.getBlockState(pos).getBlock() instanceof com.cobbleraids.worldboss.arena.ArenaMarkerBlock marker
+                                        && markers.add(marker.kind(), new com.cobbleraids.worldboss.arena.ArenaMarkers.Spot(dimension, pos.immutable()))) added++;
+                            }
+                        }
+                    }
                 }
             }
         }
