@@ -125,8 +125,8 @@ def model():
             'fixed': {'rotation': [0, 180, 0], 'translation': [0, -1, 0], 'scale': [0.85, 0.85, 0.85]},
             'thirdperson_righthand': {'rotation': [75, 45, 0], 'translation': [0, 2.5, 0], 'scale': [0.5, 0.5, 0.5]},
             'thirdperson_lefthand': {'rotation': [75, 225, 0], 'translation': [0, 2.5, 0], 'scale': [0.5, 0.5, 0.5]},
-            'firstperson_righthand': {'rotation': [6, -22, 0], 'translation': [-1.5, 3, 0], 'scale': [0.27, 0.27, 0.27]},
-            'firstperson_lefthand': {'rotation': [6, 22, 0], 'translation': [1.5, 3, 0], 'scale': [0.27, 0.27, 0.27]},
+            'firstperson_righthand': {'rotation': [6, -22, 0], 'translation': [-1.5, 3, 0], 'scale': [0.34, 0.34, 0.34]},
+            'firstperson_lefthand': {'rotation': [6, 22, 0], 'translation': [1.5, 3, 0], 'scale': [0.34, 0.34, 0.34]},
         },
     }
 
