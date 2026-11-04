@@ -38,6 +38,14 @@ Same rig and the same warning (it boots and stops the server and changes its wor
 
 This proves what the server sends and when. It does not prove how it sounds or that it is pleasant to use: that needs ears in a real client.
 
+### Raidio item art, seen by a real client
+
+```text
+JAVA_TOOL_OPTIONS=-Dcobbleraids.radar.smoke.raidio=true python validation/radar/server_hologram_smoke.py --server-dir <isolatedRig> --output-dir <results>
+```
+
+A real Minecraft client (no CobbleRaids code) joins, holds the Raidio, and photographs it into `<results>/screenshots/raidio-*.png`: held level and looking down, in the inventory screen, and from behind and in front in third person. Look at them: a model can pass every test and still draw wrongly in the hand. To make sure the client really has this build's art, the harness asks Polymer to build the resource pack (`polymer generate-pack`), hosts it on a local HTTP port, and pins the pack's hash and id in `server.properties`, then restarts the server, because the client keeps any pack whose hash it already has. The rig's original `server.properties` is put back afterwards.
+
 ## Prototype run result (2026-10-29)
 
 Build `0.8.192-radar-prototype` passed all seven live checks: exact recipe consumption,

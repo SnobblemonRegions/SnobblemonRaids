@@ -6,7 +6,7 @@ captures the status menu and the hologram. Isolated from the user's modpack: it 
 Never point --server-dir at a production world: it boots the rig, changes its world and stops it.
 """
 from pathlib import Path
-import argparse, json, shutil, subprocess, sys, time
+import argparse, functools, hashlib, http.server, json, re, shutil, subprocess, sys, threading, time
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'validation/smoke'))
 from smoke_test import Server, read_password, rcon_port, server_port, CONTAINED_FAULT, MIXIN_TROUBLE, SUSPECT_EXCEPTION
@@ -74,7 +74,37 @@ def main():
 
     server = Server(args.server_dir, args.java)
     client = None
+    properties = args.server_dir / 'server.properties'
+    original_properties = properties.read_bytes()
+    host = None
     try:
+        server.start()
+        server.wait_until_ready()
+        # Deliver Polymer's resource pack the way a real server does: build it, host it, and point server.properties at it with its SHA-1 and Polymer's own
+        # pack id. Polymer builds the pack only when asked, and a pack left from an earlier build would hide this build's models behind the old ones: the client
+        # sees a hash it already has and never fetches the new pack. The client accepts the prompt, so Polymer really sees the pack loaded, and nothing is slipped
+        # into the client. server.properties is read only at start, so the server is restarted, and the original file is put back afterwards.
+        pack = args.server_dir / 'polymer/resource_pack.zip'
+        before = pack.stat().st_mtime if pack.exists() else 0
+        with Rcon('127.0.0.1', rcon_port(args.server_dir), read_password(args.server_dir)) as rcon:
+            print('polymer generate-pack:', ' '.join(rcon.command('polymer generate-pack').split())[:200], flush=True)
+        deadline = time.monotonic() + 120
+        while time.monotonic() < deadline and not (pack.exists() and pack.stat().st_mtime > before):
+            time.sleep(1)
+        assert pack.exists() and pack.stat().st_mtime > before, 'Polymer did not write a fresh resource pack'
+        time.sleep(2)
+        server.stop()
+        sha1 = hashlib.sha1(pack.read_bytes()).hexdigest()
+        handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(pack.parent))
+        host = http.server.ThreadingHTTPServer(('127.0.0.1', 0), handler)
+        threading.Thread(target=host.serve_forever, daemon=True).start()
+        pack_id = json.loads((args.server_dir / 'config/polymer/resource-pack.json').read_text(encoding='utf-8'))['main_uuid']
+        settings = original_properties.decode('utf-8')
+        for key, value in {'resource-pack': f'http://127.0.0.1:{host.server_address[1]}/{pack.name}', 'resource-pack-sha1': sha1,
+                           'resource-pack-id': pack_id, 'require-resource-pack': 'false'}.items():
+            settings = re.sub(r'^' + re.escape(key) + r'=.*$', lambda _: key + '=' + value, settings, flags=re.MULTILINE)
+        properties.write_text(settings, encoding='utf-8')
+        server = Server(args.server_dir, args.java)
         server.start()
         server.wait_until_ready()
         command = [str(args.java), '-Xmx4G', '-Dcobbleraids.radar.smoke.output=' + str(args.output_dir), '-Dfabric.gameVersion=1.21.1', '-cp', classpath,
@@ -117,6 +147,9 @@ def main():
                     rcon.command('forceload remove 32 -160 160 -32')
         finally:
             server.stop()
+            properties.write_bytes(original_properties)
+            if host:
+                host.shutdown()
     for regex in (CONTAINED_FAULT, MIXIN_TROUBLE, SUSPECT_EXCEPTION):
         assert not regex.search(server.read_log()), regex.pattern
     print('SERVER HOLOGRAM (real client, no mod): PASS', flush=True)

@@ -3,6 +3,8 @@ package com.cobbleraids.item;
 import com.cobbleraids.radar.RaidRadarService;
 import com.cobbleraids.raidio.RaidioMode;
 import eu.pb4.polymer.core.api.item.PolymerItem;
+import eu.pb4.polymer.resourcepack.api.PolymerModelData;
+import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Registry;
@@ -27,6 +29,11 @@ public final class RaidRadarItem extends Item implements PolymerItem {
     public static final RaidRadarItem INSTANCE = new RaidRadarItem();
     private static final String OPEN = "cobbleraids_radar_open";
     private static final String FLAT_MAP = "cobbleraids_radar_flat_map";
+    /** The Raidio's model under {@code assets/cobbleraids/models/item/}, drawn by the resource pack Polymer builds ({@link RaidItemPack}). A player without it sees a clock. */
+    static final String MODEL_PATH = "raidio";
+    /** Requested when this class loads, which is before Polymer builds the pack. It sits on the clock the item is sent as. */
+    private static final PolymerModelData MODEL = PolymerResourcePackUtils.requestModel(Items.CLOCK,
+            ResourceLocation.fromNamespaceAndPath("cobbleraids", "item/" + MODEL_PATH));
     private RaidRadarItem() { super(new Properties().stacksTo(1)); }
     public static void register() {
         Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath("cobbleraids", "raid_radar"), INSTANCE);
@@ -46,6 +53,9 @@ public final class RaidRadarItem extends Item implements PolymerItem {
         // Raidio is heard, not seen. A clock stands in for the dial; a vanilla compass would point at world spawn and mislead.
         if (RaidioMode.enabled()) return Items.CLOCK;
         return isOpen(stack) && showsMap(stack, player) ? Items.FILLED_MAP : Items.COMPASS;
+    }
+    @Override public int getPolymerCustomModelData(ItemStack stack, ServerPlayer player) {
+        return RaidioMode.enabled() ? MODEL.value() : -1;
     }
     @Override public ItemStack getPolymerItemStack(ItemStack stack, TooltipFlag flag,
                                                   HolderLookup.Provider lookup, ServerPlayer player) {

@@ -15,6 +15,8 @@ import net.minecraft.world.entity.Entity;
  * server hologram off), counts the display entities the server sent and whether they ride something, and takes screenshots. Excluded from every shipped JAR.
  */
 public final class ServerHologramProbe implements ClientModInitializer {
+    /** {@code -Dcobbleraids.radar.smoke.raidio=true}: the radar is Raidio, which draws no hologram, so the probe only holds it and photographs the item. */
+    private static final boolean RAIDIO = Boolean.getBoolean("cobbleraids.radar.smoke.raidio");
     private int stage, delay, ticks;
     private Path output;
 
@@ -61,6 +63,14 @@ public final class ServerHologramProbe implements ClientModInitializer {
                 if (client.player.getInventory().selected != 0) {
                     client.player.getInventory().selected = 0;
                     client.getConnection().send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(0));
+                }
+                if (RAIDIO) {
+                    if (!client.player.getMainHandItem().getHoverName().getString().equals("Raidio")) return;
+                    client.player.setYRot(180);
+                    client.player.setXRot(15);
+                    stage = 100;
+                    delay = 80;   // the resource pack has to arrive and the client reload before the item draws its model
+                    return;
                 }
                 if (!client.player.getMainHandItem().getHoverName().getString().equals("Raid Radar")) return;
                 client.player.setYRot(180);
@@ -151,6 +161,47 @@ public final class ServerHologramProbe implements ClientModInitializer {
                 screenshot(client, "flat-map-mode.png");
                 stage = 12;
                 delay = 30;
+            }
+            case 100 -> {
+                screenshot(client, "raidio-hand-level.png");
+                client.player.setXRot(50);
+                stage = 101;
+                delay = 30;
+            }
+            case 101 -> {
+                screenshot(client, "raidio-hand-looking-down.png");
+                client.player.setXRot(15);
+                client.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(client.player));
+                stage = 102;
+                delay = 30;
+            }
+            case 102 -> {
+                screenshot(client, "raidio-inventory.png");
+                client.setScreen(null);
+                client.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+                stage = 103;
+                delay = 40;
+            }
+            case 103 -> {
+                screenshot(client, "raidio-third-person-back.png");
+                client.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+                stage = 104;
+                delay = 40;
+            }
+            case 104 -> {
+                screenshot(client, "raidio-third-person-front.png");
+                client.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+                stage = 105;
+                delay = 40;
+            }
+            case 105 -> {
+                for (String name : new String[] {"raidio-hand-level.png", "raidio-hand-looking-down.png", "raidio-inventory.png",
+                        "raidio-third-person-back.png", "raidio-third-person-front.png"}) {
+                    if (!Files.exists(output.resolve("screenshots").resolve(name))) return;
+                }
+                Files.writeString(output.resolve("graphical-result.json"), "{\"passed\":true}");
+                stage = 13;
+                client.stop();
             }
             case 12 -> {
                 for (String name : new String[] {"radar-status-menu.png", "server-hologram-front.png", "server-hologram-offhand-front.png",
