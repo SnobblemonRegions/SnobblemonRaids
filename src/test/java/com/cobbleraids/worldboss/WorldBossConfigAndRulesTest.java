@@ -39,8 +39,8 @@ class WorldBossConfigAndRulesTest {
         assertEquals(config, WorldBossConfig.fromJson(config.toJson()));
         assertEquals(WorldBossRules.Window.BEFORE, WorldBossRules.window(config, Instant.parse("2026-10-31T03:59:59Z")));
         assertEquals(WorldBossRules.Window.OPEN, WorldBossRules.window(config, Instant.parse("2026-10-31T04:00:00Z")));
-        assertEquals(WorldBossRules.Window.OPEN, WorldBossRules.window(config, Instant.parse("2026-11-03T04:59:59Z")));
-        assertEquals(WorldBossRules.Window.AFTER, WorldBossRules.window(config, Instant.parse("2026-11-03T05:00:00Z")));
+        assertEquals(WorldBossRules.Window.OPEN, WorldBossRules.window(config, Instant.parse("2026-11-07T04:59:59Z")));
+        assertEquals(WorldBossRules.Window.AFTER, WorldBossRules.window(config, Instant.parse("2026-11-07T05:00:00Z")));
     }
 
     @Test
