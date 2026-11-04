@@ -61,6 +61,27 @@ public final class WorldBossRules {
         return damage > 0f && damage >= average * minOfAverage;
     }
 
+    /** How long a warp's saved origin stays good: long enough for any fight, short enough that it is not a standing teleport. */
+    public static final long ORIGIN_TTL_MILLIS = 6L * 60 * 60 * 1000;
+
+    /** Whether an origin saved at {@code savedAtMillis} has gone stale. */
+    public static boolean originExpired(long savedAtMillis, long nowMillis) {
+        return nowMillis - savedAtMillis > ORIGIN_TTL_MILLIS;
+    }
+
+    /**
+     * Whether {@code /worldboss return} may send a player home, and where: back to the origin their warp saved, or, with none (a restart forgets
+     * them), to world spawn but only if they are standing in the arena zone. Anywhere else the command is not a way to move at all.
+     */
+    public static boolean mayReturn(boolean hasLiveOrigin, boolean inArenaZone) {
+        return hasLiveOrigin || inArenaZone;
+    }
+
+    /** Whether a player already paid {@code paidToday} times today may be paid again; a cap of 0 or less means no cap. */
+    public static boolean mayBePaid(int paidToday, int maxPerDay) {
+        return maxPerDay <= 0 || paidToday < maxPerDay;
+    }
+
     /** The average damage per player who dealt any; 0 when nobody did. */
     public static float averageDamage(Map<UUID, Float> damage) {
         double total = 0;
