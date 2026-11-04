@@ -5,6 +5,8 @@ import com.cobbleraids.config.RaidDefinitionRegistry;
 import com.cobbleraids.item.RaidRadarItem;
 import com.cobbleraids.lobby.RaidLobbyManager;
 import com.cobbleraids.presentation.RaidBossGlowService;
+import com.cobbleraids.raidio.RaidioMode;
+import com.cobbleraids.raidio.RaidioService;
 import com.cobbleraids.spawn.RaidBossEntityMarker;
 import com.cobbleraids.spawn.RaidSpawnScheduler;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
@@ -80,6 +82,7 @@ public final class RaidRadarService {
         tick++;
         ServerHologramService.tick(server);
         if (tick % FRAME_TICKS == 0) refreshViews(server);
+        if (RaidioMode.enabled()) return;   // Raidio draws nothing, so there is no terrain to sample
         if (active.isEmpty()) return;
         // Fair round-robin: adding viewers increases scan latency rather than the per-tick work limit.
         for (int i = 0; i < SAMPLE_BUDGET; i++) {
@@ -114,7 +117,11 @@ public final class RaidRadarService {
             present.add(player.getUUID());
             View view = VIEWS.get(player.getUUID());
             if (view == null || !view.matches(player, id)) {
+                // Walking about a hundred blocks takes the player out of the old view's window, which is the whole point of following a raid. The raid they
+                // picked must survive that, as long as it is still the same radar in the same dimension.
+                UUID chosen = view != null && view.mapId.equals(id) && view.dimension.equals(player.serverLevel().dimension().location()) ? view.targetId : null;
                 view = new View(player, id);
+                view.targetId = chosen;
                 VIEWS.put(player.getUUID(), view);
             }
             List<RaidSpawnScheduler.RadarContact> available = contacts.computeIfAbsent(view.dimension,
@@ -127,9 +134,11 @@ public final class RaidRadarService {
                     .filter(contact -> contact.bossId().equals(selected)).findFirst().orElse(null);
             if (target == null && !view.targets.isEmpty()) target = view.targets.getFirst();
             view.targetId = target == null ? null : target.bossId();
-            sendFrame(player, view, target);
+            if (RaidioMode.enabled()) announce(player, view, target, false);
+            else sendFrame(player, view, target);
         }
         VIEWS.keySet().retainAll(present);
+        RaidioService.retainOnly(present);
         ServerHologramService.retainOnly(VIEWS.keySet());
         active = new ArrayList<>(VIEWS.values());
     }
@@ -222,6 +231,20 @@ public final class RaidRadarService {
         }
     }
 
+    /** Raidio: tunes the player's Raidio to the raid they are tracking, and keeps the action-bar line current. Nothing is drawn. */
+    private static void announce(ServerPlayer player, View view, RaidSpawnScheduler.RadarContact target, boolean showStatusNow) {
+        RaidDefinition definition = target == null ? null : RaidDefinitionRegistry.get(target.definitionId());
+        RaidioService.publish(player.getUUID(), definition == null ? null
+                : new RaidioService.Target(view.dimension, target.position().x, target.position().z, definition.rarityTier()));
+        if (!showStatusNow && tick % 40 != 0) return;
+        String status = target == null || definition == null ? "Raidio: no raids to tune to in this dimension" :
+                "Raidio | " + definition.species().getPath() + " | " + Math.round(horizontalDistance(player, target)) + "M | "
+                + definition.rarityTier().serializedName().toUpperCase(java.util.Locale.ROOT)
+                + (target.lastKnown() ? " | last known position" : "")
+                + (target.secondsLeft() < 0 ? "" : " | " + target.secondsLeft() + "s remaining");
+        player.displayClientMessage(Component.literal(status).withStyle(ChatFormatting.AQUA), true);
+    }
+
     /** Whether this player is shown the flat map (rather than the server hologram) for the open radar in {@code stack}; see {@link RadarDisplayRules}. */
     public static boolean showsFlatMap(ItemStack stack, ServerPlayer player) {
         return RadarDisplayRules.showsFlatMap(RaidRadarItem.prefersFlatMap(stack), ServerHologramService.enabled(), RadarHologramNetworking.canShow(player));
@@ -267,14 +290,21 @@ public final class RaidRadarService {
         int index = 0;
         for (int i = 0; i < view.targets.size(); i++) if (view.targets.get(i).bossId().equals(view.targetId)) index = i;
         view.targetId = view.targets.get((index + 1) % view.targets.size()).bossId();
+        if (RaidioMode.enabled()) {
+            // Tune to the new raid and say which it is straight away, rather than at the next two-second refresh.
+            UUID chosen = view.targetId;
+            announce(player, view, view.targets.stream().filter(contact -> contact.bossId().equals(chosen)).findFirst().orElse(null), true);
+        }
     }
     public static void forget(UUID playerId) {
         VIEWS.remove(playerId);
+        RaidioService.forget(playerId);
         ServerHologramService.remove(playerId);
         active = new ArrayList<>(VIEWS.values());
     }
     public static void clear() {
         VIEWS.clear(); active = List.of(); tick = 0; sampleCursor = 0;
+        RaidioService.clear();
         ServerHologramService.clear();
     }
 }

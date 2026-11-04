@@ -76,3 +76,11 @@ _Avoid_: reward claim, loot ticket
 **Raid Shop**:
 The storefront that spends Raid Points, separate from any general-purpose server shop.
 _Avoid_: reward shop
+
+**Raidio**:
+The Raid Radar item, tuned in or out from its menu. While it is tuned in it plays note-block sounds to its holder alone, in the style of a Game Boy: quiet bleeps and the
+odd faint tick while they turn, and the tune of the raid they are facing, a short tune for each Rarity Tier that starts slow a long way off and quickens and
+rises as they close in. It gives a direction and a sense of nearness and never a position, draws no map or hologram, and is silent while the holder stands
+still facing away. The item id stays `raid_radar`; `-Dcobbleraids.raidio=off` brings back the older hologram and
+flat-map display.
+_Avoid_: radar display, tracker, minimap

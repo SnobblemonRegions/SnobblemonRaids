@@ -1,6 +1,7 @@
 package com.cobbleraids.item;
 
 import com.cobbleraids.radar.RaidRadarService;
+import com.cobbleraids.raidio.RaidioMode;
 import eu.pb4.polymer.core.api.item.PolymerItem;
 import java.util.List;
 import net.minecraft.ChatFormatting;
@@ -42,6 +43,8 @@ public final class RaidRadarItem extends Item implements PolymerItem {
         return player == null || RaidRadarService.showsFlatMap(stack, player);
     }
     @Override public Item getPolymerItem(ItemStack stack, ServerPlayer player) {
+        // Raidio is heard, not seen. A clock stands in for the dial; a vanilla compass would point at world spawn and mislead.
+        if (RaidioMode.enabled()) return Items.CLOCK;
         return isOpen(stack) && showsMap(stack, player) ? Items.FILLED_MAP : Items.COMPASS;
     }
     @Override public ItemStack getPolymerItemStack(ItemStack stack, TooltipFlag flag,
@@ -50,13 +53,21 @@ public final class RaidRadarItem extends Item implements PolymerItem {
         // Polymer 0.9.19's default component allow-list does not copy MAP_ID.
         // Without this the held map has no texture despite receiving the correct pixel packets.
         if (isOpen(stack)) {
-            if (showsMap(stack, player)) visual.set(DataComponents.MAP_ID, stack.get(DataComponents.MAP_ID));
+            if (RaidioMode.enabled()) visual.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);   // a tuned-in Raidio glows
+            else if (showsMap(stack, player)) visual.set(DataComponents.MAP_ID, stack.get(DataComponents.MAP_ID));
             else visual.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);   // an open radar projecting a hologram glows
         }
         return visual;
     }
-    @Override public Component getName(ItemStack stack) { return Component.literal("Raid Radar"); }
+    @Override public Component getName(ItemStack stack) { return Component.literal(RaidioMode.enabled() ? "Raidio" : "Raid Radar"); }
     @Override public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
+        if (RaidioMode.enabled()) {
+            lines.add(Component.literal("Use: tune in, or open the menu").withStyle(ChatFormatting.AQUA));
+            lines.add(Component.literal("Turn around slowly: a clear tune means a raid is that way").withStyle(ChatFormatting.GRAY));
+            lines.add(Component.literal("Sneak + use: next raid").withStyle(ChatFormatting.GRAY));
+            lines.add(Component.literal("Each tier has its own tune; it quickens and rises as you close in").withStyle(ChatFormatting.DARK_GRAY));
+            return;
+        }
         lines.add(Component.literal("Use: raid charges / radar menu").withStyle(ChatFormatting.AQUA));
         lines.add(Component.literal("Sneak + use: next raid").withStyle(ChatFormatting.GRAY));
         lines.add(Component.literal("Topography of loaded terrain; direct bearing").withStyle(ChatFormatting.DARK_GRAY));
@@ -94,7 +105,8 @@ public final class RaidRadarItem extends Item implements PolymerItem {
         }
         CustomData.update(DataComponents.CUSTOM_DATA,stack,tag -> tag.putBoolean(OPEN,!open));
         RaidRadarService.forget(player.getUUID());
-        player.displayClientMessage(Component.literal(open?"Raid Radar closed":"Raid Radar online - sneak + use to cycle raids").withStyle(ChatFormatting.AQUA),true);
+        String name=RaidioMode.enabled()?"Raidio":"Raid Radar";
+        player.displayClientMessage(Component.literal(open?name+" closed":name+" online - sneak + use to cycle raids").withStyle(ChatFormatting.AQUA),true);
     }
 
 }

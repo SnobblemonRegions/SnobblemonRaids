@@ -4,6 +4,7 @@ import com.cobbleraids.charges.RaidChargeAccount;
 import com.cobbleraids.charges.RaidChargeStore;
 import com.cobbleraids.item.RaidRadarItem;
 import com.cobbleraids.presentation.CommandFormat;
+import com.cobbleraids.raidio.RaidioMode;
 import java.util.Arrays;
 import java.util.List;
 import net.minecraft.ChatFormatting;
@@ -34,7 +35,7 @@ public final class RaidRadarMenu extends ChestMenu {
 
     public static void open(ServerPlayer player, InteractionHand hand) {
         player.openMenu(new SimpleMenuProvider((id, inventory, ignored) -> new RaidRadarMenu(id, player, hand),
-                Component.literal("Raid Radar - " + RaidChargeStore.status(player).available() + "/" + RaidChargeAccount.CAPACITY)));
+                Component.literal((RaidioMode.enabled() ? "Raidio" : "Raid Radar") + " - " + RaidChargeStore.status(player).available() + "/" + RaidChargeAccount.CAPACITY)));
     }
 
     private RaidRadarMenu(int id, ServerPlayer player, InteractionHand hand) {
@@ -71,16 +72,28 @@ public final class RaidRadarMenu extends ChestMenu {
                 fullyCharged ? "You have all " + capacity + " raid charges." : "Full in " + CommandFormat.duration(account.secondsToFull(now)),
                 "Refills 1 charge per hour, up to " + capacity + ".", "Refills while you are offline, too."));
         boolean flat = RaidRadarItem.prefersFlatMap(owner.getItemInHand(hand));
-        display.setItem(RadarMenuLayout.MODE, icon(flat ? Items.FILLED_MAP : Items.ENDER_EYE, flat ? "Display: flat map" : "Display: 3D hologram", ChatFormatting.AQUA,
-                flat ? "A map in your hand." : "A hologram floating in front of you.", "Click for the " + (flat ? "3D hologram" : "flat map") + "."));
+        if (RaidioMode.enabled()) {
+            display.setItem(RadarMenuLayout.MODE, icon(Items.JUKEBOX, "How Raidio works", ChatFormatting.AQUA,
+                    "Tune in, then turn around slowly.", "A clear tune means a raid lies that way.", "Static means you are facing away.",
+                    "Each tier has its own tune.", "It quickens and rises as you get close.", "Silent while you stand still facing away.",
+                    "Turn it down with the Jukebox/Note Blocks volume."));
+        } else {
+            display.setItem(RadarMenuLayout.MODE, icon(flat ? Items.FILLED_MAP : Items.ENDER_EYE, flat ? "Display: flat map" : "Display: 3D hologram", ChatFormatting.AQUA,
+                    flat ? "A map in your hand." : "A hologram floating in front of you.", "Click for the " + (flat ? "3D hologram" : "flat map") + "."));
+        }
         display.setItem(RadarMenuLayout.GUIDE, icon(Items.BOOK, "How raid charges work", ChatFormatting.AQUA,
                 "Charges belong to your player UUID.", "Crafting another radar does not reset them.",
                 "Joining a lobby costs nothing.", "Cancelled lobbies cost nothing.", "Failed battle starts are refunded.",
                 "A started battle costs 1 charge, win or lose.", "Owned encounters use their own entry rules."));
 
         boolean open = RaidRadarItem.isOpen(owner.getItemInHand(hand));
-        display.setItem(RadarMenuLayout.TOGGLE, icon(Items.COMPASS, open ? "Close radar" : "Open radar", ChatFormatting.AQUA,
-                "Shows nearby raids on the display you chose."));
+        if (RaidioMode.enabled()) {
+            display.setItem(RadarMenuLayout.TOGGLE, icon(Items.NOTE_BLOCK, open ? "Tune out" : "Tune in", ChatFormatting.AQUA,
+                    "Lets you hear which way the raid is."));
+        } else {
+            display.setItem(RadarMenuLayout.TOGGLE, icon(Items.COMPASS, open ? "Close radar" : "Open radar", ChatFormatting.AQUA,
+                    "Shows nearby raids on the display you chose."));
+        }
         List<String> tracking = RaidRadarService.trackingLines(owner);
         String[] nextLore = new String[tracking.isEmpty() ? 2 : tracking.size() + 2];
         nextLore[0] = tracking.isEmpty() ? (open ? "No raid to track right now." : "Open the radar to track a raid.") : "Tracking:";
@@ -133,6 +146,7 @@ public final class RaidRadarMenu extends ChestMenu {
             }
             case CLOSE -> owner.closeContainer();
             case MODE -> {
+                if (RaidioMode.enabled()) return;   // Raidio has no display to switch; the icon is a guide
                 RaidRadarItem.toggleDisplayMode(owner, hand);
                 refresh();
             }
