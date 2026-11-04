@@ -24,16 +24,7 @@ public final class RenderRadarPreview {
             frame = java.nio.file.Files.readAllBytes(java.nio.file.Path.of(args[1]));
             if (frame.length != 128 * 128) throw new IllegalArgumentException("Expected a captured 128x128 map");
         }
-        byte[] palette = {
-            MapColor.COLOR_BLACK.getPackedId(MapColor.Brightness.LOWEST),
-            MapColor.TERRACOTTA_CYAN.getPackedId(MapColor.Brightness.LOWEST),
-            MapColor.COLOR_CYAN.getPackedId(MapColor.Brightness.LOW),
-            MapColor.DIAMOND.getPackedId(MapColor.Brightness.NORMAL),
-            MapColor.DIAMOND.getPackedId(MapColor.Brightness.HIGH),
-            MapColor.SNOW.getPackedId(MapColor.Brightness.HIGH),
-            MapColor.COLOR_ORANGE.getPackedId(MapColor.Brightness.HIGH),
-            MapColor.COLOR_CYAN.getPackedId(MapColor.Brightness.LOWEST)
-        };
+        byte[] palette = com.cobbleraids.radar.RadarPalette.COLORS;   // the one the server uses
         BufferedImage nativeImage = new BufferedImage(128, 128, BufferedImage.TYPE_INT_RGB);
         for (int i = 0; i < frame.length; i++) {
             int abgr = MapColor.getColorFromPackedId(Byte.toUnsignedInt(captured ? frame[i] : palette[frame[i]]));

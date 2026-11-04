@@ -27,7 +27,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.saveddata.maps.MapId;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
@@ -39,16 +38,7 @@ public final class RaidRadarService {
     private static final Map<UUID, View> VIEWS = new HashMap<>();
     private static List<View> active = List.of();
     private static int tick, sampleCursor;
-    private static final byte[] PALETTE = {
-            MapColor.COLOR_BLACK.getPackedId(MapColor.Brightness.LOWEST),
-            MapColor.TERRACOTTA_CYAN.getPackedId(MapColor.Brightness.LOWEST),
-            MapColor.COLOR_CYAN.getPackedId(MapColor.Brightness.LOW),
-            MapColor.DIAMOND.getPackedId(MapColor.Brightness.NORMAL),
-            MapColor.DIAMOND.getPackedId(MapColor.Brightness.HIGH),
-            MapColor.SNOW.getPackedId(MapColor.Brightness.HIGH),
-            MapColor.COLOR_ORANGE.getPackedId(MapColor.Brightness.HIGH),
-            MapColor.COLOR_CYAN.getPackedId(MapColor.Brightness.LOWEST)
-    };
+
     private RaidRadarService() {}
 
     private static final class View {
@@ -88,6 +78,7 @@ public final class RaidRadarService {
 
     public static void tick(MinecraftServer server) {
         tick++;
+        ServerHologramService.tick(server);
         if (tick % FRAME_TICKS == 0) refreshViews(server);
         if (active.isEmpty()) return;
         // Fair round-robin: adding viewers increases scan latency rather than the per-tick work limit.
@@ -139,6 +130,7 @@ public final class RaidRadarService {
             sendFrame(player, view, target);
         }
         VIEWS.keySet().retainAll(present);
+        ServerHologramService.retainOnly(VIEWS.keySet());
         active = new ArrayList<>(VIEWS.values());
     }
 
@@ -197,14 +189,16 @@ public final class RaidRadarService {
         String distance = target == null ? "" : Math.round(horizontalDistance(player, target)) + "M";
         String tier = definition == null ? "" : definition.rarityTier().serializedName().toUpperCase(java.util.Locale.ROOT);
         byte[] frame = RadarRenderer.frame(view.background, playerPoint, player.getYRot(), targetPoint, distance, tier, !view.hasTerrain);
-        for (int i = 0; i < frame.length; i++) frame[i] = PALETTE[frame[i]];
-        RadarMapPatch patch = RadarMapPatch.between(view.sent, frame);
+        for (int i = 0; i < frame.length; i++) frame[i] = RadarPalette.COLORS[frame[i]];
+        boolean flatMap = showsFlatMap(heldRadar(player), player);
+        RadarMapPatch patch = flatMap ? RadarMapPatch.between(view.sent, frame) : null;
         if (patch != null) {
             player.connection.send(new ClientboundMapItemDataPacket(view.mapId, (byte) 0, true, List.of(),
                     new MapItemSavedData.MapPatch(patch.x(), patch.y(), patch.width(), patch.height(), patch.pixels())));
             view.sent = frame;
         }
         if (RadarHologramNetworking.canShow(player)) {
+            ServerHologramService.remove(player.getUUID());   // the companion draws its own; never both
             boolean fullTerrain = view.sentHologramRevision != view.terrainRevision;
             RadarHologramNetworking.send(player, new com.cobbleraids.radar.protocol.RadarHologramPayload(
                     view.mapId.id(), view.centerX, view.centerZ, view.baseY,
@@ -214,6 +208,10 @@ public final class RaidRadarService {
                     definition == null ? "" : definition.species().getPath(), tier,
                     target == null ? -1 : target.secondsLeft(), target != null && target.lastKnown()));
             view.sentHologramRevision = view.terrainRevision;
+        } else if (flatMap) {
+            ServerHologramService.remove(player.getUUID());   // they chose the map, or the hologram is off: the map is shown, never both
+        } else {
+            showServerHologram(player, view, target, definition, tier, distance);
         }
         if (tick % 40 == 0) {
             String status = target == null ? "No available raids in this dimension" :
@@ -222,6 +220,45 @@ public final class RaidRadarService {
                     + (target.secondsLeft() < 0 ? "" : " | " + target.secondsLeft() + "s remaining");
             player.displayClientMessage(Component.literal(status).withStyle(ChatFormatting.AQUA), true);
         }
+    }
+
+    /** Whether this player is shown the flat map (rather than the server hologram) for the open radar in {@code stack}; see {@link RadarDisplayRules}. */
+    public static boolean showsFlatMap(ItemStack stack, ServerPlayer player) {
+        return RadarDisplayRules.showsFlatMap(RaidRadarItem.prefersFlatMap(stack), ServerHologramService.enabled(), RadarHologramNetworking.canShow(player));
+    }
+
+    /** A player without the client companion gets the same radar as a floating model made of display entities: no client mod, nothing sent by the client. */
+    private static void showServerHologram(ServerPlayer player, View view, RaidSpawnScheduler.RadarContact target, RaidDefinition definition,
+                                            String tier, String distance) {
+        ServerHologram hologram = ServerHologramService.of(player);
+        if (hologram == null) return;
+        hologram.showTerrain(view.hologramTerrain, view.terrainRevision);
+        String text = target == null || definition == null ? "NO RAIDS NEARBY"
+                : definition.species().getPath().toUpperCase(java.util.Locale.ROOT) + "  " + distance + "  " + tier;
+        hologram.showMarkers(player.getX() - view.centerX, player.getZ() - view.centerZ, target != null,
+                target == null ? 0 : target.position().x - view.centerX, target == null ? 0 : target.position().z - view.centerZ, text);
+    }
+
+    /**
+     * The raid this player's open radar is tracking, as short lines for the menu: species, distance, tier, and what is known about its timer. Empty when
+     * the radar is closed or there is no raid to track.
+     */
+    public static List<String> trackingLines(ServerPlayer player) {
+        View view = VIEWS.get(player.getUUID());
+        if (view == null || view.targetId == null) return List.of();
+        for (RaidSpawnScheduler.RadarContact target : view.targets) {
+            if (!target.bossId().equals(view.targetId)) continue;
+            RaidDefinition definition = RaidDefinitionRegistry.get(target.definitionId());
+            if (definition == null) return List.of();
+            List<String> lines = new ArrayList<>();
+            lines.add(definition.species().getPath().toUpperCase(java.util.Locale.ROOT));
+            lines.add(Math.round(horizontalDistance(player, target)) + " blocks away");
+            lines.add(definition.rarityTier().serializedName().toUpperCase(java.util.Locale.ROOT));
+            if (target.lastKnown()) lines.add("Last known position");
+            if (target.secondsLeft() >= 0) lines.add(target.secondsLeft() + "s remaining");
+            return lines;
+        }
+        return List.of();
     }
 
     public static void nextTarget(ServerPlayer player) {
@@ -233,9 +270,11 @@ public final class RaidRadarService {
     }
     public static void forget(UUID playerId) {
         VIEWS.remove(playerId);
+        ServerHologramService.remove(playerId);
         active = new ArrayList<>(VIEWS.values());
     }
     public static void clear() {
         VIEWS.clear(); active = List.of(); tick = 0; sampleCursor = 0;
+        ServerHologramService.clear();
     }
 }
