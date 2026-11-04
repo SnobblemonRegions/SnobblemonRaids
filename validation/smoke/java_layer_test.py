@@ -600,7 +600,104 @@ def scenario_capture_session_flush(rig: Rig) -> list[Result]:
     return results
 
 
+def scenario_teleport_lock(rig: Rig) -> list[Result]:
+    """A player in a raid cannot be teleported out of it, and /cobbleraids leave lifts the lock.
+
+    The bot is never told to FIGHT, so the raid stays active for the whole scenario. Teleports are
+    done from the console (`tp`), which reaches ServerPlayer.teleportTo like any warp or /back mod.
+    """
+    results: list[Result] = []
+
+    def check(name: str, ok: bool, detail: str = "") -> None:
+        results.append(Result(name, ok, detail))
+
+    def where(bot: BotProcess) -> str:
+        return rig.command(f"data get entity {bot.name} Pos").strip()
+
+    def dimension(bot: BotProcess) -> str:
+        return rig.command(f"data get entity {bot.name} Dimension").strip()
+
+    solo = rig.bot("Tele")
+    rig.settle([solo])
+    rig.give(solo, *SOLO_PARTY)
+    # The default boss site is at y=132 over a flat world whose ground is y=-60: the bot falls, and
+    # either dies (the lobby cancels) or lands far from the boss, which says nothing about teleports.
+    global BOSS_AT
+    saved, BOSS_AT = BOSS_AT, (0, -59, 0)
+    try:
+        rig.start_raid([solo])
+    finally:
+        BOSS_AT = saved
+    if not solo.wait_for("BATTLE_INIT", 120):
+        check("the player is in a started battle", False, "the lobby never became a battle")
+        return results
+    before = where(solo)
+    rig.command(f"tp {solo.name} 400 -60 400")
+    time.sleep(1)
+    check("a same-dimension tp is refused during a raid", where(solo) == before,
+          f"moved: {before} -> {where(solo)}")
+    rig.command(f"execute in minecraft:the_nether run tp {solo.name} 0 100 0")
+    time.sleep(1)
+    check("a cross-dimension tp is refused during a raid", "overworld" in dimension(solo),
+          dimension(solo))
+    check("the player is told why", solo.wait_for("cannot teleport", 5),
+          "no message reached the player")
+
+    rig.command(f"execute as {solo.name} run cobbleraids leave")
+    time.sleep(2)
+    rig.command(f"tp {solo.name} 400 -60 400")
+    time.sleep(1)
+    check("after leaving the raid the player can teleport again", where(solo) != before,
+          f"still at {where(solo)}")
+    return results
+
+
+def scenario_worldboss_duel(rig: Rig) -> list[Result]:
+    """A World Boss duel starts, is fought, and reports AscensionLib's part in it.
+
+    The duel is an owned encounter. With AscensionLib installed, its policy decides whether the
+    library's battle effects act: the AscensionLib lines the server logged are printed so a run on
+    two builds can be compared, and the checks assert only what must hold on both.
+    """
+    results: list[Result] = []
+
+    def check(name: str, ok: bool, detail: str = "") -> None:
+        results.append(Result(name, ok, detail))
+
+    solo = rig.bot("Wbd")
+    rig.settle([solo])
+    rig.give(solo, *SOLO_PARTY)
+    rig.command("cobbleraids despawn all")
+    rig.command(f"tp {solo.name} 0 -59 0")
+    solo.send("MOVE blizzard")
+    solo.send("FIGHT")
+    started = rig.command("cobbleraids worldboss start").strip()
+    check("the World Boss starts", "started" in started.lower(), started)
+    time.sleep(2)
+    where = re.search(r"started: \S+ at (-?\d+) (-?\d+) (-?\d+) in", rig.server.read_log())
+    if where:
+        x, y, z = (int(v) for v in where.groups())
+        rig.command(f"tp {solo.name} {x + 4} {y} {z + 4}")
+        time.sleep(2)
+    before = len(rig.server.read_log().splitlines())
+    joined = rig.command(f"execute as {solo.name} run cobbleraids worldboss join").strip()
+    check("the player is in a started duel", solo.wait_for("BATTLE_INIT", 60), joined or "the duel never started")
+    time.sleep(3)
+    lines = [l for l in rig.server.read_log().splitlines()[before:] if "scension" in l]
+    print("  AscensionLib lines during the duel (" + str(len(lines)) + "):")
+    for line in lines[:12]:
+        print("    " + line[:200])
+    if any(rig.dir.joinpath("mods").glob("AscensionLib*.jar")):
+        check("AscensionLib's battle effects act in the duel",
+              any("Applied ascension effects" in line for line in lines),
+              "AscensionLib is installed but never armed the duel's battle")
+    rig.command("cobbleraids worldboss stop")
+    return results
+
+
 SCENARIOS = {
+    "worldboss-duel": scenario_worldboss_duel,
+    "teleport-lock": scenario_teleport_lock,
     "capture-session-flush": scenario_capture_session_flush,
     "damage-after-animation": scenario_damage_after_animation,
     "hold-before-choice": scenario_hold_before_choice,

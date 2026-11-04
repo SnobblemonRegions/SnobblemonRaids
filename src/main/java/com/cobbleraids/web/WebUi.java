@@ -16,7 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
  * pages for players whose client can show them.
  *
  * <p>Pages live in this jar under {@code web/} and are served to clients as
- * {@code webgui:/cobbleraids/<page>}. WebGUI sends them down the player's own connection, so there
+ * {@code webgui://cobbleraids/<page>} (WebGUI 2.0.0 refuses the one-slash form and opens a blank page). WebGUI sends them down the player's own connection, so there
  * is no web host and no open port to run.
  */
 public final class WebUi {
@@ -56,6 +56,7 @@ public final class WebUi {
                 RaidFaultBarrier.guard("player-disconnect:web-icons",
                         () -> {
                             WebIconFeed.forgetEverywhere(handler.getPlayer().getUUID());
+                            WebGuiBridge.forget(handler.getPlayer().getUUID());
                             RewardWebPage.forget(handler.getPlayer().getUUID());
                             CaptureWebPage.forget(handler.getPlayer().getUUID());
                             LeaderboardWebPage.forget(handler.getPlayer().getUUID());

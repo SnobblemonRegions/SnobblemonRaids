@@ -61,6 +61,27 @@ public final class WorldBossRules {
         return damage > 0f && damage >= average * minOfAverage;
     }
 
+    /** How long a warp's saved origin stays good: long enough for any fight, short enough that it is not a standing teleport. */
+    public static final long ORIGIN_TTL_MILLIS = 6L * 60 * 60 * 1000;
+
+    /** Whether an origin saved at {@code savedAtMillis} has gone stale. */
+    public static boolean originExpired(long savedAtMillis, long nowMillis) {
+        return nowMillis - savedAtMillis > ORIGIN_TTL_MILLIS;
+    }
+
+    /**
+     * Whether {@code /worldboss return} may send a player home, and where: back to the origin their warp saved, or, with none (a restart forgets
+     * them), to world spawn but only if they are standing in the arena zone. Anywhere else the command is not a way to move at all.
+     */
+    public static boolean mayReturn(boolean hasLiveOrigin, boolean inArenaZone) {
+        return hasLiveOrigin || inArenaZone;
+    }
+
+    /** Whether a player already paid {@code paidToday} times today may be paid again; a cap of 0 or less means no cap. */
+    public static boolean mayBePaid(int paidToday, int maxPerDay) {
+        return maxPerDay <= 0 || paidToday < maxPerDay;
+    }
+
     /** The average damage per player who dealt any; 0 when nobody did. */
     public static float averageDamage(Map<UUID, Float> damage) {
         double total = 0;
@@ -111,13 +132,21 @@ public final class WorldBossRules {
 
     /**
      * Whether the next World Boss should start by itself: the system is on, the window is open
-     * (a window-less config only ever starts by command), nothing is active, and the gap since the
+     * (a window-less config only ever starts by command), {@code spawn.auto_start} is on (off means only a command or another mod's
+     * {@code CobbleRaidsWorldBoss.start} call starts one), nothing is active, and the gap since the
      * last one has passed.
      */
     public static boolean shouldAutoStart(WorldBossConfig config, Window window, boolean bossActive,
                                           long lastEndedMillis, long nowMillis) {
-        if (!config.enabled() || bossActive || window != Window.OPEN) return false;
+        if (!config.enabled() || !config.autoStart() || bossActive || window != Window.OPEN) return false;
         return nowMillis - lastEndedMillis >= config.spawnIntervalMinutes() * 60_000L;
+    }
+
+    /** Whole seconds left of the join countdown that began when the boss appeared (rounded up), or 0 when it is over or switched off. */
+    public static int joinSecondsLeft(long startedAtMillis, int countdownSeconds, long nowMillis) {
+        if (countdownSeconds <= 0) return 0;
+        long left = startedAtMillis + countdownSeconds * 1000L - nowMillis;
+        return left <= 0L ? 0 : (int) Math.min(countdownSeconds, (left + 999L) / 1000L);
     }
 
     /**
@@ -128,6 +157,11 @@ public final class WorldBossRules {
     public static boolean isNight(long dayTime, int from, int to) {
         int time = (int) Math.floorMod(dayTime, 24000L);
         return from < to ? time >= from && time < to : time >= from || time < to;
+    }
+
+    /** The zone radius in force: the arena's own when the boss stands at an arena marker, otherwise the open-world radius. */
+    public static double zoneRadius(WorldBossState state, WorldBossConfig config) {
+        return state != null && state.arena() ? config.arena().radius() : config.radius();
     }
 
     /**

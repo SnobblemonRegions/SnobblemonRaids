@@ -160,7 +160,8 @@ def main():
     # --- bosses -------------------------------------------------------------------------------
     definitions = {}
     for filename in sorted(os.listdir(RAIDS_DIR)):
-        if filename.endswith(".json"):
+        # World Boss skin variants repeat a species that already has a definition; they are not extra bosses.
+        if filename.endswith(".json") and not filename.startswith("worldboss_"):
             definition = load_json(os.path.join(RAIDS_DIR, filename))
             definitions[filename[:-5]] = definition
 

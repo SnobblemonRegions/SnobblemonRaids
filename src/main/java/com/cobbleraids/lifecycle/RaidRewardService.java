@@ -295,29 +295,13 @@ public final class RaidRewardService {
             CLAIM_LOCKS.remove(player.getUUID());
         }
         persistNow(player.getServer());
+        // The restore scope is the grant and nothing else. Once grantChoice returns, items are in the
+        // player's hands and capture-protocol points are banked, so an exception from the reporting
+        // below must never put the claim back: that would be a second payout on the retry.
+        RewardGrantResult granted;
         try {
             RewardGrantResult result = RaidRewardGrantEngine.grantChoice(player, pending, choice);
-            if (CobbleRaidsConfigManager.get().debugLogging()) {
-                RaidLog.info("" + player.getGameProfile().getName() + " claimed '" + choiceId
-                        + "' for raid " + pending.definitionId()
-                        + String.format(Locale.ROOT, " (contribution %.1f%%, %d bonus roll(s))",
-                                pending.contributionPercentage(), pending.contributionBonusRolls())
-                        + ": base=" + summarize(result.baseItems())
-                        + " chance=" + summarize(result.chanceItemsGranted())
-                        + " bonus=" + summarize(result.contributionBonusItems())
-                        + " currency=" + result.currencyGranted()
-                        + " points=" + result.raidPointsGranted());
-            }
-            player.sendSystemMessage(Component.literal(String.format(Locale.ROOT,
-                    "Raid reward claimed. Contribution %.1f%% awarded %d bonus roll%s. Granted: %s%s",
-                    pending.contributionPercentage(), pending.contributionBonusRolls(),
-                    pending.contributionBonusRolls() == 1 ? "" : "s", describeAll(result),
-                    // Left out entirely rather than shown as zero: with nothing configured there
-                    // is nothing to tell the player about.
-                    (result.paidPoints() ? " (+" + result.raidPointsGranted() + " RP)" : "")
-                            + (result.paidCurrency() ? " (+" + result.currencyGranted() + " CobbleDollars)" : ""))));
-            if (hasPending(player.getUUID())) OPEN_DELAY.put(player.getUUID(), GUI_OPEN_DELAY_TICKS);
-            return result;
+            granted = result;
         } catch (RuntimeException ex) {
             // Restore the exact claim at the front if granting fails before completion.
             PENDING.computeIfAbsent(player.getUUID(), ignored -> new ArrayDeque<>()).addFirst(pending);
@@ -325,6 +309,32 @@ public final class RaidRewardService {
             player.sendSystemMessage(Component.literal("Raid reward grant failed; your claim was preserved. Contact an administrator."));
             throw ex;
         }
+        RaidFaultBarrier.guard("reward:claim-report", () -> reportClaim(player, pending, choiceId, granted));
+        return granted;
+    }
+
+    /** Tells the player and the log what a finished claim paid. Runs after the grant is final; see {@link #claimLocked}. */
+    private static void reportClaim(ServerPlayer player, PendingRaidReward pending, String choiceId, RewardGrantResult result) {
+        if (CobbleRaidsConfigManager.get().debugLogging()) {
+            RaidLog.info("" + player.getGameProfile().getName() + " claimed '" + choiceId
+                    + "' for raid " + pending.definitionId()
+                    + String.format(Locale.ROOT, " (contribution %.1f%%, %d bonus roll(s))",
+                            pending.contributionPercentage(), pending.contributionBonusRolls())
+                    + ": base=" + summarize(result.baseItems())
+                    + " chance=" + summarize(result.chanceItemsGranted())
+                    + " bonus=" + summarize(result.contributionBonusItems())
+                    + " currency=" + result.currencyGranted()
+                    + " points=" + result.raidPointsGranted());
+        }
+        player.sendSystemMessage(Component.literal(String.format(Locale.ROOT,
+                "Raid reward claimed. Contribution %.1f%% awarded %d bonus roll%s. Granted: %s%s",
+                pending.contributionPercentage(), pending.contributionBonusRolls(),
+                pending.contributionBonusRolls() == 1 ? "" : "s", describeAll(result),
+                // Left out entirely rather than shown as zero: with nothing configured there
+                // is nothing to tell the player about.
+                (result.paidPoints() ? " (+" + result.raidPointsGranted() + " RP)" : "")
+                        + (result.paidCurrency() ? " (+" + result.currencyGranted() + " CobbleDollars)" : ""))));
+        if (hasPending(player.getUUID())) OPEN_DELAY.put(player.getUUID(), GUI_OPEN_DELAY_TICKS);
     }
 
     /** Used by the native reward screen's network handler: never throws, since the player is already messaged. */

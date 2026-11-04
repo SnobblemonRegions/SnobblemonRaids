@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '0.8.191-world-boss'
+version = '0.8.204-mew-model-fix'
 group = 'com.cobbleraids'
 
 base {
@@ -29,7 +29,7 @@ dependencies {
     minecraft 'com.mojang:minecraft:1.21.1'
     mappings loom.officialMojangMappings()
 
-    modImplementation 'net.fabricmc:fabric-loader:0.17.2'
+    modImplementation 'net.fabricmc:fabric-loader:0.19.3'
     modImplementation 'net.fabricmc.fabric-api:fabric-api:0.116.6+1.21.1'
 
     // Exact public releases used by the live-tested runtime builds.
@@ -78,6 +78,8 @@ processResources {
     filesMatching('fabric.mod.json') {
         expand version: modVersion
     }
+    // Halloween World Boss skins: kept in compat/ as a resource pack, shipped under halloween_pack/ and handed to Polymer at runtime.
+    from('compat/halloween/resourcepack/assets') { into 'halloween_pack/assets' }
 }
 
 // Consumed by CobbleTowers through `gradlew publishToMavenLocal`. The java component carries the
@@ -90,3 +92,7 @@ publishing {
         }
     }
 }
+
+// The protocol contains only Minecraft-common value/codec types; rendering ships separately.
+sourceSets.main.java.srcDir('radar-shared/src/main/java')
+tasks.named('build') { dependsOn(':radar-client:build') }

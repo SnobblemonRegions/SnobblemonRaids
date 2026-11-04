@@ -38,9 +38,13 @@ import java.util.Optional;
  * @param spawnMaxDistance         farthest
  * @param spawnAttempts            tries to find a surface position before giving up
  * @param spawnIntervalMinutes     gap between one World Boss ending and the next starting by itself in the window
+ * @param autoStart                whether a boss may start by itself in the window; false means it only starts by command or from another mod
+ *                                 through {@code CobbleRaidsWorldBoss.start} (the Spooky Surge's top tier does this)
  * @param spawnLifetimeMinutes     how long one World Boss stays before it leaves undefeated
+ * @param joinCountdownSeconds     how long players have to gather after the boss appears before duels open for everyone at once (0 = no countdown)
  * @param minPercentOfAverage      least damage, as a percent of the average per player who dealt any, that earns the defeat reward
  * @param rewardRaidPoints         Raid Points paid to each qualifying player
+ * @param rewardMaxPerDay          the most defeat rewards one player is paid per UTC day (0 = no cap); per account, so it limits farming, not alts
  * @param borderParticles          draw the zone as a wall of soul particles for players near its edge
  * @param borderViewDistance       how far along the wall, in blocks, a player is shown it
  * @param bossScale                size multiplier of the World Boss standing in the world (1 is the species' normal size)
@@ -51,6 +55,9 @@ import java.util.Optional;
  * @param dome                     the glass dome drawn at the zone's edge
  * @param look                     what players see of the bosses inside the zone
  * @param night                    whether the boss may only start by itself at night
+ * @param arena                    the arena: when spawn marker blocks are placed, the boss starts at one of them and players can warp in
+ * @param poolMax                  the most health the World Pool may ever have, however many players join (pool.max)
+ * @param bossBannedMoves          Showdown move ids a World Boss duel's boss may not know, so it cannot heal itself back up (duel.boss_banned_moves)
  */
 public record WorldBossConfig(
         boolean enabled,
@@ -74,9 +81,12 @@ public record WorldBossConfig(
         int spawnMaxDistance,
         int spawnAttempts,
         int spawnIntervalMinutes,
+        boolean autoStart,
         int spawnLifetimeMinutes,
+        int joinCountdownSeconds,
         float minPercentOfAverage,
         int rewardRaidPoints,
+        int rewardMaxPerDay,
         boolean borderParticles,
         int borderViewDistance,
         float bossScale,
@@ -86,7 +96,10 @@ public record WorldBossConfig(
         Music music,
         Dome dome,
         Look look,
-        Night night) {
+        Night night,
+        Arena arena,
+        float poolMax,
+        List<String> bossBannedMoves) {
 
     /**
      * When the boss may start by itself: only at night when {@code only} is set. A command start ignores this. A dimension with a fixed time
@@ -105,6 +118,23 @@ public record WorldBossConfig(
 
         public static Night defaults() {
             return new Night(true, 13000, 23000);
+        }
+    }
+
+    /**
+     * The arena (a built area, such as a pasted schematic, with World Boss spawn marker blocks placed in it).
+     *
+     * @param enabled whether placed spawn markers are used: with one or more placed, a boss starts at a random marker instead of a random
+     *                surface spot, and {@code /cobbleraids worldboss warp} takes players to the arena
+     * @param radius  the zone radius used for a boss that stands at a marker, in place of {@code radius}: set it to cover the arena, no more
+     */
+    public record Arena(boolean enabled, double radius) {
+        public Arena {
+            require(radius >= 16.0 && radius <= 512.0, "arena.radius", "must be 16 to 512");
+        }
+
+        public static Arena defaults() {
+            return new Arena(true, 96.0);
         }
     }
 
@@ -181,6 +211,9 @@ public record WorldBossConfig(
         require(minutesPerPlayer > 0f, "pool.minutes_per_player", "must be positive");
         require(maxMinutes > 0f, "pool.max_minutes", "must be positive");
         require(activeWindowSeconds >= 10, "pool.active_window_seconds", "must be at least 10");
+        require(poolMax >= poolBase && Float.isFinite(poolMax), "pool.max", "must be at least pool.base");
+        require(bossBannedMoves != null, "duel.boss_banned_moves", "must be a list");
+        bossBannedMoves = bossBannedMoves.stream().map(m -> m == null ? "" : m.trim().toLowerCase(java.util.Locale.ROOT)).filter(m -> !m.isEmpty()).distinct().toList();
         require(duelBossLevel >= 1 && duelBossLevel <= 100, "duel.boss_level", "must be 1 to 100");
         require(duelBossHealth >= 1, "duel.boss_health", "must be at least 1");
         require(duelTimeLimitSeconds >= 30, "duel.time_limit_seconds", "must be at least 30");
@@ -195,8 +228,10 @@ public record WorldBossConfig(
         require(spawnAttempts >= 1, "spawn.attempts", "must be at least 1");
         require(spawnIntervalMinutes >= 0, "spawn.interval_minutes", "must not be negative");
         require(spawnLifetimeMinutes >= 1, "spawn.lifetime_minutes", "must be at least 1");
+        require(joinCountdownSeconds >= 0 && joinCountdownSeconds <= 600, "spawn.join_countdown_seconds", "must be 0 to 600");
         require(minPercentOfAverage >= 0f && minPercentOfAverage <= 100f, "reward.min_percent_of_average", "must be 0 to 100");
         require(rewardRaidPoints >= 0, "reward.raid_points", "must not be negative");
+        require(rewardMaxPerDay >= 0, "reward.max_per_player_per_day", "must not be negative (0 = no cap)");
         require(borderViewDistance >= 16 && borderViewDistance <= 96, "visual.view_distance", "must be 16 to 96");
         require(bossScale >= 0.1f && bossScale <= 30f, "visual.boss_scale", "must be 0.1 to 30");
         require(duelBossScale >= 0.1f && duelBossScale <= 30f, "visual.duel_boss_scale", "must be 0.1 to 30");
@@ -207,14 +242,25 @@ public record WorldBossConfig(
         }
     }
 
+    /**
+     * Moves that restore the user's own health, which a World Boss must not use: the pool is the whole event's health, and a boss that heals
+     * itself back up turns a long fight into one nobody can finish. Recovery moves, draining moves, and the passive regeneration setups.
+     */
+    public static final List<String> HEALING_MOVES = List.of(
+            "recover", "roost", "softboiled", "slackoff", "milkdrink", "moonlight", "morningsun", "synthesis", "shoreup", "healorder",
+            "wish", "rest", "strengthsap", "junglehealing", "lifedew", "healpulse", "floralhealing", "lunarblessing", "painsplit", "purify",
+            "absorb", "megadrain", "gigadrain", "drainpunch", "leechlife", "hornleech", "drainingkiss", "paraboliccharge", "oblivionwing",
+            "dreameater", "bitterblade", "matchagotcha", "leechseed", "ingrain", "aquaring", "swallow");
+
     /** What a fresh install gets: disabled, with numbers that are a starting point for a bot test. */
     public static WorldBossConfig defaults() {
         return new WorldBossConfig(false, List.of("cobbleraids:marshadow", "cobbleraids:gengar",
                 "cobbleraids:chandelure", "cobbleraids:giratina", "cobbleraids:darkrai"), Optional.empty(), Optional.empty(),
                 20_000f, 6_000f, 1f, 20f, 900,
                 70, 3_000L, 240, 30, 45, true, 128.0,
-                "minecraft:overworld", 300, 1500, 30, 30, 40,
-                5f, 200, true, 40, 8f, 3f, "#9A5CC6", 50, Music.defaults(), Dome.defaults(), Look.defaults(), Night.defaults());
+                "minecraft:overworld", 300, 1500, 30, 30, true, 40, 60,
+                5f, 200, 0, true, 40, 8f, 3f, "#9A5CC6", 50, Music.defaults(), Dome.defaults(), Look.defaults(), Night.defaults(), Arena.defaults(),
+                150_000f, HEALING_MOVES);
     }
 
     /**
@@ -247,6 +293,7 @@ public record WorldBossConfig(
         JsonObject pool = obj(root, "pool");
         JsonObject duel = obj(root, "duel");
         JsonObject spawn = obj(root, "spawn");
+        JsonObject arenaJson = obj(root, "arena");
         JsonObject reward = obj(root, "reward");
         JsonObject visual = obj(root, "visual");
         JsonObject music = obj(root, "music");
@@ -277,9 +324,12 @@ public record WorldBossConfig(
                 (int) num(spawn, "spawn.max_distance", d.spawnMaxDistance),
                 (int) num(spawn, "spawn.attempts", d.spawnAttempts),
                 (int) num(spawn, "spawn.interval_minutes", d.spawnIntervalMinutes),
+                bool(spawn, "spawn.auto_start", d.autoStart),
                 (int) num(spawn, "spawn.lifetime_minutes", d.spawnLifetimeMinutes),
+                (int) num(spawn, "spawn.join_countdown_seconds", d.joinCountdownSeconds),
                 num(reward, "reward.min_percent_of_average", d.minPercentOfAverage),
                 (int) num(reward, "reward.raid_points", d.rewardRaidPoints),
+                (int) num(reward, "reward.max_per_player_per_day", d.rewardMaxPerDay),
                 bool(visual, "visual.border_particles", d.borderParticles),
                 (int) num(visual, "visual.view_distance", d.borderViewDistance),
                 num(visual, "visual.boss_scale", d.bossScale),
@@ -300,7 +350,10 @@ public record WorldBossConfig(
                         bool(visual, "visual.no_glow_in_zone", dl.noGlowInZone)),
                 new Night(bool(spawn, "spawn.night_only", dn.only),
                         (int) num(spawn, "spawn.night_from_tick", dn.fromTick),
-                        (int) num(spawn, "spawn.night_to_tick", dn.toTick)));
+                        (int) num(spawn, "spawn.night_to_tick", dn.toTick)),
+                new Arena(bool(arenaJson, "arena.enabled", d.arena.enabled()), num(arenaJson, "arena.radius", (float) d.arena.radius())),
+                num(pool, "pool.max", d.poolMax),
+                idList(duel, "duel.boss_banned_moves", d.bossBannedMoves));
     }
 
     /** The defaults written back as JSON, with the keys in the same grouping the parser reads. */
@@ -321,6 +374,7 @@ public record WorldBossConfig(
         pool.addProperty("minutes_per_player", minutesPerPlayer);
         pool.addProperty("max_minutes", maxMinutes);
         pool.addProperty("active_window_seconds", activeWindowSeconds);
+        pool.addProperty("max", poolMax);
         root.add("pool", pool);
         JsonObject duel = new JsonObject();
         duel.addProperty("boss_level", duelBossLevel);
@@ -329,6 +383,9 @@ public record WorldBossConfig(
         duel.addProperty("breather_seconds", breatherSeconds);
         duel.addProperty("all_fainted_breather_seconds", allFaintedBreatherSeconds);
         duel.addProperty("chain", chain);
+        com.google.gson.JsonArray bannedOut = new com.google.gson.JsonArray();
+        bossBannedMoves.forEach(bannedOut::add);
+        duel.add("boss_banned_moves", bannedOut);
         root.add("duel", duel);
         JsonObject spawn = new JsonObject();
         spawn.addProperty("dimension", spawnDimension);
@@ -336,7 +393,9 @@ public record WorldBossConfig(
         spawn.addProperty("max_distance", spawnMaxDistance);
         spawn.addProperty("attempts", spawnAttempts);
         spawn.addProperty("interval_minutes", spawnIntervalMinutes);
+        spawn.addProperty("auto_start", autoStart);
         spawn.addProperty("lifetime_minutes", spawnLifetimeMinutes);
+        spawn.addProperty("join_countdown_seconds", joinCountdownSeconds);
         spawn.addProperty("night_only", night.only());
         spawn.addProperty("night_from_tick", night.fromTick());
         spawn.addProperty("night_to_tick", night.toTick());
@@ -344,6 +403,7 @@ public record WorldBossConfig(
         JsonObject reward = new JsonObject();
         reward.addProperty("min_percent_of_average", minPercentOfAverage);
         reward.addProperty("raid_points", rewardRaidPoints);
+        reward.addProperty("max_per_player_per_day", rewardMaxPerDay);
         root.add("reward", reward);
         JsonObject visual = new JsonObject();
         visual.addProperty("border_particles", borderParticles);
@@ -369,6 +429,10 @@ public record WorldBossConfig(
         domeJson.addProperty("detail", dome.detail());
         domeJson.addProperty("full", dome.full());
         root.add("dome", domeJson);
+        JsonObject arenaOut = new JsonObject();
+        arenaOut.addProperty("enabled", arena.enabled());
+        arenaOut.addProperty("radius", arena.radius());
+        root.add("arena", arenaOut);
         return root;
     }
 
@@ -392,6 +456,22 @@ public record WorldBossConfig(
             return List.of(str(root, "raid_definition", fallback.get(0)));
         }
         return fallback;
+    }
+
+    /** A list of text ids under {@code path}'s leaf key, or {@code fallback} when it is not there. */
+    private static List<String> idList(JsonObject parent, String path, List<String> fallback) {
+        String key = leaf(path);
+        if (!parent.has(key) || parent.get(key).isJsonNull()) return fallback;
+        if (!parent.get(key).isJsonArray()) throw new IllegalArgumentException(path + " must be a list of move ids");
+        List<String> out = new ArrayList<>();
+        for (var element : parent.getAsJsonArray(key)) {
+            try {
+                out.add(element.getAsString());
+            } catch (RuntimeException ex) {
+                throw new IllegalArgumentException(path + " must be a list of text ids");
+            }
+        }
+        return out;
     }
 
     private static JsonObject obj(JsonObject parent, String key) {

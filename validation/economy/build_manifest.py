@@ -170,7 +170,8 @@ def read_bosses():
     """Every raid definition's species and tier, read from the tree rather than restated here."""
     bosses = {}
     for filename in sorted(os.listdir(RAIDS_DIR)):
-        if not filename.endswith(".json"):
+        # World Boss skin variants repeat a species that already has a definition; they are not extra bosses.
+        if not filename.endswith(".json") or filename.startswith("worldboss_"):
             continue
         with io.open(os.path.join(RAIDS_DIR, filename), encoding="utf-8") as handle:
             definition = json.load(handle)

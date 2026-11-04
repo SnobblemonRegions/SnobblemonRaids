@@ -141,6 +141,37 @@ Answers: chain mode on with a 30 second breather, 45 seconds when every Pokemon 
 3. AscensionLib side: `spooky_essence`, the Haunting rolls, and a listener that pays essence from `onDefeated`.
 4. Measuring "damage per player-minute" with bots and setting `pool.damage_per_player_minute`; the shipped 6000 is a guess.
 
+## 12b. Starting a boss from another mod (0.8.191)
+
+`CobbleRaidsWorldBoss.start(MinecraftServer, ServerPlayer near)` (server thread) starts a World Boss exactly like `/cr worldboss start`: the window and
+night-only are not asked, the system must be `enabled`, and only one boss runs at a time. It returns `null` on success or a short reason.
+`CobbleRaidsWorldBoss.isEnabled()` says whether the system is on. Both are compatible additions to API version 1.
+
+`spawn.auto_start` (default `true`, unchanged behaviour) turns the schedule off when `false`: the boss then appears only by command or from another
+mod. The Spooky Surge uses this: its top tier summons the boss around its top contributor, and a server that wants the boss only through the
+surge sets `"auto_start": false`. Verified live with the Spooky Surge: tier 4 started a boss; with the system disabled the call was refused with
+the reason; the boss bar shows only to players within `radius` of the boss (or in a duel), as before.
+
+## 12c. The arena: spawn markers, warp and return (0.8.191)
+
+A built arena (for example a pasted schematic in its own world) can host the boss instead of a random surface spot.
+
+- **Markers.** Two blocks, `cobbleraids:world_boss_spawn` (where the boss stands) and `cobbleraids:world_boss_entrance` (where warping players arrive). They exist only on
+  the server: clients see a structure void (invisible, no collision), so no resource pack is needed. They cannot be broken in survival. Give one with
+  `/give @s cobbleraids:world_boss_spawn` and place it; breaking it (creative) unregisters it. Positions are saved in `cobbleraids_world_boss_arena.dat`.
+  Markers that arrive without being placed (a pasted schematic that contains them) are found with `/cobbleraids worldboss arena scan [radius]` (loaded chunks only,
+  default 64, at most 128). `arena list` shows them, `arena clear` forgets them (the blocks stay).
+- **Starting.** With `arena.enabled` (default true) and at least one spawn marker, every start (schedule, command, or `CobbleRaidsWorldBoss.start`) puts the boss at a
+  random spawn marker, in that marker's dimension, whether or not anyone is nearby. With no spawn marker, behaviour is unchanged.
+- **Zone.** A boss at a marker uses `arena.radius` (default 96, enough for the corners of a 128 x 128 arena) for the wall, dome, bar, music and duel range, instead of `radius`.
+  The flag is saved, so a restart keeps it.
+- **Warp.** The spawn announcement carries a `[Click to warp]` link, and `/cobbleraids worldboss warp` does the same: the player's position is remembered and they arrive at a random
+  entrance marker (or, with none placed, the first standable spot on a ring 10 to 22 blocks from the boss) facing the boss. Refused while in a battle or duel, when already in the
+  arena, or when the boss has fallen. `/cobbleraids worldboss return` goes back (to the world spawn if the origin is unknown, for example after a restart). Operators only: `arena ...`.
+- Verified live with a Fabric 1.21.1 client and the Spooky Surge: markers registered by `setblock`, the boss started at the marker in the Nether, warp arrived at the entrance
+  facing the boss with the boss bar showing, breaking the entrance unregistered it and warp then used the ring, return went back to the overworld. Not verified: a real pasted
+  schematic, `arena scan` on one, or a dedicated custom dimension.
+
 ## 13. Decisions still needed
 
 1. Which Ghost bosses to add as raid definitions (Gengar, Mimikyu, Gholdengo, others)?
@@ -167,3 +198,19 @@ Rig: `L:\claude-cobbleraids-work\testserver-integration` with the new CobbleRaid
 The zone a duel needs (`radius`, default 128 blocks round the boss) is drawn as a **wall of soul particles** so players can see where it starts and walk in. Only a player within `visual.view_distance` blocks (default 40, 16 to 96) of the wall is sent it, and only the stretch within that distance: soul fire flames and rising souls on alternating passes every 8 ticks, one packet per column, columns 4 blocks apart on a fixed angle grid (so the wall does not shimmer as someone walks along it), at most 48 columns per player per pass. The height follows the player (about 5 blocks below to 13 above), so it is visible on hills and in caves. Crossing the wall shows an action-bar line once, "You entered the World Boss zone" or "You left the World Boss zone". `visual.border_particles: false` turns it off. The wall is exactly the duel range test, so it is walking in that makes a duel possible.
 
 Pure geometry in `WorldBossBorder` (11 tests); the drawing is `WorldBossService.drawBorder`. **Not yet seen in a client**: the particle choice, density and height are a first guess to be judged by eye. A live check can count the `world_particles` packets a bot receives at the wall (many) against one at the centre (none).
+
+## Load test at 40 players (2026-10-28)
+
+`validation/smoke/worldboss_duel_load.js N` drives N mineflayer bots (`worldboss_duelbot.js`) through real duels against one World Boss on a throwaway server and samples `/tick query`. See the header of the script for setup. A battle itself is capped at 4 players (`VALIDATED_MAX_HUMAN_PLAYERS`, `EncounterRequest.MAX_PLAYERS`, ADR 0003), so 40 players means 40 simultaneous solo duels on the shared pool, which needs no change.
+
+Rig: Fabric 1.21.1, Cobblemon 1.8.2, CobbleRaids 0.8.191, 4 cores shared with the bots (their load is in the numbers; 40 idle bots alone cost about 9 ms per tick). Test pool: `damage_per_player_minute` 1500, `max_minutes` 4. Each bot has one level 100 Garchomp, healed in each breather.
+
+| Bots | Duels at once | Tick avg / p95 | Worst tick avg | Result |
+|---|---|---|---|---|
+| 12 | 12 | 5.0 / 7.0 ms | 6.1 ms | 70 duels started; run capped at 420 s with the pool nearly empty |
+| 20 | 20 | 6.0 / 8.3 ms | 7.4 ms | defeated once, 20 paid |
+| 40 | 40 | 10.3 / 14.0 ms | 13.2 ms | defeated once, 40 paid |
+
+No CobbleRaids errors in any run; the only server errors were Cobblemon's `BattleSelectActionsHandler` NPE for a bot answering after its duel ended. Server RSS about 2.9 GB.
+
+Not covered: real clients, real damage per player-minute (bots deal about 800 per minute, so `pool.damage_per_player_minute` is still a guess), multi-Pokemon parties (a forced switch stalls a bot until the duel time limit), a real arena sized for 40 duel boss copies, and a restart at 40 players.

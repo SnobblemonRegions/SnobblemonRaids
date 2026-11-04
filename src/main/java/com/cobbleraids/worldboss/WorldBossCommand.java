@@ -27,6 +27,15 @@ public final class WorldBossCommand {
                 .then(Commands.literal("worldboss")
                         .then(Commands.literal("join").executes(WorldBossCommand::join))
                         .then(Commands.literal("leave").executes(WorldBossCommand::leave))
+                        .then(Commands.literal("warp").executes(WorldBossCommand::warp))
+                        .then(Commands.literal("return").executes(WorldBossCommand::returnHome))
+                        .then(Commands.literal("arena")
+                                .requires(source -> source.hasPermission(ADMIN_PERMISSION_LEVEL))
+                                .then(Commands.literal("list").executes(WorldBossCommand::arenaList))
+                                .then(Commands.literal("clear").executes(WorldBossCommand::arenaClear))
+                                .then(Commands.literal("scan").executes(ctx -> arenaScan(ctx, 64))
+                                        .then(Commands.argument("radius", com.mojang.brigadier.arguments.IntegerArgumentType.integer(8, 128))
+                                                .executes(ctx -> arenaScan(ctx, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "radius"))))))
                         .then(Commands.literal("status").executes(WorldBossCommand::status))
                         .then(Commands.literal("me").executes(WorldBossCommand::me))
                         .then(Commands.literal("start")
@@ -35,6 +44,11 @@ public final class WorldBossCommand {
                         .then(Commands.literal("stop")
                                 .requires(source -> source.hasPermission(ADMIN_PERMISSION_LEVEL))
                                 .executes(WorldBossCommand::stop))
+                        .then(Commands.literal("win")
+                                .requires(source -> source.hasPermission(ADMIN_PERMISSION_LEVEL))
+                                .executes(ctx -> win(ctx, ctx.getSource().getPlayerOrException()))
+                                .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
+                                        .executes(ctx -> win(ctx, net.minecraft.commands.arguments.EntityArgument.getPlayer(ctx, "player")))))
                         .then(Commands.literal("reload")
                                 .requires(source -> source.hasPermission(ADMIN_PERMISSION_LEVEL))
                                 .executes(WorldBossCommand::reload))));
@@ -48,6 +62,102 @@ public final class WorldBossCommand {
             return 0;
         }
         return 1;
+    }
+
+    private static int warp(CommandContext<CommandSourceStack> ctx) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        String problem = WorldBossService.warp(player);
+        if (problem != null) {
+            player.sendSystemMessage(Component.literal(problem).withStyle(ChatFormatting.RED));
+            return 0;
+        }
+        return 1;
+    }
+
+    private static int returnHome(CommandContext<CommandSourceStack> ctx) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        String problem = WorldBossService.returnHome(player);
+        if (problem != null) {
+            player.sendSystemMessage(Component.literal(problem).withStyle(ChatFormatting.RED));
+            return 0;
+        }
+        return 1;
+    }
+
+    /** Admin test tool: wins the active fight, crediting the rest of the pool to the chosen player (default: you). */
+    private static int win(CommandContext<CommandSourceStack> ctx, ServerPlayer credit) {
+        String problem = WorldBossService.forceWin(ctx.getSource().getServer(), credit);
+        if (problem != null) {
+            ctx.getSource().sendFailure(Component.literal(problem));
+            return 0;
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal("World Boss won; the remaining damage went to " + credit.getGameProfile().getName()
+                + ". Rewards are being paid through the normal defeat path.").withStyle(ChatFormatting.YELLOW), true);
+        return 1;
+    }
+
+    private static int arenaList(CommandContext<CommandSourceStack> ctx) {
+        var markers = com.cobbleraids.worldboss.arena.ArenaMarkers.get(ctx.getSource().getServer());
+        for (var kind : com.cobbleraids.worldboss.arena.ArenaMarkers.Kind.values()) {
+            var spots = markers.list(kind);
+            ctx.getSource().sendSuccess(() -> Component.literal(kind.name().toLowerCase() + " markers: " + spots.size()).withStyle(ChatFormatting.YELLOW), false);
+            for (var spot : spots) {
+                ctx.getSource().sendSuccess(() -> Component.literal("  " + spot.dimension() + " " + spot.pos().getX() + " " + spot.pos().getY() + " "
+                        + spot.pos().getZ()), false);
+            }
+        }
+        return markers.list(com.cobbleraids.worldboss.arena.ArenaMarkers.Kind.SPAWN).size();
+    }
+
+    private static int arenaClear(CommandContext<CommandSourceStack> ctx) {
+        var markers = com.cobbleraids.worldboss.arena.ArenaMarkers.get(ctx.getSource().getServer());
+        markers.clear(com.cobbleraids.worldboss.arena.ArenaMarkers.Kind.SPAWN);
+        markers.clear(com.cobbleraids.worldboss.arena.ArenaMarkers.Kind.ENTRANCE);
+        markers.flush(ctx.getSource().getServer());
+        ctx.getSource().sendSuccess(() -> Component.literal("Forgot every arena marker (the blocks stay where they are; /cobbleraids worldboss arena scan finds them again).")
+                .withStyle(ChatFormatting.YELLOW), true);
+        return 1;
+    }
+
+    /** Finds marker blocks that arrived without being placed by hand (a pasted schematic) in the loaded chunks round the operator and registers them. */
+    private static int arenaScan(CommandContext<CommandSourceStack> ctx, int radius) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        var level = player.serverLevel();
+        var markers = com.cobbleraids.worldboss.arena.ArenaMarkers.get(ctx.getSource().getServer());
+        String dimension = level.dimension().location().toString();
+        int minY = Math.max(level.getMinBuildHeight(), player.getBlockY() - 96), maxY = Math.min(level.getMaxBuildHeight() - 1, player.getBlockY() + 96);
+        int added = 0;
+        var pos = new net.minecraft.core.BlockPos.MutableBlockPos();
+        int minX = player.getBlockX() - radius, maxX = player.getBlockX() + radius;
+        int minZ = player.getBlockZ() - radius, maxZ = player.getBlockZ() + radius;
+        // Walk the loaded chunks and skip every section that is only air: a marker is a block, so it is never in one. A radius of 128 is otherwise
+        // some twelve million block reads on the server thread, nearly all of them air.
+        for (int cx = minX >> 4; cx <= maxX >> 4; cx++) {
+            for (int cz = minZ >> 4; cz <= maxZ >> 4; cz++) {
+                var chunk = level.getChunkSource().getChunkNow(cx, cz);
+                if (chunk == null) continue;
+                var sections = chunk.getSections();
+                for (int i = 0; i < sections.length; i++) {
+                    if (sections[i].hasOnlyAir()) continue;
+                    int baseY = (chunk.getMinSection() + i) << 4;
+                    if (baseY + 15 < minY || baseY > maxY) continue;
+                    for (int x = Math.max(minX, cx << 4); x <= Math.min(maxX, (cx << 4) + 15); x++) {
+                        for (int z = Math.max(minZ, cz << 4); z <= Math.min(maxZ, (cz << 4) + 15); z++) {
+                            for (int y = Math.max(minY, baseY); y <= Math.min(maxY, baseY + 15); y++) {
+                                pos.set(x, y, z);
+                                if (level.getBlockState(pos).getBlock() instanceof com.cobbleraids.worldboss.arena.ArenaMarkerBlock marker
+                                        && markers.add(marker.kind(), new com.cobbleraids.worldboss.arena.ArenaMarkers.Spot(dimension, pos.immutable()))) added++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (added > 0) markers.flush(ctx.getSource().getServer());
+        int found = added;
+        ctx.getSource().sendSuccess(() -> Component.literal("Scan done: " + found + " new marker(s) registered (loaded chunks within " + radius + " blocks).")
+                .withStyle(ChatFormatting.YELLOW), true);
+        return found;
     }
 
     private static int leave(CommandContext<CommandSourceStack> ctx) throws com.mojang.brigadier.exceptions.CommandSyntaxException {

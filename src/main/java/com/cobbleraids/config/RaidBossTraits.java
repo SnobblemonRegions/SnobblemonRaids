@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.random.RandomGenerator;
@@ -39,9 +40,10 @@ public record RaidBossTraits(
         String heldItem,
         String gender,
         String teraType,
-        String form
+        String form,
+        List<String> aspects
 ) {
-    public static final RaidBossTraits NONE = new RaidBossTraits(null, null, Map.of(), Map.of(), null, null, null, null);
+    public static final RaidBossTraits NONE = new RaidBossTraits(null, null, Map.of(), Map.of(), null, null, null, null, List.of());
 
     /** Cobblemon's six permanent stats, as they are written in a definition. */
     private static final Set<String> STATS =
@@ -104,12 +106,13 @@ public record RaidBossTraits(
     public RaidBossTraits {
         ivs = Map.copyOf(ivs);
         evs = Map.copyOf(evs);
+        aspects = List.copyOf(aspects);
     }
 
     /** True when the boss should be built exactly as it was before traits existed. */
     public boolean isEmpty() {
         return nature == null && ability == null && ivs.isEmpty() && evs.isEmpty()
-                && heldItem == null && gender == null && teraType == null && form == null;
+                && heldItem == null && gender == null && teraType == null && form == null && aspects.isEmpty();
     }
 
     /** Null when the item may be held, otherwise the reason to report. */
@@ -197,7 +200,8 @@ public record RaidBossTraits(
                 heldItem,
                 string(traits, "gender"),
                 string(traits, "tera_type"),
-                string(traits, "form"));
+                string(traits, "form"),
+                readAspects(traits, definitionId));
     }
 
     /**
@@ -228,6 +232,31 @@ public record RaidBossTraits(
             values.put(stat, value);
         }
         return values;
+    }
+
+    /**
+     * Reads "aspects": a list of Cobblemon aspect names forced onto the boss, which is how a skin such
+     * as the Halloween ones is selected (a resolver variation matches on its aspects). Names are
+     * lowercased; anything that is not a short plain word is dropped with a warning.
+     */
+    private static List<String> readAspects(JsonObject traits, String definitionId) {
+        if (!traits.has("aspects") || !traits.get("aspects").isJsonArray()) return List.of();
+        List<String> out = new java.util.ArrayList<>();
+        for (JsonElement element : traits.getAsJsonArray("aspects")) {
+            String name;
+            try {
+                name = element.getAsString().trim().toLowerCase(Locale.ROOT);
+            } catch (RuntimeException ex) {
+                warn(definitionId, "aspects has an entry that is not a string; ignoring it");
+                continue;
+            }
+            if (!name.matches("[a-z0-9_-]{1,32}")) {
+                warn(definitionId, "aspect '" + name + "' is not a plain name; ignoring it");
+                continue;
+            }
+            if (!out.contains(name)) out.add(name);
+        }
+        return out;
     }
 
     private static String string(JsonObject object, String key) {

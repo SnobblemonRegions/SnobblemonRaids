@@ -30,10 +30,16 @@ public final class WorldBossScaling {
      */
     public static float poolSize(float base, float damagePerPlayerMinute, int activePlayers,
                                  float minutesPerPlayer, float maxMinutes) {
+        return poolSize(base, damagePerPlayerMinute, activePlayers, minutesPerPlayer, maxMinutes, Float.MAX_VALUE);
+    }
+
+    /** As above, never more than {@code poolMax}: the hard ceiling on the event's health however many players join. */
+    public static float poolSize(float base, float damagePerPlayerMinute, int activePlayers,
+                                 float minutesPerPlayer, float maxMinutes, float poolMax) {
         int players = Math.max(1, activePlayers);
         float minutes = Math.min(minutesPerPlayer * players, maxMinutes);
         float wanted = damagePerPlayerMinute * minutes * players;
         if (!Float.isFinite(wanted)) return base;
-        return Math.max(base, wanted);
+        return Math.min(poolMax, Math.max(base, wanted));
     }
 }

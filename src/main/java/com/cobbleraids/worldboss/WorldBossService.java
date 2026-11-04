@@ -1,6 +1,8 @@
 package com.cobbleraids.worldboss;
 
 import com.cobbleraids.RaidLog;
+import com.cobbleraids.worldboss.arena.ArenaMarkers;
+import com.cobbleraids.worldboss.arena.ArenaSpot;
 import com.cobbleraids.api.encounter.EncounterListener;
 import com.cobbleraids.api.encounter.EncounterPolicy;
 import com.cobbleraids.api.encounter.EncounterRequest;
@@ -30,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.ChatFormatting;
@@ -38,7 +41,10 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -92,6 +98,8 @@ public final class WorldBossService {
     private static final Map<UUID, Long> CHAIN = new ConcurrentHashMap<>();
     /** Wall-clock millis each player last started a duel; sizes the pool. */
     private static final Map<UUID, Long> LAST_DUEL_START = new ConcurrentHashMap<>();
+    /** Players who joined during the join countdown; their duels all start when it ends. */
+    private static final Map<UUID, Long> GATHERED = new ConcurrentHashMap<>();
     /** Players last seen inside the zone, so crossing the wall can be announced once. Only touched on the server thread. */
     private static final Map<UUID, Boolean> LAST_INSIDE = new HashMap<>();
 
@@ -136,7 +144,7 @@ public final class WorldBossService {
         if (current == null || !current.active() || current.pool() == null || current.pool().isDefeated()) return false;
         WorldBossConfig config = WorldBossConfigManager.get();
         if (!config.look().noGlowInZone() || !current.dimension().equals(dimension.toString())) return false;
-        return WorldBossBorder.inside(current.x(), current.z(), config.radius(), x, z);
+        return WorldBossBorder.inside(current.x(), current.z(), WorldBossRules.zoneRadius(current, config), x, z);
     }
 
     public static boolean isShowpiece(Entity entity) {
@@ -230,6 +238,7 @@ public final class WorldBossService {
             return;
         }
         WorldBossMusic.tick(current, s, config, DUELS.keySet(), CHAIN.keySet());
+        openGathered(current, config);
         tickDuels(current, config);
         tickChains(current, config);
         refreshBar(current);
@@ -280,26 +289,36 @@ public final class WorldBossService {
         String pickedId = WorldBossRules.pickDefinition(loaded, state.definitionId(), ThreadLocalRandom.current());
         if (pickedId == null) return "none of the configured raid definitions is loaded: " + config.raidDefinitions();
         RaidDefinition definition = RaidDefinitionRegistry.get(ResourceLocation.parse(pickedId));
-        ResourceLocation dimensionId = ResourceLocation.tryParse(config.spawnDimension());
-        ServerLevel level = dimensionId == null ? null
-                : current.getLevel(ResourceKey.create(Registries.DIMENSION, dimensionId));
-        if (level == null) return "dimension " + config.spawnDimension() + " does not exist";
-
-        ServerPlayer anchor = near != null && near.level() == level ? near : randomPlayerIn(level);
-        if (anchor == null) return "nobody is online in " + config.spawnDimension() + " to place the boss around";
-        BlockPos spot = findLand(level, anchor.blockPosition(), config);
-        if (spot == null) return "no suitable surface was found after " + config.spawnAttempts() + " attempts";
+        // With spawn markers placed in an arena, the boss stands at one of them; otherwise it appears at a random surface spot near a player.
+        ArenaPick arenaPick = config.arena().enabled() ? pickArena(current) : null;
+        if (arenaPick != null && arenaPick.problem() != null) return arenaPick.problem();
+        boolean arenaMode = arenaPick != null;
+        ServerLevel level;
+        BlockPos spot;
+        if (arenaMode) {
+            level = arenaPick.level();
+            spot = arenaPick.pos();
+        } else {
+            ResourceLocation dimensionId = ResourceLocation.tryParse(config.spawnDimension());
+            level = dimensionId == null ? null : current.getLevel(ResourceKey.create(Registries.DIMENSION, dimensionId));
+            if (level == null) return "dimension " + config.spawnDimension() + " does not exist";
+            ServerPlayer anchor = near != null && near.level() == level ? near : randomPlayerIn(level);
+            if (anchor == null) return "nobody is online in " + config.spawnDimension() + " to place the boss around";
+            spot = findLand(level, anchor.blockPosition(), config);
+            if (spot == null) return "no suitable surface was found after " + config.spawnAttempts() + " attempts";
+        }
 
         long now = System.currentTimeMillis();
         float pool = WorldBossScaling.poolSize(config.poolBase(), config.damagePerPlayerMinute(), 1,
-                config.minutesPerPlayer(), config.maxMinutes());
+                config.minutesPerPlayer(), config.maxMinutes(), config.poolMax());
         WorldBossState s = state;
-        s.begin(UUID.randomUUID(), definition.id().toString(), config.spawnDimension(),
+        s.begin(UUID.randomUUID(), definition.id().toString(), level.dimension().location().toString(),
                 spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, now, WorldBossRules.endMillis(config, now),
-                new WorldBossPool(pool));
+                new WorldBossPool(pool), arenaMode);
         DUELS.clear();
         DUEL_PLAYER.clear();
         CHAIN.clear();
+        GATHERED.clear();
         LAST_DUEL_START.clear();
         flush(current);
         try {
@@ -309,9 +328,9 @@ public final class WorldBossService {
             RaidLog.error("World Boss {} started but its showpiece could not be spawned", s.bossId(), ex);
         }
         ensureBar(current);
-        announceStart(current, definition, level, spot);
-        RaidLog.info("World Boss {} started: {} at {} {} {} in {}, pool {}", s.bossId(), definition.id(),
-                spot.getX(), spot.getY(), spot.getZ(), config.spawnDimension(), Math.round(pool));
+        announceStart(current, definition, level, spot, arenaMode);
+        RaidLog.info("World Boss {} started{}: {} at {} {} {} in {}, pool {}", s.bossId(), arenaMode ? " at an arena marker" : "", definition.id(),
+                spot.getX(), spot.getY(), spot.getZ(), level.dimension().location(), Math.round(pool));
         return null;
     }
 
@@ -342,6 +361,10 @@ public final class WorldBossService {
         flush(current);
         removeShowpiece(current);
         int swept = sweepLeftovers(current);
+        for (UUID warped : new ArrayList<>(RETURN_TO.keySet())) {
+            ServerPlayer visitor = current.getPlayerList().getPlayer(warped);
+            if (visitor != null) say(visitor, "The fight is over. /cobbleraids worldboss return takes you back.", ChatFormatting.YELLOW);
+        }
         clearBar();
         broadcast(current, Component.literal("[World Boss] ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
                 .append(Component.literal(message).withStyle(ChatFormatting.YELLOW)));
@@ -350,6 +373,7 @@ public final class WorldBossService {
                     () -> listener.onEnded(bossId, definitionId, damage, total));
         }
         CHAIN.clear();
+        GATHERED.clear();
         RaidLog.info("World Boss {} ended undefeated: {} damage of {}; {} leftover boss(es) swept", bossId,
                 Math.round(pool == null ? 0f : pool.totalDamage()), Math.round(total), swept);
         return swept;
@@ -367,7 +391,34 @@ public final class WorldBossService {
         String why = cannotDuel(player, s, config);
         if (why != null) return why;
         CHAIN.remove(player.getUUID());
+        int gatherLeft = joinSecondsLeft(s, config);
+        if (gatherLeft > 0) {
+            if (GATHERED.putIfAbsent(player.getUUID(), System.currentTimeMillis()) == null) barDirty = true;
+            say(player, "You are in. The fight opens in " + gatherLeft + " s, so everyone can join.", ChatFormatting.LIGHT_PURPLE);
+            return null;
+        }
         return startDuel(player, s, config);
+    }
+
+    /** Seconds left before duels open for this boss (0 once open). Counted from when the boss appeared, so a restart does not restart it. */
+    private static int joinSecondsLeft(WorldBossState s, WorldBossConfig config) {
+        return WorldBossRules.joinSecondsLeft(s.startedAtMillis(), config.joinCountdownSeconds(), System.currentTimeMillis());
+    }
+
+    /** When the countdown ends, starts the duel of everyone who joined during it, all in the same second. */
+    private static void openGathered(MinecraftServer current, WorldBossConfig config) {
+        WorldBossState s = state;
+        if (GATHERED.isEmpty() || joinSecondsLeft(s, config) > 0) return;
+        List<UUID> waiting = new ArrayList<>(GATHERED.keySet());
+        GATHERED.clear();
+        broadcast(current, Component.literal("[World Boss] ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                .append(Component.literal("The fight is open! " + waiting.size() + " fighter(s) go in together.").withStyle(ChatFormatting.YELLOW)));
+        for (UUID id : waiting) {
+            ServerPlayer player = current.getPlayerList().getPlayer(id);
+            if (player == null) continue;
+            String problem = join(player);
+            if (problem != null) say(player, problem, ChatFormatting.YELLOW);
+        }
     }
 
     /** Leaves the chain: no more automatic duels. Damage already dealt is kept. */
@@ -378,7 +429,7 @@ public final class WorldBossService {
     private static String cannotDuel(ServerPlayer player, WorldBossState s, WorldBossConfig config) {
         if (!player.isAlive() || player.isSpectator()) return "You cannot duel right now.";
         if (!inRange(player, s, config)) return "You are too far from the World Boss (limit "
-                + Math.round(config.radius()) + " blocks).";
+                + Math.round(WorldBossRules.zoneRadius(s, config)) + " blocks).";
         if (Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player) != null) {
             return "Finish your current battle first.";
         }
@@ -393,7 +444,7 @@ public final class WorldBossService {
         LAST_DUEL_START.put(player.getUUID(), nowMillis);
         int active = WorldBossRules.activePlayers(LAST_DUEL_START, nowMillis, config.activeWindowSeconds() * 1000L);
         s.pool().growTo(WorldBossScaling.poolSize(config.poolBase(), config.damagePerPlayerMinute(), active,
-                config.minutesPerPlayer(), config.maxMinutes()));
+                config.minutesPerPlayer(), config.maxMinutes(), config.poolMax()));
         s.touch();
         stateDirty = true;
         barDirty = true;
@@ -401,13 +452,14 @@ public final class WorldBossService {
         UUID encounterId = UUID.randomUUID();
         Vec3 position = duelPosition(player);
         if (position == null) return "The duel cannot start from where you are standing.";
-        EncounterPolicy policy = EncounterPolicy.none().withCarryover(true, true);
+        EncounterPolicy policy = EncounterPolicy.none().withCarryover(true, true).withAscensionEffects(true);
         EncounterRequest request = new EncounterRequest(OWNER, encounterId, List.of(player), definitionId,
                 player.serverLevel(), position, config.duelBossLevel(), OptionalLong.of(config.duelBossHealth()),
                 policy, EncounterRules.none());
         StartResult result;
         try {
-            result = EncounterService.start(request, DUEL_LISTENER);
+            result = com.cobbleraids.spawn.RaidBossSpawner.withoutMoves(config.bossBannedMoves(),
+                    () -> EncounterService.start(request, DUEL_LISTENER));
         } catch (RuntimeException ex) {
             RaidLog.error("World Boss duel for {} could not start", player.getGameProfile().getName(), ex);
             return "The duel could not start. Tell an administrator.";
@@ -556,6 +608,38 @@ public final class WorldBossService {
     }
 
     /**
+     * Admin test tool: wins the active fight now. The pool's remaining health is dealt in one strike and credited to {@code credit}, then the
+     * ordinary defeat path runs, so Raid Points, the announcement and every listener (the Spooky Essence payout among them) behave exactly as
+     * after a real win. Damage already dealt by others is kept, so a test with several players still splits as it would have.
+     *
+     * @return null on success, otherwise why nothing happened
+     */
+    public static String forceWin(MinecraftServer current, ServerPlayer credit) {
+        WorldBossState s = state;
+        if (s == null || !s.active() || s.pool() == null) return "no World Boss is active";
+        if (s.pool().isDefeated()) return "the World Boss is already defeated";
+        float left = s.pool().current();
+        // Split the rest across everyone taking part. Crediting it all to one player would make the average huge and push everybody else under
+        // the pay threshold (a fraction of the average), so a test with several players would pay only the admin.
+        Set<UUID> takingPart = new LinkedHashSet<>(s.pool().contributions().keySet());
+        takingPart.add(credit.getUUID());
+        takingPart.addAll(GATHERED.keySet());
+        WorldBossConfig config = WorldBossConfigManager.get();
+        for (ServerPlayer player : current.getPlayerList().getPlayers()) {
+            if (inRange(player, s, config)) takingPart.add(player.getUUID());
+        }
+        if (left > 0f) {
+            float each = left / takingPart.size();
+            for (UUID id : takingPart) s.pool().strike(id, each);
+            if (s.pool().current() > 0f) s.pool().strike(credit.getUUID(), s.pool().current());
+        }
+        RaidLog.warn("World Boss {} was won by admin command, the last {} damage split across {} player(s)", s.bossId(), Math.round(left),
+                takingPart.size());
+        handleDefeat(current);
+        return null;
+    }
+
+    /**
      * Pays and announces a defeat. Safe to run again after a restart: Raid Points are guarded by a
      * flag saved first (at most once), and listeners by a flag saved after (at least once, which is
      * why the listener API names the boss id as an idempotency key).
@@ -568,14 +652,31 @@ public final class WorldBossService {
         float total = pool.max();
 
         if (!s.rewardsPaid()) {
-            s.markRewardsPaid();
-            flush(current);
+            // Each player is marked paid and saved just before their own payment (at most once for them), and the whole step is marked done only
+            // when the loop ends. A crash half way therefore costs the one player in flight, and the rerun after the restart pays the rest.
             int paid = 0;
             float average = WorldBossRules.averageDamage(damage);
+            WorldBossPayoutStore payouts = WorldBossPayoutStore.get(current);
+            String day = WorldBossPayoutStore.today();
             for (Map.Entry<UUID, Float> entry : damage.entrySet()) {
                 float share = total <= 0f ? 0f : entry.getValue() / total;
                 if (!WorldBossRules.qualifies(entry.getValue(), average, config.minOfAverage())) continue;
                 final UUID playerId = entry.getKey();
+                if (!WorldBossRules.mayBePaid(payouts.paidOn(playerId, day), config.rewardMaxPerDay())) {
+                    ServerPlayer capped = current.getPlayerList().getPlayer(playerId);
+                    if (capped != null) {
+                        say(capped, "You have already earned " + config.rewardMaxPerDay() + " World Boss reward(s) today. This one pays nothing.", ChatFormatting.YELLOW);
+                    }
+                    continue;
+                }
+                if (!s.markPlayerPaid(playerId)) continue;   // paid before a restart
+                payouts.record(playerId, day);
+                flush(current);
+                try {
+                    payouts.flush(current);
+                } catch (java.io.IOException ex) {
+                    RaidLog.error("Could not save the World Boss payout count", ex);
+                }
                 final int amount = config.rewardRaidPoints();
                 if (amount > 0) {
                     RaidFaultBarrier.guard("worldboss:award", () -> CobbleRaidsPoints.award(current, playerId, amount));
@@ -587,6 +688,8 @@ public final class WorldBossService {
                             + "% of the damage.", ChatFormatting.GREEN);
                 }
             }
+            s.markRewardsPaid();
+            flush(current);
             RaidLog.info("World Boss {} defeated: {} player(s) paid {} Raid Points each", s.bossId(), paid,
                     config.rewardRaidPoints());
         }
@@ -792,16 +895,124 @@ public final class WorldBossService {
         return feet.getCollisionShape(level, pos).isEmpty() && head.getCollisionShape(level, above).isEmpty();
     }
 
-    private static void announceStart(MinecraftServer current, RaidDefinition definition, ServerLevel level, BlockPos spot) {
+    private static void announceStart(MinecraftServer current, RaidDefinition definition, ServerLevel level, BlockPos spot, boolean arena) {
         var species = definition.species();
         var message = Component.literal("[World Boss] ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
                 .append(Component.literal("A World Boss, ").withStyle(ChatFormatting.YELLOW))
-                .append(Component.literal(speciesName(species)).withStyle(ChatFormatting.LIGHT_PURPLE))
-                .append(Component.literal(", has appeared! Near X " + WorldBossRules.coordinateHint(spot.getX())
-                        + ", Z " + WorldBossRules.coordinateHint(spot.getZ()) + " ("
-                        + level.dimension().location().getPath() + "). Right-click it to duel, together we bring it down.")
-                        .withStyle(ChatFormatting.YELLOW));
+                .append(Component.literal(speciesName(species)).withStyle(ChatFormatting.LIGHT_PURPLE));
+        if (arena) {
+            message.append(Component.literal(", has appeared in the arena! Warp in, right-click it to duel, together we bring it down. ")
+                            .withStyle(ChatFormatting.YELLOW))
+                    .append(Component.literal("[Click to warp]").withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA).withBold(true)
+                            .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/cobbleraids worldboss warp"))
+                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                    Component.literal("Teleports you to the arena. /cobbleraids worldboss return takes you back.")))));
+        } else {
+            message.append(Component.literal(", has appeared! Near X " + WorldBossRules.coordinateHint(spot.getX())
+                            + ", Z " + WorldBossRules.coordinateHint(spot.getZ()) + " ("
+                            + level.dimension().location().getPath() + "). Right-click it to duel, together we bring it down.")
+                    .withStyle(ChatFormatting.YELLOW));
+        }
+        int countdown = WorldBossConfigManager.get().joinCountdownSeconds();
+        if (countdown > 0) {
+            message.append(Component.literal(" The fight opens in " + countdown + " s: join now and everyone goes in together.")
+                    .withStyle(ChatFormatting.GREEN));
+        }
         broadcast(current, message);
+    }
+
+    // ---- the arena: choosing the marker, warping in and back ----
+
+    /** The marker the boss starts at, or why there is none. A null pick means "no markers placed": use the open-world placement. */
+    private record ArenaPick(ServerLevel level, BlockPos pos, String problem) {}
+
+    private static ArenaPick pickArena(MinecraftServer current) {
+        List<ArenaMarkers.Spot> spots = new ArrayList<>(ArenaMarkers.get(current).list(ArenaMarkers.Kind.SPAWN));
+        if (spots.isEmpty()) return null;
+        java.util.Collections.shuffle(spots);
+        for (ArenaMarkers.Spot spot : spots) {
+            ResourceLocation id = ResourceLocation.tryParse(spot.dimension());
+            ServerLevel level = id == null ? null : current.getLevel(ResourceKey.create(Registries.DIMENSION, id));
+            if (level != null) return new ArenaPick(level, spot.pos(), null);
+        }
+        return new ArenaPick(null, null, "the arena's spawn markers are in a dimension that is not loaded (" + spots.get(0).dimension() + ")");
+    }
+
+    /** Where a player was before warping in, so {@link #returnHome} can send them back. Server thread only; lost on restart. */
+    private record Origin(ResourceKey<net.minecraft.world.level.Level> dimension, double x, double y, double z, float yaw, float pitch, long savedAt) {}
+
+    private static final Map<UUID, Origin> RETURN_TO = new HashMap<>();
+
+    /** Teleports the player into the arena. Returns null on success, else why not. */
+    public static String warp(ServerPlayer player) {
+        WorldBossConfig config = WorldBossConfigManager.get();
+        WorldBossState s = state;
+        if (s == null || !s.active() || s.pool() == null) return "There is no World Boss right now.";
+        if (!s.arena()) return "This World Boss is not in an arena; walk to it.";
+        if (s.pool().isDefeated() || s.pool().current() <= 0f) return "The World Boss has already fallen.";
+        if (!player.isAlive() || player.isSpectator()) return "You cannot warp right now.";
+        if (DUELS.containsKey(player.getUUID())) return "You are in a duel.";
+        if (Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player) != null) return "Finish your current battle first.";
+        if (inRange(player, s, config)) return "You are already in the arena.";
+        ResourceLocation dimensionId = ResourceLocation.tryParse(s.dimension());
+        ServerLevel level = dimensionId == null || server == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, dimensionId));
+        if (level == null) return "The arena's dimension is not loaded.";
+        BlockPos boss = BlockPos.containing(s.x(), s.y(), s.z());
+        BlockPos target = arenaEntrance(level, boss);
+        if (target == null) return "No safe place to arrive was found in the arena. Tell an administrator.";
+        long now = System.currentTimeMillis();
+        RETURN_TO.values().removeIf(old -> WorldBossRules.originExpired(old.savedAt(), now));   // stale origins are forgotten, not kept forever
+        RETURN_TO.put(player.getUUID(), new Origin(player.level().dimension(), player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot(), now));
+        double dx = boss.getX() - target.getX(), dz = boss.getZ() - target.getZ();
+        float yaw = (float) (Math.toDegrees(Math.atan2(-dx, dz)));
+        player.teleportTo(level, target.getX() + 0.5, target.getY(), target.getZ() + 0.5, yaw, 0f);
+        say(player, "You are in the arena. Right-click the boss to duel. /cobbleraids worldboss return takes you back.", ChatFormatting.LIGHT_PURPLE);
+        return null;
+    }
+
+    /** An entrance marker in the boss's dimension if any is placed, otherwise the nearest standable spot on a ring round the boss. */
+    private static BlockPos arenaEntrance(ServerLevel level, BlockPos boss) {
+        String dimension = level.dimension().location().toString();
+        List<BlockPos> entrances = new ArrayList<>();
+        for (ArenaMarkers.Spot spot : ArenaMarkers.get(level.getServer()).list(ArenaMarkers.Kind.ENTRANCE)) {
+            if (spot.dimension().equals(dimension)) entrances.add(spot.pos());
+        }
+        if (!entrances.isEmpty()) return entrances.get(ThreadLocalRandom.current().nextInt(entrances.size()));
+        return ArenaSpot.near(boss, new int[] {14, 18, 22, 10}, 6,
+                pos -> level.getBlockState(pos).isSolid(), pos -> level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()).orElse(null);
+    }
+
+    /** Sends a player who warped in back to where they were (or to the world spawn if that is unknown). Returns null on success. */
+    public static String returnHome(ServerPlayer player) {
+        if (server == null) return "The server is not ready.";
+        if (!player.isAlive() || player.isSpectator()) return "You cannot do that right now.";
+        if (DUELS.containsKey(player.getUUID())) return "Finish your duel first.";
+        if (Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player) != null) return "Finish your current battle first.";
+        Origin origin = RETURN_TO.remove(player.getUUID());
+        if (origin != null && WorldBossRules.originExpired(origin.savedAt(), System.currentTimeMillis())) origin = null;
+        // Not a spawn teleport for anyone who asks: with no live origin it only helps a player stranded in the arena (a restart forgets origins).
+        WorldBossState arenaState = state;
+        boolean inArenaZone = arenaState != null && arenaState.arena() && inRange(player, arenaState, WorldBossConfigManager.get());
+        if (!WorldBossRules.mayReturn(origin != null, inArenaZone)) {
+            return "You have not warped to the arena, so there is nowhere to return to.";
+        }
+        if (origin == null) {
+            ServerLevel overworld = server.overworld();
+            BlockPos spawn = overworld.getSharedSpawnPos();
+            player.teleportTo(overworld, spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5, player.getYRot(), 0f);
+            return null;
+        }
+        ServerLevel level = server.getLevel(origin.dimension());
+        if (level == null) level = server.overworld();
+        player.teleportTo(level, origin.x(), origin.y(), origin.z(), origin.yaw(), origin.pitch());
+        return null;
+    }
+
+    /** The boss as players read it: its species ("Phantump"), not the raid definition id, which for a skin is "worldboss_halloween_phantump". */
+    private static String bossName(WorldBossState s) {
+        ResourceLocation id = ResourceLocation.parse(s.definitionId());
+        RaidDefinition definition = RaidDefinitionRegistry.get(id);
+        return speciesName(definition != null ? definition.species() : id);
     }
 
     private static String speciesName(ResourceLocation species) {
@@ -840,8 +1051,8 @@ public final class WorldBossService {
             }
             double px = player.getX();
             double pz = player.getZ();
-            var columns = WorldBossBorder.columns(s.x(), s.z(), config.radius(), px, pz, config.borderViewDistance(), BORDER_SPACING);
-            boolean inside = WorldBossBorder.inside(s.x(), s.z(), config.radius(), px, pz);
+            var columns = WorldBossBorder.columns(s.x(), s.z(), WorldBossRules.zoneRadius(s, config), px, pz, config.borderViewDistance(), BORDER_SPACING);
+            boolean inside = WorldBossBorder.inside(s.x(), s.z(), WorldBossRules.zoneRadius(s, config), px, pz);
             Boolean was = LAST_INSIDE.put(player.getUUID(), inside);
             if (was != null && was != inside) {
                 if (config.dome().enabled()) WorldBossDome.ripple(player, inside);
@@ -891,8 +1102,14 @@ public final class WorldBossService {
         Set<UUID> fighting = new HashSet<>(DUELS.keySet());
         fighting.addAll(CHAIN.keySet());
         long minutesLeft = s.endsAtMillis() > 0L ? Math.max(0L, (s.endsAtMillis() - System.currentTimeMillis() + 59_999L) / 60_000L) : -1L;
-        event.setName(WorldBossBarText.build(speciesName(ResourceLocation.parse(s.definitionId())), pool.current(), pool.max(),
-                percentLeft(pool), fighting.size(), minutesLeft));
+        int gatherLeft = joinSecondsLeft(s, config);
+        if (gatherLeft > 0) {
+            event.setName(Component.literal(bossName(s) + " - gathering, the fight opens in "
+                    + gatherLeft / 60 + ":" + String.format("%02d", gatherLeft % 60) + " (" + GATHERED.size() + " ready)"));
+        } else {
+            event.setName(WorldBossBarText.build(bossName(s), pool.current(), pool.max(),
+                    percentLeft(pool), fighting.size(), minutesLeft));
+        }
         for (ServerPlayer player : current.getPlayerList().getPlayers()) {
             boolean show = !pool.isDefeated() && (DUELS.containsKey(player.getUUID())
                     || CHAIN.containsKey(player.getUUID()) || inRange(player, s, config));
@@ -913,7 +1130,8 @@ public final class WorldBossService {
         if (dimensionId == null || !player.level().dimension().location().equals(dimensionId)) return false;
         double dx = player.getX() - s.x();
         double dz = player.getZ() - s.z();
-        return dx * dx + dz * dz <= config.radius() * config.radius();
+        double radius = WorldBossRules.zoneRadius(s, config);
+        return dx * dx + dz * dz <= radius * radius;
     }
 
     private static int partySize(ServerPlayer player) {

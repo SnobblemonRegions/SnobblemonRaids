@@ -20,7 +20,9 @@
     "battle.RaidPlayerDeathMixin",
     "battle.RaidPlayerBattleActorMixin",
     "battle.RaidActiveBattlePokemonMixin",
-    "battle.RaidBattleMessagePnxMixin"
+    "battle.RaidBattleMessagePnxMixin",
+    "battle.RaidPlayerTeleportLockMixin",
+    "battle.RaidPacketTeleportLockMixin"
   ],
   "injectors": {
     "defaultRequire": 1

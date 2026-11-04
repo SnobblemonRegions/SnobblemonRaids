@@ -3,7 +3,9 @@ package com.cobbleraids.worldboss;
 import com.cobbleraids.config.SavedDataFlush;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -41,6 +43,9 @@ public final class WorldBossState extends SavedData {
     private WorldBossPool pool;
     private boolean defeatAnnounced;
     private boolean rewardsPaid;
+    /** Players whose defeat reward has been paid (marked and saved just before each payment), so a restart half way through pays only the rest. */
+    private final Set<UUID> paidPlayers = new LinkedHashSet<>();
+    private boolean arena;
 
     public static SavedData.Factory<WorldBossState> factory() {
         return new SavedData.Factory<>(WorldBossState::new, WorldBossState::load, DataFixTypes.LEVEL);
@@ -73,11 +78,13 @@ public final class WorldBossState extends SavedData {
     public WorldBossPool pool() { return pool; }
     public boolean defeatAnnounced() { return defeatAnnounced; }
     public boolean rewardsPaid() { return rewardsPaid; }
+    /** True when the boss started at an arena spawn marker: the zone then uses {@code arena.radius} and players can warp in. */
+    public boolean arena() { return arena; }
 
     // ---- writes (each marks the state dirty) ----
 
     public void begin(UUID bossId, String definitionId, String dimension, double x, double y, double z,
-                      long startedAtMillis, long endsAtMillis, WorldBossPool pool) {
+                      long startedAtMillis, long endsAtMillis, WorldBossPool pool, boolean arena) {
         this.active = true;
         this.bossId = bossId;
         this.definitionId = definitionId;
@@ -88,14 +95,23 @@ public final class WorldBossState extends SavedData {
         this.startedAtMillis = startedAtMillis;
         this.endsAtMillis = endsAtMillis;
         this.pool = pool;
+        this.arena = arena;
         this.defeatAnnounced = false;
         this.rewardsPaid = false;
+        this.paidPlayers.clear();
         setDirty();
     }
 
     public void markDefeatAnnounced() { defeatAnnounced = true; setDirty(); }
 
     public void markRewardsPaid() { rewardsPaid = true; setDirty(); }
+
+    /** Marks this player's reward as being paid. @return false if it already was, in which case it must not be paid again */
+    public boolean markPlayerPaid(UUID player) {
+        boolean added = paidPlayers.add(player);
+        if (added) setDirty();
+        return added;
+    }
 
     /** The pool changed (damage or growth); the caller flushes on its own schedule. */
     public void touch() { setDirty(); }
@@ -120,6 +136,12 @@ public final class WorldBossState extends SavedData {
         state.endsAtMillis = tag.getLong("ends");
         state.defeatAnnounced = tag.getBoolean("defeat_announced");
         state.rewardsPaid = tag.getBoolean("rewards_paid");
+        ListTag paid = tag.getList("paid_players", Tag.TAG_COMPOUND);
+        for (int i = 0; i < paid.size(); i++) {
+            CompoundTag item = paid.getCompound(i);
+            if (item.hasUUID("player")) state.paidPlayers.add(item.getUUID("player"));
+        }
+        state.arena = tag.getBoolean("arena");
         Map<UUID, Float> damage = new LinkedHashMap<>();
         ListTag list = tag.getList("damage", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
@@ -148,6 +170,14 @@ public final class WorldBossState extends SavedData {
         tag.putLong("ends", endsAtMillis);
         tag.putBoolean("defeat_announced", defeatAnnounced);
         tag.putBoolean("rewards_paid", rewardsPaid);
+        ListTag paid = new ListTag();
+        for (UUID id : paidPlayers) {
+            CompoundTag item = new CompoundTag();
+            item.putUUID("player", id);
+            paid.add(item);
+        }
+        tag.put("paid_players", paid);
+        tag.putBoolean("arena", arena);
         tag.putFloat("pool_max", pool.max());
         tag.putFloat("pool_current", pool.current());
         tag.putBoolean("pool_defeated", pool.isDefeated());

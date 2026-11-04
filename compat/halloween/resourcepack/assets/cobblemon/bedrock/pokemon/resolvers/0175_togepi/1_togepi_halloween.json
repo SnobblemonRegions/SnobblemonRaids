@@ -1,0 +1,21 @@
+{
+  "order": 1,
+  "species": "cobblemon:togepi",
+  "variations": [
+    {
+      "aspects": [
+        "halloween"
+      ],
+      "texture": "cobblemon:textures/pokemon/0175_togepi/togepi_halloween.png",
+      "layers": []
+    },
+    {
+      "aspects": [
+        "halloween",
+        "shiny"
+      ],
+      "texture": "cobblemon:textures/pokemon/0175_togepi/togepi_halloween_shiny.png",
+      "layers": []
+    }
+  ]
+}
