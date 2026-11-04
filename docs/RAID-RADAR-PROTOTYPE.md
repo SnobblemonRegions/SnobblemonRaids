@@ -6,12 +6,12 @@ Minecraft 1.21.1 Fabric / Polymer 0.9.19. Current server build: `0.8.194-raid-ch
 
 Craft one `cobbleraids:raid_radar` in a crafting table:
 
-| Netherite Ingot | Shulker Shell | Netherite Ingot |
+| Iron Ingot | Amethyst Shard | Iron Ingot |
 | --- | --- | --- |
-| Cobblemon Upgrade | Compass | Cobblemon Upgrade |
-| Netherite Ingot | Shulker Shell | Netherite Ingot |
+| Redstone | Note Block | Redstone |
+| Iron Ingot | Cobblemon Upgrade | Iron Ingot |
 
-One ingot in each corner: **four total**. Recipe-book discovery occurs when acquiring a compass.
+Four iron ingots, two redstone, one note block, one amethyst shard and one Cobblemon Upgrade. Recipe-book discovery occurs when acquiring a note block.
 Operators can test with `/give @s cobbleraids:raid_radar`.
 
 - Right-click opens the charge/status menu. Its compass button opens or closes the radar. Closed appearance is a vanilla compass; the server-only open appearance uses the vanilla held-map pose.

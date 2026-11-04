@@ -1,9 +1,9 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_compass": {
+    "has_note_block": {
       "trigger": "minecraft:inventory_changed",
-      "conditions": {"items": [{"items": ["minecraft:compass"]}]}
+      "conditions": {"items": [{"items": ["minecraft:note_block"]}]}
     }
   },
   "rewards": {"recipes": ["cobbleraids:raid_radar"]}
