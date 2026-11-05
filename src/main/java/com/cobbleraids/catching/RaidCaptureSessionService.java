@@ -491,6 +491,8 @@ public final class RaidCaptureSessionService {
             return updated;
         }
 
+        final Pokemon delivered = toDeliver;
+        RaidFaultBarrier.guard("ascensionlib:capture-floor", () -> CaptureRarityFloor.apply(delivered, resolved.tier()));
         RaidPlayerRecords.recordCatch(server, resolved.playerId());
         RaidFaultBarrier.guard("stats:catch", () -> com.cobbleraids.stats.RaidStats.onCatch(server, resolved.playerId()));
         RaidFaultBarrier.guard("title-unlock:catch", () -> TitleService.checkUnlocks(server, resolved.playerId()));

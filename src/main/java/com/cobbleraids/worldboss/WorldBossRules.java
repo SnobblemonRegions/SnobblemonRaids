@@ -192,4 +192,12 @@ public final class WorldBossRules {
         if (fresh.size() > 1 && previous != null) fresh.remove(previous);
         return fresh.get(random.nextInt(fresh.size()));
     }
+
+    /** Balance phase 3: the most players one World Boss takes. */
+    public static final int MAX_PLAYERS = 40;
+
+    /** Whether {@code player} may join: already one of {@code fighters}, or there is still room. */
+    public static boolean hasRoom(java.util.Set<java.util.UUID> fighters, java.util.UUID player) {
+        return fighters.contains(player) || fighters.size() < MAX_PLAYERS;
+    }
 }

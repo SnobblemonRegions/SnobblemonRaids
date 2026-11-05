@@ -165,6 +165,7 @@ public final class RaidShopGateway {
 
     private static boolean isListable(ShopEntry entry) {
         if (entry.isPokemon()) return true;
+        if (AscensionShopHook.isMaterial(entry.item().itemId())) return AscensionShopHook.canSellMaterial();
         ResourceLocation itemId = ResourceLocation.tryParse(entry.item().itemId());
         return itemId != null && BuiltInRegistries.ITEM.containsKey(itemId);
     }

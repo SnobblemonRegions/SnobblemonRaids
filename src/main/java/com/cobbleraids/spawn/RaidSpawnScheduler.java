@@ -252,7 +252,9 @@ public final class RaidSpawnScheduler {
         @Override
         public ActiveRaidSpawnTracker.Presence presence(PokemonEntity boss) {
             if (boss.isRemoved()) return new ActiveRaidSpawnTracker.Presence(true, false, false, false);
-            boolean battling = boss.isBattling();
+            // A duel raid's boss is fought through hidden copies, so it is never battling itself: count it as battling so neither the
+            // lifetime cap nor the idle timer removes it from under the players.
+            boolean battling = boss.isBattling() || com.cobbleraids.duel.RaidDuelService.isFace(boss);
             // Short-circuited deliberately, exactly as the original loop was: a battling or lobbied
             // boss is kept alive regardless, and hasNearbyPlayer walks the whole player list.
             boolean lobbyActive = !battling && RaidLobbyManager.hasActiveLobby(boss);
