@@ -18,3 +18,25 @@ tasks.register('remapSmokeJar', tasks.named('remapJar').get().class.superclass) 
     destinationDirectory = layout.buildDirectory.dir('smoke-libs')
     addNestedDependencies = false
 }
+
+// A second, independent probe for the SERVER-SIDE hologram: it must run in a client with no CobbleRaids code, so it is its own mod and its own JAR.
+sourceSets {
+    serverSmoke {
+        java.srcDir(rootProject.file('validation/radar/server-client-probe/java'))
+        resources.srcDir(rootProject.file('validation/radar/server-client-probe/resources'))
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+def serverProbeJar = tasks.register('serverSmokeJar', Jar) {
+    from sourceSets.serverSmoke.output
+    archiveFileName = 'CobbleRaids-Server-Hologram-Probe-dev.jar'
+    destinationDirectory = layout.buildDirectory.dir('devlibs')
+}
+tasks.register('remapServerSmokeJar', tasks.named('remapJar').get().class.superclass) {
+    dependsOn serverProbeJar
+    inputFile.set(serverProbeJar.flatMap { it.archiveFile })
+    archiveFileName = 'CobbleRaids-Server-Hologram-Probe.jar'
+    destinationDirectory = layout.buildDirectory.dir('smoke-libs')
+    addNestedDependencies = false
+}
