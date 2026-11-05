@@ -93,6 +93,7 @@ public final class CobbleRaids implements ModInitializer {
             RaidFaultBarrier.safeTick("deferred-discard", server, com.cobbleraids.spawn.RaidDeferredDiscard::tick);
             RaidFaultBarrier.safeTick("rewards", server, RaidRewardService::tick);
             RaidFaultBarrier.safeTick("world-boss", server, com.cobbleraids.worldboss.WorldBossService::tick);
+            RaidFaultBarrier.safeTick("duel-raids", server, com.cobbleraids.duel.RaidDuelService::tick);
             RaidFaultBarrier.safeTick("capture-sessions", server, RaidCaptureSessionService::tick);
             RaidFaultBarrier.safeTick("reconnect-grace", server, RaidReconnectService::tick);
             RaidFaultBarrier.safeTick("combat-timer", server, RaidCombatRuleService::tick);
@@ -205,6 +206,8 @@ public final class CobbleRaids implements ModInitializer {
         // So the last partial window of a session is on disk rather than lost with the process.
         ServerLifecycleEvents.SERVER_STOPPING.register(server ->
                 RaidFaultBarrier.guard("shutdown:perf-report", () -> com.cobbleraids.perf.RaidPerfReporter.report(server)));
+        ServerLifecycleEvents.SERVER_STOPPING.register(server ->
+                RaidFaultBarrier.guard("shutdown:duel-raids", () -> com.cobbleraids.duel.RaidDuelService.abortAll(server)));
         ServerLifecycleEvents.SERVER_STOPPING.register(server ->
                 RaidFaultBarrier.guard("shutdown:world-boss", () -> com.cobbleraids.worldboss.WorldBossService.onServerStopping(server)));
         ServerLifecycleEvents.SERVER_STOPPING.register(server ->

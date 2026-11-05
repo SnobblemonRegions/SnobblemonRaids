@@ -3,6 +3,7 @@ package com.cobbleraids.raid;
 import com.cobbleraids.RaidLog;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -31,6 +32,9 @@ public final class AscensionLibArming {
     private static Method end;
     /** Optional: an older library without raid attunement still arms battles. */
     private static Method settleAttunement;
+    /** Optional (balance phase 1+): Threat bands and share-based raid pay. */
+    private static Method threatEnabled;
+    private static Method settleRaid;
 
     private AscensionLibArming() {}
 
@@ -44,12 +48,47 @@ public final class AscensionLibArming {
         return "raid:" + bossPokemonId;
     }
 
+    /**
+     * Balance phase 3: the Threat band a raid tier fights at (starter II, powerhouse IV, legendary V, mythical VI; the world
+     * boss is VII, see {@link #WORLD_BOSS_THREAT}).
+     */
+    public static int threatFor(com.cobbleraids.config.RaidRarityTier tier) {
+        return switch (tier) {
+            case STARTER -> 2;
+            case POWERHOUSE -> 4;
+            case LEGENDARY -> 5;
+            case MYTHICAL -> 6;
+        };
+    }
+
+    public static final int WORLD_BOSS_THREAT = 7;
+
+    /** The enemy tier to declare: {@code threat_N} while the library's Threat system is on, the old {@code boss} otherwise. */
+    static String enemyTier(int threat) {
+        return threat > 0 && threatOn() ? "threat_" + threat : BOSS_TIER;
+    }
+
+    /** Whether the library is new enough to have Threat and has it switched on. */
+    public static boolean threatOn() {
+        if (!resolve() || threatEnabled == null) return false;
+        try {
+            return Boolean.TRUE.equals(threatEnabled.invoke(null));
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError ex) {
+            return false;
+        }
+    }
+
     /** Declares the boss and arms the battle for it. Pair with {@link #disarm}. Returns whether the battle is armed. */
     static boolean declareAndArm(Collection<UUID> players, UUID bossPokemonId, String speciesId, int level) {
+        return declareAndArm(players, bossPokemonId, speciesId, level, 0);
+    }
+
+    /** As above at a Threat band (0: the legacy boss tier). */
+    static boolean declareAndArm(Collection<UUID> players, UUID bossPokemonId, String speciesId, int level, int threat) {
         if (!resolve()) return false;
         String encounter = encounterId(bossPokemonId);
         try {
-            Object status = declare.invoke(null, encounter, players, 0, BOSS_TIER, true, null, speciesId, level);
+            Object status = declare.invoke(null, encounter, players, 0, enemyTier(threat), true, null, speciesId, level);
             if (!"DECLARED".equals(String.valueOf(status))) return false; // DISABLED (no world) or unknown species: fight natively
             arm.invoke(null, players, encounter);
             return true;
@@ -81,6 +120,62 @@ public final class AscensionLibArming {
         }
     }
 
+    /**
+     * Balance phase 3: a won raid paid by damage share (Apex Shards, attunement and dust from the library's raid bands). Falls back
+     * to {@link #settleVictory(UUID, Collection)} when the library has no {@code settleRaid}. {@code damage} is each victor's
+     * contribution; it is turned into shares of 1 here.
+     */
+    public static void settleVictory(String encounterId, String tierId, Map<UUID, ? extends Number> damage, Collection<UUID> victors,
+                                     Runnable fallback) {
+        if (!resolve()) return;
+        if (settleRaid == null) {
+            fallback.run();
+            return;
+        }
+        Map<UUID, Double> shares = new java.util.LinkedHashMap<>();
+        com.cobbleraids.reward.ContributionMath.percentages(damage, victors).forEach((id, pct) -> shares.put(id, pct / 100.0));
+        try {
+            settleRaid.invoke(null, encounterId, "VICTORY", tierId, shares);
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError ex) {
+            RaidLog.error("Paying the raid through AscensionLib failed", ex);
+        }
+    }
+
+    /** The ordinary raid's form of the above. */
+    public static void settleVictory(UUID bossPokemonId, com.cobbleraids.config.RaidRarityTier tier, Map<UUID, ? extends Number> damage,
+                                     Collection<UUID> victors) {
+        settleVictory(encounterId(bossPokemonId), tier.serializedName(), damage, victors, () -> settleVictory(bossPokemonId, victors));
+    }
+
+    /**
+     * Balance phase 3, for duel raids: declares the raid's boss once for every player, keyed by the lobby boss's Pokemon. Each duel
+     * then arms its one player with {@link #arm} just before its battle starts. Returns whether the boss was declared.
+     */
+    public static boolean declare(Collection<UUID> players, UUID bossPokemonId, String speciesId, int level, int threat) {
+        if (!resolve()) return false;
+        try {
+            Object status = declare.invoke(null, encounterId(bossPokemonId), players, 0, enemyTier(threat), true, null, speciesId, level);
+            return "DECLARED".equals(String.valueOf(status));
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError ex) {
+            RaidLog.error("Declaring the duel raid of " + speciesId + " to AscensionLib failed; it fights natively", ex);
+            return false;
+        }
+    }
+
+    /** Arms the next battle of {@code players} for a boss already {@link #declare declared}. Pair with {@link #disarmAll}. */
+    public static void arm(Collection<UUID> players, UUID bossPokemonId) {
+        if (!resolve()) return;
+        try {
+            arm.invoke(null, players, encounterId(bossPokemonId));
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError ex) {
+            RaidLog.error("Arming a duel for ascension effects failed; it fights natively", ex);
+        }
+    }
+
+    public static void disarmAll(Collection<UUID> players) { disarm(players); }
+
+    public static void endEncounter(UUID bossPokemonId) { end(bossPokemonId); }
+
     /** The raid is over: the library forgets the boss and every reveal. Safe to repeat. */
     static void end(UUID bossPokemonId) {
         if (!resolve()) return;
@@ -107,6 +202,14 @@ public final class AscensionLibArming {
                             .getMethod("settleRaidAttunement", String.class, String.class, Collection.class);
                 } catch (ReflectiveOperationException ignored) {
                     settleAttunement = null;
+                }
+                try {
+                    threatEnabled = encounters.getMethod("threatEnabled");
+                    settleRaid = Class.forName("com.ascensionlib.AscensionRewards")
+                            .getMethod("settleRaid", String.class, String.class, String.class, Map.class);
+                } catch (ReflectiveOperationException ignored) {
+                    threatEnabled = null;
+                    settleRaid = null;
                 }
             } catch (ReflectiveOperationException | LinkageError ex) {
                 declare = null;

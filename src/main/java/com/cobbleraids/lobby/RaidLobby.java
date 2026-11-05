@@ -21,7 +21,7 @@ public final class RaidLobby {
         this.boss = boss;
         this.definition = definition;
         this.roster = new RaidRecruitmentRoster(
-                definition.recruitment().maxPlayers(),
+                com.cobbleraids.duel.RaidDuelRules.MAX_PLAYERS, // balance phase 3: every raid is a duel raid of up to eight
                 openedAtTick,
                 definition.recruitment().durationSeconds());
     }
