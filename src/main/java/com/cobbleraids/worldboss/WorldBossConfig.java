@@ -272,7 +272,7 @@ public record WorldBossConfig(
         root.addProperty("enabled", true);
         JsonObject window = new JsonObject();
         window.addProperty("start", "2026-10-31T04:00:00Z");
-        window.addProperty("end", "2026-11-07T05:00:00Z");
+        window.addProperty("end", "2026-11-09T05:00:00Z");
         root.add("window", window);
         return fromJson(root);
     }
