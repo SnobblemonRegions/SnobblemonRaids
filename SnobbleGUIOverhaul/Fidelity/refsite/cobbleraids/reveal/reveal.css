@@ -1,0 +1,46 @@
+#side { position: absolute; left: 3cqw; top: 9.2cqw; width: 24cqw; bottom: 3cqw; padding: 1.6cqw 1.8cqw; display: flex; flex-direction: column; gap: 0.2cqw; }
+#side h3 { margin: 0 0 0.8cqw; font: 700 max(11px, 1.3cqw) var(--pix); color: var(--hi); letter-spacing: 0.08em; }
+#side h3:not(:first-child) { margin-top: 1.4cqw; }
+.kv { display: flex; justify-content: space-between; gap: 1cqw; padding: 0.6cqw 0; border-bottom: 1px dashed rgba(70, 227, 255, 0.2); color: var(--mu); font-size: var(--fs); }
+.kv b { color: var(--tx); font-weight: 600; text-align: right; }
+.kv b.tier { color: var(--tc); }
+
+#chamber { position: absolute; left: 30cqw; right: 3cqw; top: 9.2cqw; bottom: 11.6cqw; overflow: hidden; }
+#beam { position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 22% 7% at 50% 78%, rgba(70, 227, 255, 0.55), transparent 70%),
+    radial-gradient(ellipse 34% 11% at 50% 80%, rgba(70, 227, 255, 0.18), transparent 70%),
+    linear-gradient(90deg, transparent 38%, rgba(70, 227, 255, 0.16) 44%, rgba(160, 244, 255, 0.28) 50%, rgba(70, 227, 255, 0.16) 56%, transparent 62%); }
+#chamber.done #beam { opacity: 0.35; }
+#banner { position: absolute; left: 0; right: 0; top: 1.4cqw; display: flex; justify-content: center; z-index: 2; }
+.plate { display: flex; align-items: center; gap: 0.9cqw; padding: 0.6cqw 1.8cqw; max-width: 96%; min-width: 0; background: rgba(2, 10, 18, 0.88); border: 1px solid #5a2a2a; font: 700 max(13px, 1.8cqw) var(--pix); white-space: nowrap; }
+.plate img { width: 2.4cqw; height: 2.4cqw; }
+.plate svg { width: 1.8cqw; height: 1.8cqw; color: #ff5555; }
+.plate .nm { color: #ffaa00; } .plate .ep { color: #ff6b6b; }
+.plate .nm, .plate .ep { min-width: 0; overflow: hidden; text-overflow: clip; }
+.plate img, .plate svg { flex: none; }
+#prompt { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: var(--mu); letter-spacing: 0.14em; font-size: var(--fs); z-index: 2; }
+#prompt .big { font: 700 max(14px, 2cqw) var(--pix); color: var(--hi); margin-bottom: 0.5cqw; }
+
+#row { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-38%); display: flex; justify-content: center; flex-wrap: wrap; gap: 1.1cqw; z-index: 2; padding: 0 1.5cqw; }
+.slot { width: 10.6cqw; height: 10.6cqw; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5cqw; --cut: 1cqw; cursor: default; animation: pop 380ms cubic-bezier(.2, 1.4, .4, 1) both; }
+.slot .ico { width: 5.2cqw; height: 5.2cqw; background-size: 100% 100%; background-repeat: no-repeat; image-rendering: pixelated; }
+.slot .cnt { position: absolute; right: 0.8cqw; top: 0.5cqw; font-weight: 600; font-size: var(--fs); }
+.slot .cap { font-size: var(--fs-s); color: var(--mu); max-width: 92%; text-align: center; line-height: 1.2; }
+.slot.chip-slot .val { font: 700 max(13px, 1.8cqw) var(--pix); }
+.slot.rp { border-color: #1fb6c8; } .slot.rp .val { color: #8fe8f2; }
+.slot.cd { border-color: #d9a73a; } .slot.cd .val { color: #ffd666; }
+@keyframes pop { from { transform: translateY(1.2cqw) scale(0.8); opacity: 0; } to { transform: none; opacity: 1; } }
+#row .fail { color: var(--bad); font-size: var(--fs-l); }
+
+#flash { position: absolute; inset: 0; opacity: 0; z-index: 3; pointer-events: none; }
+#flash.go { animation: flash 600ms ease-out; }
+@keyframes flash { 0% { opacity: 0.85; } 100% { opacity: 0; } }
+#sparks { position: absolute; left: 50%; top: 62%; width: 0; height: 0; z-index: 3; }
+.spark { position: absolute; width: 0.7cqw; height: 0.7cqw; background: var(--hi); opacity: 0; }
+.spark.go { animation: fly 650ms ease-out forwards; }
+@keyframes fly { 0% { opacity: 1; transform: translate(0, 0); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)); } }
+
+#buttons { position: absolute; left: 30cqw; right: 3cqw; bottom: 3cqw; height: 6.4cqw; display: flex; align-items: center; justify-content: center; gap: 1.6cqw; }
+#buttons .btn { height: 100%; flex: 1 1 0; min-width: 0; max-width: 30cqw; font-size: max(10px, 1.25cqw); letter-spacing: 0.02em; white-space: normal; line-height: 1.2; overflow: hidden; }
+#status { color: var(--hi); letter-spacing: 0.2em; font: 700 max(12px, 1.4cqw) var(--pix); }

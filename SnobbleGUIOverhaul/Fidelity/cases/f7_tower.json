@@ -1,0 +1,42 @@
+[
+ {
+  "case": "f7_tower__t01_inter",
+  "shot": "t01_inter",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_tower__t01_inter",
+  "budget": 5760,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_tower\\t01_inter.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_tower__t02_selected",
+  "shot": "t02_selected",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_tower__t02_selected",
+  "budget": 7631,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_tower\\t02_selected.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f7_tower__t03_reward",
+  "shot": "t03_reward",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_tower__t03_reward",
+  "budget": 8982,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_tower\\t03_reward.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f7_tower__t04_vendor",
+  "shot": "t04_vendor",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_tower__t04_vendor",
+  "budget": 12124,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_tower\\t04_vendor.png",
+  "unmappable": [],
+  "steps": 5
+ }
+]

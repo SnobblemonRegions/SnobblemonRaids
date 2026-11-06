@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "webgui",
+  "version": "${version}",
+  "name": "WebGUI compatibility (Snobblemon native pages)",
+  "description": "Stands in for the WebGUI server API (WebviewApi, WebviewAssets, WebviewServerConfig, WebviewNetworking) and shows the calling mods' pages as native Snobblemon pages. Install INSTEAD of WebGUI, never together with it.",
+  "authors": ["Snobblemon"],
+  "license": "All Rights Reserved",
+  "environment": "server",
+  "entrypoints": { "main": ["net.snobblemon.compat.WebguiCompat"] },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*",
+    "snobblemon_server": ">=2.2.0"
+  }
+}

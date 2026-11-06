@@ -1,0 +1,32 @@
+[
+ {
+  "case": "f7_crate__x01_page1",
+  "shot": "x01_page1",
+  "page": "snobblecrates_crate",
+  "url": "/snobblecrates/crate.html?refcase=f7_crate__x01_page1",
+  "budget": 4857,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_crate\\x01_page1.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_crate__x02_selected",
+  "shot": "x02_selected",
+  "page": "snobblecrates_crate",
+  "url": "/snobblecrates/crate.html?refcase=f7_crate__x02_selected",
+  "budget": 6075,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_crate\\x02_selected.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_crate__x03_page2",
+  "shot": "x03_page2",
+  "page": "snobblecrates_crate",
+  "url": "/snobblecrates/crate.html?refcase=f7_crate__x03_page2",
+  "budget": 6357,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_crate\\x03_page2.png",
+  "unmappable": [],
+  "steps": 1
+ }
+]

@@ -1,0 +1,12 @@
+[
+ {
+  "case": "f_tw6__l01_lobby",
+  "shot": "l01_lobby",
+  "page": "ascensionlib_hud",
+  "url": "/ascensionlib/hud.html?refcase=f_tw6__l01_lobby",
+  "budget": 4330,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_tw6\\l01_lobby.png",
+  "unmappable": [],
+  "steps": 1
+ }
+]

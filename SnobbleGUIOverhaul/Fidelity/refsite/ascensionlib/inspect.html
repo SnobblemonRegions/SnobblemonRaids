@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head><script src="/_inject.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inspect</title>
+<link rel="stylesheet" href="ascension.css">
+<style>
+  .main { flex: 1; min-height: 0; display: grid; grid-template-columns: 290px 1fr; gap: 12px; padding: 12px 14px 6px; }
+  .dexrow { display: flex; justify-content: space-between; align-items: center; background: var(--head); margin: -10px -10px 8px; padding: 6px 10px; font-size: 11px; color: var(--muted); border-bottom: 2px solid var(--line); text-shadow: var(--glow); }
+  .chip { color: #fff; font-size: 10px; padding: 1px 6px; border: 2px solid var(--outline); text-shadow: none; }
+  .art { height: 140px; } .sprbox { display: flex; align-items: center; justify-content: center; }
+  .nm { text-align: center; margin-top: 10px; font-size: 15px; overflow-wrap: anywhere; text-shadow: var(--glow); }
+  .sub { text-align: center; color: var(--muted); }
+  .stat { display: grid; grid-template-columns: 34px 1fr 30px; gap: 8px; align-items: center; margin-top: 4px; }
+  .stat .k { color: var(--muted); } .stat .v { text-align: right; }
+  .grade { margin-top: auto; text-align: center; padding: 8px; color: var(--common); background: var(--common-bg); letter-spacing: .16em; border: 2px solid var(--outline); }
+  .right { min-height: 0; }
+  .rhead { display: flex; justify-content: space-between; margin: -10px -10px 8px; padding: 6px 10px; background: var(--head); border-bottom: 2px solid var(--line); text-shadow: var(--glow); font-size: 11px; color: var(--muted); }
+  .rows { flex: 1; min-height: 0; overflow-y: auto; display: grid; gap: 4px; align-content: start; }
+  .row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border: 2px solid transparent; background: var(--row); cursor: pointer; }
+  .row:hover { border-color: var(--line); } .row.sel { border-color: var(--acc); box-shadow: var(--glow); }
+  .row.uniq { background: #1b1a38; }
+  .ic { width: 18px; height: 18px; flex: none; border: 2px solid var(--outline); }
+  .row .t1 { font-size: 13px; } .row .t2 { font-size: 10px; color: var(--muted); display: flex; gap: 8px; align-items: center; margin-top: 2px; }
+  .row .v { margin-left: auto; font-size: 14px; color: var(--acc); text-shadow: var(--glow); }
+  .pips { display: inline-flex; gap: 2px; } .pips i { width: 8px; height: 8px; background: var(--well); border: 1px solid var(--line); } .pips i.on { background: var(--acc); border-color: var(--acc); }
+  .theme { margin-left: 8px; font-size: 9px; letter-spacing: .08em; padding: 0 5px; border: 1px solid var(--line); color: var(--muted); text-transform: uppercase; }
+  .maxed { margin-left: 6px; font-size: 9px; padding: 0 5px; background: var(--gold); color: #1b120d; }
+  .sealedtag { margin-left: 6px; font-size: 9px; padding: 0 5px; border: 1px solid var(--warn); color: var(--warn); }
+  .reso { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 10px; }
+  .tier { padding: 1px 8px; border: 2px solid var(--line); color: var(--muted); letter-spacing: .06em; }
+  .tier.on { border-color: var(--acc); color: var(--acc); box-shadow: var(--glow); text-shadow: var(--glow); }
+  .strip { margin-top: 8px; padding: 8px 10px; background: var(--head); border: 2px solid var(--line); min-height: 52px; }
+  .bottom { padding: 2px 16px 6px; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .empty { padding: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="head"><span id="title">ASCENSION DEX</span><button class="x" id="close" title="Close">&times;</button></div>
+  <div class="main">
+    <div class="box left">
+      <div class="dexrow"><span id="dex"></span><span class="chip" id="type" style="display:none"></span></div>
+      <div class="art stage" id="art"></div>
+      <div class="nm" id="name"></div>
+      <div class="sub" id="sub"></div>
+      <div id="stats" style="margin-top:8px"></div>
+      <div class="grade" id="grade">RARITY ?</div>
+    </div>
+    <div class="box right">
+      <div class="rhead"><span>Affixes</span><span class="muted" id="count"></span></div>
+      <div class="rows" id="rows"></div>
+      <div class="reso" id="reso" style="display:none"></div>
+      <div class="strip" id="strip">Click a modifier to see what it does.</div>
+    </div>
+  </div>
+  <div class="bottom muted" id="bottom"></div>
+  <div class="foot">
+    <button id="prev" style="display:none">&lt;</button><button id="next" style="display:none">&gt;</button>
+    <div class="msg muted" id="info"></div>
+    <button class="primary" id="scout" style="display:none">Scout</button>
+    <button class="primary" id="sigil" style="display:none">Use Ascension Sigil</button>
+    <button class="primary" id="upgrade" style="display:none">Upgrade</button>
+    <button id="done">Close</button>
+  </div>
+</div>
+<script src="ui.js"></script>
+<script>
+(function () {
+  'use strict';
+  var A = window.A, $ = A.$;
+  var STATS = ['HP', 'Atk', 'Def', 'SpA', 'SpD', 'Spe'];
+  var TYPES = { normal: '#a8a77a', fire: '#ee8130', water: '#6390f0', electric: '#f7d02c', grass: '#7ac74c', ice: '#96d9d6', fighting: '#c22e28', poison: '#a33ea1',
+    ground: '#e2bf65', flying: '#a98ff3', psychic: '#f95587', bug: '#a6b91a', rock: '#b6a136', ghost: '#735797', dragon: '#6f35fc', dark: '#705746', steel: '#b7b7ce', fairy: '#d685ad' };
+  var mode = '';           // owned | enemy
+  var owned = null, state = null, idx = 0, sel = 0, sigilArmed = false, rowEls = [];
+
+  function detail() { return mode === 'owned' ? (owned && owned.detail) : (state && state.entries[idx] ? state.entries[idx].detail : null); }
+  function rowsOf(d) {
+    var rows = [];
+    if (!d) return rows;
+    if (d.uniqueName) rows.push({ unique: true, name: d.uniqueName, value: '', rank: 0, min: -1, max: -1, condition: 'A Unique power: fixed tuning, no ordinary rank.', prefix: false });
+    d.slots.forEach(function (s) { rows.push({ unique: false, name: s.name, value: s.value + '%', rank: s.rank, min: s.min, max: s.max, condition: s.condition, prefix: s.category === 'prefix', theme: s.theme || '', perfected: s.rank === 5 && s.max >= 0 && s.value >= s.max && !s.sealed, sealed: !!s.sealed, over: !!s.sealed && s.max >= 0 && s.value > s.max }); });
+    return rows;
+  }
+  function origin(k) {
+    if (!k) return 'Origin unknown';
+    return k === 'wild_capture' ? 'Wild capture' : k === 'hatch' ? 'Hatched' : k === 'admin' ? 'Operator-registered' : A.cap(k.replace(/_/g, ' '));
+  }
+
+  function render() {
+    var d = detail();
+    var name = mode === 'owned' ? (owned ? owned.name : '') : (state && state.entries[idx] ? state.entries[idx].name : '');
+    var speciesId = mode === 'owned' && owned && owned.extra ? owned.extra.speciesId : (mode === 'enemy' && state && state.entries[idx] ? (state.entries[idx].speciesId || '') : '');
+    A.text($('title'), mode === 'owned' ? 'ASCENSION DEX' : 'SCOUTING');
+    A.text($('name'), name);
+    var art = $('art'); art.innerHTML = '';
+    if (speciesId) art.appendChild(A.sprite(speciesId, 2));
+    else { var f = A.el('div', 'sprfb', name); art.appendChild(f); }
+    A.text($('dex'), speciesId ? A.speciesName(speciesId) : '');
+    var ty = $('type');
+    if (d && d.types.length) { ty.style.display = ''; A.text(ty, d.types[0].toUpperCase()); ty.style.background = TYPES[d.types[0]] || '#7f869b'; } else ty.style.display = 'none';
+    A.text($('sub'), d ? 'Lv ' + d.level + ' · ' + d.types.join(' / ')
+      : mode === 'owned' ? (owned ? 'No profile available' : 'Loading server data…') : 'Details not revealed');
+    var st = $('stats'); st.innerHTML = '';
+    for (var i = 0; i < 6; i++) {
+      var row = A.el('div', 'stat'); row.appendChild(A.el('span', 'muted', STATS[i]));
+      var v = d && i < d.baseStats.length ? d.baseStats[i] : null; var on = v == null ? 0 : Math.max(1, Math.round(v / 255 * 14 * 1.6));
+      var b = A.el('div', 'seg'); for (var k = 0; k < 14; k++) b.appendChild(A.el('i', k < on ? 'on' : '')); row.appendChild(b);
+      row.appendChild(A.el('span', 'v', v == null ? '?' : v)); st.appendChild(row);
+    }
+    var gr = $('grade');
+    if (d) { A.text(gr, (d.rarityId === 'mythical' ? 'MYTHIC' : d.rarityId.toUpperCase()) + (d.uniqueName ? ' · UNIQUE' : '')); gr.style.background = 'var(--' + d.rarityId + '-bg)'; gr.style.color = 'var(--' + d.rarityId + ')'; A.setBezel(d.rarityId); }
+    else { A.text(gr, 'RARITY ?'); gr.style.background = '#16303f'; gr.style.color = 'var(--muted)'; A.setBezel(''); }
+    drawRows(d);
+    drawBottom(d);
+    buttons();
+  }
+
+  function drawRows(d) {
+    var box = $('rows'); box.innerHTML = '';
+    var rows = rowsOf(d); rowEls = [];
+    if (!d) {
+      box.appendChild(A.el('div', 'empty', mode === 'owned' ? (owned ? 'This Pokémon has no ascension profile.' : 'Loading server data…') : 'Scout to reveal rarity and modifiers.'));
+      A.text($('count'), '? / ?'); A.text($('strip'), 'Click a modifier to see what it does.'); return;
+    }
+    if (mode === 'owned' && owned) {
+      var pre = d.slots.filter(function (s) { return s.category === 'prefix'; }).length;
+      A.text($('count'), 'Prefix ' + pre + '/' + owned.extra.prefixCap + ' · Suffix ' + (d.slots.length - pre) + '/' + owned.extra.suffixCap);
+    } else A.text($('count'), rows.length + ' / ' + rows.length);
+    if (!rows.length) box.appendChild(A.el('div', 'empty', 'No modifiers rolled.'));
+    sel = Math.max(0, Math.min(sel, rows.length - 1));
+    rows.forEach(function (r, i) {
+      var el = A.el('div', 'row' + (r.unique ? ' uniq' : '') + (i === sel ? ' sel' : ''));
+      rowEls.push(el);
+      el.appendChild(A.affixIcon(r.name, r.unique));
+      var col = A.el('div'); var t1 = A.el('div', 't1', r.unique ? 'UNIQUE  ' + r.name : r.name);
+      if (r.theme) t1.appendChild(A.el('span', 'theme', r.theme));
+      if (r.perfected) t1.appendChild(A.el('span', 'maxed', 'MAX'));
+      if (r.over) t1.appendChild(A.el('span', 'maxed', 'OVERREACH'));
+      else if (r.sealed) t1.appendChild(A.el('span', 'sealedtag', 'SEALED'));
+      col.appendChild(t1);
+      if (!r.unique) {
+        var t2 = A.el('div', 't2'); var pips = A.el('span', 'pips');
+        for (var k = 0; k < 5; k++) pips.appendChild(A.el('i', k < r.rank ? 'on' : ''));
+        t2.appendChild(pips); if (r.min >= 0) t2.appendChild(A.el('span', '', 'rolls ' + r.min + '–' + r.max + '%'));
+        col.appendChild(t2);
+      }
+      el.appendChild(col);
+      if (r.value) el.appendChild(A.el('div', 'v', '+' + r.value));
+      el.addEventListener('click', function () { sel = i; rowEls.forEach(function (e, k) { e.classList.toggle('sel', k === i); }); A.text($('strip'), describe(r)); });   // only the highlight moves; the sprite and stats stay
+      el.addEventListener('mouseenter', function () { A.text($('strip'), describe(r)); });
+      box.appendChild(el);
+    });
+    drawResonance(d);
+    if (rows.length) A.text($('strip'), describe(rows[sel]));
+  }
+
+  function describe(r) { return r.condition || (r.prefix ? 'An offensive modifier.' : 'A defensive or recovery modifier.'); }
+
+  function drawResonance(d) {
+    var box = $('reso'); box.innerHTML = '';
+    var tiers = (d && d.resonance) || [];
+    if (!tiers.length) { box.style.display = 'none'; return; }
+    box.style.display = '';
+    box.appendChild(A.el('span', 'muted', 'RESONANCE'));
+    tiers.forEach(function (t) {
+      var on = t.bonusPercent > 0;
+      var chip = A.el('span', 'tier' + (on ? ' on' : ''), t.theme.toUpperCase() + ' ' + t.pieces + (on ? ' · +' + t.bonusPercent + '%' : '/2'));
+      chip.title = on ? t.pieces + ' ' + t.theme + ' affixes: their values count ' + t.bonusPercent + '% higher in battle.' : 'A second ' + t.theme + ' affix would add +15% to them.';
+      box.appendChild(chip);
+    });
+  }
+
+  function drawBottom(d) {
+    var b = $('bottom');
+    if (mode === 'owned' && owned && d) {
+      var e = owned.extra, bits = [];
+      bits.push(owned.pending + ' upgrade' + (owned.pending === 1 ? '' : 's') + ' pending');
+      bits.push('attunement ' + owned.attunement);
+      bits.push(origin(e.origin));
+      if (e.initialRarity && e.initialRarity !== d.rarityId) bits.push('promoted from ' + A.cap(e.initialRarity));
+      bits.push(e.milestones + ' milestone' + (e.milestones === 1 ? '' : 's'));
+      if (e.highestLevel > 0) bits.push('best Lv ' + e.highestLevel);
+      A.text(b, bits.join(' · '));
+    } else if (mode === 'enemy' && state) A.text(b, 'Scouters: ' + state.scouters);
+    else A.text(b, '');
+  }
+
+  function buttons() {
+    var up = $('upgrade'), sc = $('scout'), prev = $('prev'), next = $('next');
+    var can = mode === 'owned' && owned && owned.detail;
+    up.style.display = can ? '' : 'none';
+    if (can) {
+      var locked = owned.extra.craftLocked;
+      A.text(up, locked ? 'Locked' : owned.pending > 0 ? 'Upgrade (' + owned.pending + ')' : 'Upgrade');
+      up.disabled = locked; up.title = locked ? 'This Pokémon is on loan and cannot be upgraded.' : '';
+    }
+    // A Pokemon of yours with no profile can be given one with a Sigil (a second click confirms: it is spent and the rarity is rolled).
+    var sg = $('sigil'), bare = mode === 'owned' && owned && owned.name && !owned.detail;
+    sg.style.display = bare ? '' : 'none';
+    if (bare) {
+      var have = owned.sigils || 0;
+      A.text(sg, sigilArmed ? 'Click again to spend 1 Sigil' : 'Use Ascension Sigil (' + have + ')');
+      sg.disabled = have < 1; sg.title = have < 1 ? 'You have no Ascension Sigil.' : 'Gives this Pokémon an ascension profile with a rolled rarity.';
+    } else sigilArmed = false;
+    var enemy = mode === 'enemy' && state && state.entries.length;
+    sc.style.display = enemy ? '' : 'none';
+    prev.style.display = next.style.display = enemy && state.entries.length > 1 ? '' : 'none';
+    if (enemy) { var e = state.entries[idx]; sc.disabled = !!e.detail || state.scouters < 1; A.text(sc, e.detail ? 'Scouted' : 'Scout'); }
+    A.text($('info'), mode === 'enemy' && state && !state.entries.length ? 'No encounter to scout.' : '');
+  }
+
+  A.on('inspectOwned', function (o) { mode = 'owned'; owned = o; sel = 0; render(); });
+  A.on('inspectScout', function (s) { if (mode === '') mode = 'enemy'; if (mode !== 'enemy') return; state = s; idx = Math.min(idx, Math.max(0, s.entries.length - 1)); render(); });
+
+  $('close').addEventListener('click', function () { A.send('close'); });
+  $('done').addEventListener('click', function () { A.send('close'); });
+  $('upgrade').addEventListener('click', function () { if (owned && !$('upgrade').disabled) A.send('ascension_craft_open', { pokemonId: owned.pokemonId }); });
+  $('sigil').addEventListener('click', function () {
+    if (!owned || $('sigil').disabled) return;
+    if (!sigilArmed) { sigilArmed = true; buttons(); setTimeout(function () { if (sigilArmed) { sigilArmed = false; buttons(); } }, 4000); return; }
+    sigilArmed = false; $('sigil').disabled = true;
+    A.send('ascension_inspect_sigil', { pokemonId: owned.pokemonId });
+  });
+  $('scout').addEventListener('click', function () {
+    if (mode !== 'enemy' || !state || !state.entries[idx] || $('scout').disabled) return;
+    $('scout').disabled = true;
+    A.send('ascension_inspect_use', { encounterId: state.encounterId, subjectId: state.entries[idx].subjectId });
+  });
+  $('prev').addEventListener('click', function () { if (state) { idx = (idx - 1 + state.entries.length) % state.entries.length; sel = 0; render(); } });
+  $('next').addEventListener('click', function () { if (state) { idx = (idx + 1) % state.entries.length; sel = 0; render(); } });
+
+  function ready() {
+    A.ready('ascension_inspect_ready', function () { return !!mode; }, $('info'));
+  }
+  render(); ready();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gem Shop previews</title>
+<style>
+:root{--bg:#15122a;--panel:#241d4a;--line:#6b52c9;--text:#eee;--muted:#b9b0e6;--aqua:#5fd8ea}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:24px}h2{margin-top:36px;border-bottom:1px solid var(--line);padding-bottom:4px}
+p.note{color:var(--muted);max-width:75ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+figure{margin:0;background:var(--panel);padding:8px;border-radius:8px}
+figure img{width:100%;display:block;border-radius:4px;image-rendering:pixelated}
+figcaption{font-size:13px;color:var(--muted);padding-top:6px}
+/* mockup */
+.mock{background:#2b2358;border:3px solid var(--line);border-radius:10px;padding:8px;max-width:720px;margin:12px 0}
+.tabs{display:flex;gap:4px;margin-bottom:6px;align-items:center}
+.tab{width:28px;height:24px;background:#463a8c;border:1px solid #8a76e8;border-radius:3px}
+.tab.on{background:#8a76e8}
+.title{flex:1;background:#0d0a1f;padding:3px 8px;border-radius:3px}
+.body{display:grid;grid-template-columns:20% 1fr 33%;gap:4px;height:300px}
+.cats,.mid,.det{background:#3a2f78;border:1px solid #8a76e8;padding:4px;overflow:hidden}
+.cat{background:#5b4cb0;margin-bottom:2px;padding:1px 6px;font-size:13px}
+.cat.on{background:#b7a9f0;color:#222}
+.search{background:#000;padding:2px 6px;color:#999;font-size:13px;margin-bottom:4px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
+.tile{background:#7a8a8a;aspect-ratio:1;font-size:11px;text-align:center;padding-top:14px;color:var(--aqua)}
+.tile.bad{background:#b3555a}
+.bal{background:#161033;padding:3px 6px;color:var(--aqua);font-size:13px;margin-bottom:4px}
+.btn{background:#8a76e8;text-align:center;padding:3px;margin-top:6px}
+.btn.gold{background:#d9a53a;color:#222;display:inline-block;width:46%}.btn.red{background:#d3545a;display:inline-block;width:46%}
+</style></head><body><main>
+<h1>Gem Shop previews</h1>
+<p class="note">Section 1 is real: frames saved from a real Minecraft 1.21.1 client running SnobbleHelper 3.9.1 and the hub on my test server (a throwaway player, 1280x720 window). The shop was opened with the real <code>/hub shop</code> command and the purchase went through the server's quote-then-confirm path (2,500 to 2,250 Gems). Section 2 is a hand-drawn layout mockup for talking about structure, not an accurate render. The game's own advancement toast ("Check out the starters!") and a leftover mouse hover tooltip show up in some frames; they are not part of the shop.</p>
+
+<h2>1. Real client frames</h2>
+<div class="grid">
+<figure><img src="s2_1_browse.png" alt=""><figcaption>Browse at GUI scale 2 (first run, player had 0 Gems, so every tile is red).</figcaption></figure>
+<figure><img src="s2_3_confirm.png" alt=""><figcaption>Quote received: "Spend 250, leaving 2,250." with Confirm / Cancel. Affordable tiles are grey, unaffordable red.</figcaption></figure>
+<figure><img src="s2_4_bought.png" alt=""><figcaption>After Confirm: balance 2,250 and the purchase message. The chat line comes from the Gems mod.</figcaption></figure>
+<figure><img src="s2_5_locked.png" alt=""><figcaption>A product the player cannot buy: reason shown, button reads "Unavailable".</figcaption></figure>
+<figure><img src="s2_6_category.png" alt=""><figcaption>Category selected.</figcaption></figure>
+<figure><img src="s2_7_search.png" alt=""><figcaption>Search text "ticket" (set by the test, not typed).</figcaption></figure>
+<figure><img src="s2_8_empty.png" alt=""><figcaption>Search with no matches.</figcaption></figure>
+<figure><img src="s3_3_confirm.png" alt=""><figcaption>GUI scale 3, confirm step.</figcaption></figure>
+<figure><img src="s1_1_browse.png" alt=""><figcaption>GUI scale 1: the window is small; the zoom buttons bottom right enlarge it.</figcaption></figure>
+<figure><img src="s4_1_browse.png" alt=""><figcaption>GUI scale 4 request (the screen caps it at 3 on a 1280x720 window).</figcaption></figure>
+</div>
+
+<h2>2. Layout mockup (approximate)</h2>
+<div class="mock">
+ <div class="tabs"><span class="tab"></span><span class="tab"></span><span class="tab"></span><span class="tab"></span><span class="tab"></span><span class="tab"></span><span class="tab on"></span><span class="title">Gem Shop</span></div>
+ <div class="body">
+  <div class="cats"><div class="cat on">All</div><div class="cat">Featured Items</div><div class="cat">Shiny Boosts</div><div class="cat">Rare Items</div><div class="cat">Gem Exchange</div></div>
+  <div class="mid"><div class="search">Search...</div><div class="tiles">
+   <div class="tile">250</div><div class="tile">675</div><div class="tile">2,200</div><div class="tile">400</div>
+   <div class="tile">1,000</div><div class="tile bad">3,500</div><div class="tile">300</div><div class="tile">400</div>
+   <div class="tile">1,200</div><div class="tile bad">2,500</div><div class="tile bad">100</div><div class="tile bad">250</div></div></div>
+  <div class="det"><div class="bal">2,500 Gems</div><b style="color:#f6f">Shiny Boost Ticket</b><div style="color:var(--aqua)">250 Gems</div><div style="color:var(--muted);font-size:13px">Right-click to start a shiny boost for everyone.</div>
+   <div class="btn gold">Confirm</div> <div class="btn red">Cancel</div></div>
+ </div>
+</div>
+<p class="note">Left: categories. Middle: search and a scrolling grid. Right: balance, the selected item, and Buy, which becomes Confirm / Cancel after the server's quote.</p>
+</main></body></html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head><script src="/_inject.js"></script>
+<meta charset="utf-8">
+<title>Wardrobe</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+  <div id="frame"></div>
+
+  <header id="top">
+    <h1 id="title">WARDROBE</h1>
+    <nav id="tabs"></nav>
+    <div id="meters">
+      <div class="meter panel"><label>Owned</label><b id="owned">0 / 0</b></div>
+      <div class="meter panel"><label>Worn</label><b id="worn" class="gold">0</b></div>
+    </div>
+  </header>
+
+  <!-- left rail -->
+  <aside id="rail" class="panel">
+    <label class="h">COLLECTION</label>
+    <div id="coll"><b id="collName">Hats</b><div id="collBar"><i></i></div><span id="collText" class="dim">0 / 0 owned</span></div>
+    <label class="h">FILTER</label>
+    <div id="filters">
+      <button class="chk" data-f="owned"><i></i>Owned only</button>
+      <button class="chk" data-f="worn"><i></i>Worn only</button>
+    </div>
+    <label class="h">SORT</label>
+    <div id="sorts">
+      <button data-s="rarity" class="pill on">Rarity</button><button data-s="name" class="pill">Name</button><button data-s="owned" class="pill">Owned</button>
+    </div>
+    <div id="nav"><button id="offAll" class="btn ghost danger">TAKE EVERYTHING OFF</button></div>
+  </aside>
+
+  <!-- cards -->
+  <main id="main">
+    <div id="grid"></div>
+    <div id="empty" hidden><b id="emptyTitle">Nothing here yet</b><span id="emptyText" class="dim"></span></div>
+  </main>
+
+  <footer id="bottom">
+    <div id="pager">
+      <button id="prev" class="btn ghost">&lt; PREV</button>
+      <span id="pageLabel" class="dim">PAGE 1 / 1</span>
+      <button id="next" class="btn ghost">NEXT &gt;</button>
+    </div>
+    <button id="close" class="btn solid">CLOSE</button>
+  </footer>
+
+  <!-- detail window -->
+  <div id="overlay" hidden>
+    <section id="detail" class="panel">
+      <div id="dArt"><div class="glow"></div><img id="dImg" alt=""><span id="dFallback" class="fallback"></span></div>
+      <div id="dInfo">
+        <div id="dSlot" class="modtag"></div>
+        <h2 id="dName"></h2>
+        <div id="dTags" class="tags"></div>
+        <div id="dBody">
+          <div id="dDesc"></div>
+          <div id="dExtra"></div>
+          <div id="dSet" hidden><label class="h">SET</label><div id="dSetRow"></div></div>
+        </div>
+        <div id="dParty" hidden>
+          <label class="h">CHOOSE A POKEMON</label>
+          <div id="partyList"></div>
+        </div>
+      </div>
+      <div id="dBar" class="panel">
+        <div id="dStatus"></div>
+        <div class="dbtns">
+          <button id="dTry" class="btn ghost">TRY ON</button>
+          <button id="dMain" class="btn solid">EQUIP</button>
+          <button id="dBack" class="btn ghost">BACK</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" hidden></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

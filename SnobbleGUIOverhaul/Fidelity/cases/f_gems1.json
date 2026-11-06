@@ -1,0 +1,42 @@
+[
+ {
+  "case": "f_gems1__g01_main",
+  "shot": "g01_main",
+  "page": "snobblegems_shop",
+  "url": "/snobblegems/shop.html?refcase=f_gems1__g01_main",
+  "budget": 4485,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_gems1\\g01_main.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_gems1__g02_selected",
+  "shot": "g02_selected",
+  "page": "snobblegems_shop",
+  "url": "/snobblegems/shop.html?refcase=f_gems1__g02_selected",
+  "budget": 6072,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_gems1\\g02_selected.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_gems1__g03_modal",
+  "shot": "g03_modal",
+  "page": "snobblegems_shop",
+  "url": "/snobblegems/shop.html?refcase=f_gems1__g03_modal",
+  "budget": 7013,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_gems1\\g03_modal.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f_gems1__g04_result",
+  "shot": "g04_result",
+  "page": "snobblegems_shop",
+  "url": "/snobblegems/shop.html?refcase=f_gems1__g04_result",
+  "budget": 8866,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_gems1\\g04_result.png",
+  "unmappable": [],
+  "steps": 4
+ }
+]

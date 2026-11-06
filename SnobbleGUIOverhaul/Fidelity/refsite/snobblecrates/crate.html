@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head><script src="/_inject.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crate Loot</title>
+<style>
+  /* Open-chest tablet in the RADIANT colours (silver, pink, sky blue, violet). Blocky: hard pixel edges only, no blur, no animation
+     (WebGUI copies every repaint to the game). */
+  @font-face { font-family: "Monocraft"; src: url("fonts/Monocraft-latin.woff") format("woff"); font-display: swap; }
+  :root {
+    --ink: #eef0fb; --muted: #a9a6c9; --line: #3a3355; --dark: #14111f; --dark2: #1d1930; --slot: #191528;
+    --silver: #c9cde2; --silver-d: #8d90ab; --pink: #f2559a; --sky: #52b2ee; --violet: #a448e8; --gold: #ffd75a; --outline: #0e0b18;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; font: 12px/1.4 "Monocraft", ui-monospace, monospace; color: var(--ink); }
+  body { display: flex; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; }
+  b, strong { font-weight: 400; }
+  img { image-rendering: pixelated; }
+
+  /* the chest: speckled radiant plating (drawn into --plate by the script), a black outline, two metal side latches */
+  .frame { width: 700px; height: 600px; transform: scale(var(--ui-scale, 1)); flex: none; position: relative; display: flex; flex-direction: column; gap: 6px; padding: 22px;
+           background: var(--plate, #c9cde2); background-size: 96px 96px; image-rendering: pixelated;
+           box-shadow: 0 0 0 4px var(--outline), 0 0 0 8px #e9ebf7, 0 0 0 12px var(--outline); }
+  .latch { position: absolute; top: 46%; width: 14px; height: 54px; background: var(--silver-d); border: 4px solid var(--outline); box-shadow: inset 4px 0 0 #bfc2d8; }
+  .latch.l { left: -26px; } .latch.r { right: -26px; box-shadow: inset -4px 0 0 #bfc2d8; }
+  .close { position: absolute; right: 28px; top: 28px; z-index: 5; width: 30px; height: 30px; padding: 0; font: inherit; font-size: 16px; line-height: 1; color: #fff; background: var(--pink);
+           border: 3px solid var(--outline); box-shadow: inset 0 -4px 0 #a82a66, inset 0 3px 0 #ff9ccb; cursor: pointer; }
+  .close:hover { background: #ff6eae; } .close:active { transform: translateY(2px); }
+
+  /* lid: dark inside, two metal straps, a lock with three radiant gems, the name plate */
+  .lid { position: relative; height: 184px; flex: none; background: var(--dark2); border: 4px solid var(--outline); box-shadow: inset 0 0 0 4px #2c2547, inset 0 -8px 0 rgba(0,0,0,.35); text-align: center; padding-top: 10px; }
+  .strap { position: absolute; top: -4px; bottom: -4px; width: 30px; background: var(--silver-d); border: 4px solid var(--outline); box-shadow: inset 4px 0 0 #c3c6dd, inset -4px 0 0 #6d708c; }
+  .strap.a { left: 48px; } .strap.b { right: 48px; }
+  .strap::before, .strap::after { content: ""; position: absolute; left: 7px; width: 8px; height: 8px; background: #e6e8f5; box-shadow: 0 0 0 2px var(--outline); }
+  .strap::before { top: 14px; } .strap::after { bottom: 14px; }
+  .gems { display: flex; justify-content: center; gap: 6px; height: 36px; align-items: flex-end; }
+  .gems img { height: 30px; width: auto; } .gems img:nth-child(2) { height: 36px; }
+  .plate { display: inline-block; max-width: 440px; min-width: 260px; margin-top: 4px; padding: 4px 16px 5px; background: var(--silver); border: 4px solid var(--outline);
+           box-shadow: inset 0 4px 0 #f1f2fb, inset 0 -4px 0 var(--silver-d); color: var(--outline); }
+  .plate h1 { margin: 0; font: inherit; font-size: 19px; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .plate .tag { font-size: 10px; color: #4b4668; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .key { margin-top: 4px; font-size: 11px; color: var(--muted); } .key i { font-style: normal; color: var(--gold); }
+  .odds { position: absolute; left: 96px; right: 96px; bottom: 10px; }
+  .bar { display: flex; height: 10px; background: var(--dark); border: 3px solid var(--outline); gap: 2px; padding: 1px; }
+  .bar i { display: block; height: 100%; min-width: 3px; }
+  .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 12px; margin-top: 3px; font-size: 9px; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 4px; background: var(--c); box-shadow: 0 0 0 1px var(--outline); }
+  .legend b { color: var(--ink); }
+
+  /* body: the slots */
+  .body { flex: 1; min-height: 0; background: var(--dark); border: 4px solid var(--outline); box-shadow: inset 0 0 0 4px #2c2547; padding: 10px; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 6px; }
+  .slot { position: relative; display: flex; flex-direction: column; align-items: center; padding: 6px 3px 3px; min-width: 0; min-height: 0; background: var(--slot);
+          border: 3px solid var(--outline); box-shadow: inset 3px 3px 0 #0c0a15, inset -3px -3px 0 #2a2342; }
+  .slot.has { box-shadow: inset 3px 3px 0 #0c0a15, inset -3px -3px 0 #2a2342, inset 0 -5px 0 var(--rc); }
+  .slot.has:hover { background: #251f3b; outline: 3px solid var(--rc); }
+  .slot .pic { height: 40px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .slot .nm { margin-top: 3px; font-size: 9px; line-height: 1.15; text-align: center; color: var(--rc); height: 21px; overflow: hidden; width: 100%; word-break: break-word; }
+  .slot .ct { position: absolute; right: 5px; top: 3px; font-size: 10px; color: #fff; text-shadow: 1px 1px 0 var(--outline), -1px 1px 0 var(--outline), 1px -1px 0 var(--outline), -1px -1px 0 var(--outline); }
+  .slot .pk { position: absolute; left: 4px; top: 3px; font-size: 8px; padding: 0 3px; background: var(--violet); color: #fff; border: 2px solid var(--outline); line-height: 1.2; }
+  .slot.hi::after { content: ""; position: absolute; left: 5px; bottom: 9px; width: 6px; height: 6px; background: var(--rc); box-shadow: 0 0 0 2px var(--outline); }
+  .empty { grid-column: 1 / -1; grid-row: 1 / -1; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); }
+
+  /* ledge: info on the left, pager in the middle, size + hint on the right */
+  .ledge { height: 74px; flex: none; display: grid; grid-template-columns: 1fr 120px 150px; gap: 6px; }
+  .well { background: var(--dark); border: 4px solid var(--outline); box-shadow: inset 0 0 0 3px #2c2547; padding: 5px 10px; min-width: 0; display: flex; align-items: center; gap: 10px; }
+  .info .pic { flex: none; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; background: var(--slot); border: 3px solid var(--rc, var(--line)); }
+  .info .pic img { width: 34px; height: 34px; }
+  .info .txt { min-width: 0; flex: 1; }
+  .info .t { font-size: 12px; color: var(--rc, var(--ink)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .info .s { font-size: 9px; color: var(--muted); } .info .s b { color: var(--ink); }
+  .info .d { font-size: 9px; color: var(--ink); height: 26px; overflow: hidden; margin-top: 1px; }
+  .pager { justify-content: center; gap: 6px; padding: 5px; }
+  .pager .n { min-width: 34px; text-align: center; font-size: 11px; color: var(--ink); }
+  .arrow { width: 26px; height: 34px; padding: 0; font: inherit; font-size: 13px; color: #fff; background: var(--sky); border: 3px solid var(--outline); box-shadow: inset 0 -4px 0 #2a7fb8, inset 0 3px 0 #a5dcff; cursor: pointer; }
+  .arrow:disabled { background: #4a4766; color: #6d6a8a; box-shadow: none; cursor: default; } .arrow:active:not(:disabled) { transform: translateY(2px); }
+  .side { flex-direction: column; justify-content: center; gap: 3px; font-size: 9px; color: var(--muted); text-align: center; }
+  .side .row { display: flex; align-items: center; gap: 4px; }
+  .sz { width: 22px; height: 22px; padding: 0; font: inherit; font-size: 13px; color: #fff; background: var(--violet); border: 3px solid var(--outline); box-shadow: inset 0 -3px 0 #6b25ad, inset 0 2px 0 #d29cff; cursor: pointer; }
+  .sz:active { transform: translateY(2px); }
+  .side .pct { min-width: 40px; color: var(--ink); font-size: 10px; }
+</style>
+</head>
+<body>
+<div class="frame" id="frame">
+  <div class="latch l"></div><div class="latch r"></div>
+  <button class="close" id="close" title="Close (Esc)">&times;</button>
+  <div class="lid">
+    <div class="strap a"></div><div class="strap b"></div>
+    <div class="gems" id="gems"></div>
+    <div class="plate"><h1 id="name">Loading&hellip;</h1><div class="tag" id="tag"></div></div>
+    <div class="key" id="key"></div>
+    <div class="odds" id="odds"><div class="bar" id="bar"></div><div class="legend" id="legend"></div></div>
+  </div>
+  <div class="body" id="list"><div class="empty">Asking the server what is inside&hellip;</div></div>
+  <div class="ledge">
+    <div class="well info" id="info"></div>
+    <div class="well pager"><button class="arrow" id="prev" title="Previous page">&#9664;</button><span class="n" id="pn"></span><button class="arrow" id="next" title="Next page">&#9654;</button></div>
+    <div class="well side"><div class="row"><button class="sz" id="smaller">&minus;</button><span class="pct" id="pct">100%</span><button class="sz" id="larger">+</button></div><div>View only &middot; Esc closes</div></div>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  window.webgui = window.webgui || {};
+  var W = window.webgui;
+  // Inside the game WebGUI has put assetsBase / isHud on window.webgui before any page script runs; anything else is a plain browser.
+  var inMod = typeof window.cefQuery === 'function' || typeof W.assetsBase === 'string' || typeof W.isHud === 'boolean';
+  if (!inMod) {
+    W.postToGame = W.postToGame || function () {};
+    W.closeGui = W.closeGui || function () {};
+    W.on = W.on || function (n, f) { window.addEventListener('webgui:' + n, function (e) { f(e.detail); }); };
+  }
+  var $ = function (id) { return document.getElementById(id); };
+  // Identical writes are skipped: every touched element is a repaint that WebGUI has to copy to the game.
+  function setText(el, v) { v = v == null ? '' : String(v); if (el.textContent !== v) el.textContent = v; }
+  function send(msg) { msg.channel = 'snobblecrates'; try { W.postToGame(msg); } catch (e) {} }
+
+  // ---- size: fit a small box to the window; the player's - / + is remembered in this browser ----
+  var FILL = 0.55, pref = 100;
+  try { var saved = parseInt(localStorage.getItem('snobblecrates.size'), 10); if (saved >= 60 && saved <= 160) pref = saved; } catch (e) {}
+  function fit() {
+    var w = window.innerWidth || 1920, h = window.innerHeight || 1080, f = $('frame');
+    var s = Math.min(w * FILL / f.offsetWidth, h * FILL / f.offsetHeight) * pref / 100;
+    s = Math.min(s, w * 0.9 / f.offsetWidth, h * 0.9 / f.offsetHeight);
+    s = Math.max(0.4, Math.min(3, s));
+    document.documentElement.style.setProperty('--ui-scale', s.toFixed(3));
+    setText($('pct'), pref + '%');
+  }
+  function step(d) { return function () { pref = Math.max(60, Math.min(160, pref + d)); try { localStorage.setItem('snobblecrates.size', String(pref)); } catch (e) {} fit(); }; }
+  $('smaller').addEventListener('click', step(-10)); $('larger').addEventListener('click', step(10));
+  window.addEventListener('resize', fit); fit();
+  $('close').addEventListener('click', function () { W.closeGui(); });
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') W.closeGui();
+    else if (e.key === 'ArrowLeft') go(-1); else if (e.key === 'ArrowRight') go(1);
+  });
+  window.addEventListener('wheel', function (e) { if (e.deltaY) go(e.deltaY > 0 ? 1 : -1); }, { passive: true });
+
+  // ---- colours ----
+  function hex(c) { c = String(c || '#ffffff').replace('#', ''); if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2]; var n = parseInt(c, 16); return isNaN(n) ? [255, 255, 255] : [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function css(a) { return 'rgb(' + a.map(function (v) { return Math.max(0, Math.min(255, Math.round(v))); }).join(',') + ')'; }
+  function mix(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+
+  // The radiant plating: pale silver-lavender with pink / sky / violet / white speckles, 2x2 blocks, drawn once (same seed = same plating every time).
+  (function plating() {
+    var N = 32, cv = document.createElement('canvas'); cv.width = cv.height = N; var cx = cv.getContext('2d'), seed = 20241023;
+    function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+    var base = ['#c9cde2', '#c1c6dc', '#d3d6e8', '#b8bed6', '#dfe1ef'];
+    var spec = ['#f2559a', '#f27ab4', '#52b2ee', '#8fd0f6', '#a448e8', '#e24b94', '#ffffff', '#3f95d6'];
+    for (var y = 0; y < N; y += 2) for (var x = 0; x < N; x += 2) {
+      var r = rnd(); cx.fillStyle = r < 0.22 ? spec[Math.floor(rnd() * spec.length)] : base[Math.floor(rnd() * base.length)]; cx.fillRect(x, y, 2, 2);
+    }
+    // a few longer streaks, like the armour's feather bars
+    for (var i = 0; i < 9; i++) { cx.fillStyle = spec[Math.floor(rnd() * spec.length)]; cx.fillRect(Math.floor(rnd() * 12) * 2, Math.floor(rnd() * 16) * 2, 2 + Math.floor(rnd() * 4) * 2, 2); }
+    document.documentElement.style.setProperty('--plate', 'url(' + cv.toDataURL('image/png') + ')');
+  })();
+
+  // ---- pixel pictures: small letter grids, auto-outlined, drawn once to a canvas ----
+  // a/d/l/h = the reward's colour (normal / dark / light / lightest); r red, y gold, Y dark gold, b blue, k black, w white, g gray, n brown, p pink, c cyan, v violet
+  var ART = {
+    ball:  ['..rrrrrr..', '.rlrrrrrr.', 'rlrrrrrrrr', 'rrrrrrrrrr', 'kkkkwwkkkk', 'kkkkwwkkkk', 'wwwwwwwwww', 'wwwwwwwwgg', '.wwwwwwgg.', '..wwwwww..'],
+    candy: ['.p........p.', 'ppp.aaaa.ppp', 'pp.alaaaa.pp', 'pp.aaaaaa.pp', 'pp.aaaaad.pp', 'ppp.dddd.ppp', '.p........p.'],
+    gem:   ['..hhhhhh..', '.haaaaaad.', 'haaaaaaaad', '.aaaaaaad.', '..aaaaad..', '...aaad...', '....ad....'],
+    coin:  ['..yyyyyy..', '.yyhhyyyY.', 'yyhyyyyyyY', 'yyhyYYyyyY', 'yyyyYYyyyY', 'yyyyyyyyyY', '.yyyyyyyY.', '..YYYYYY..'],
+    key:   ['.yyy........', 'yy.yy.......', 'yy.yyyyyyyyy', 'yy.yy..y.y.y', '.yyy...y.y..'],
+    star:  ['.....yy.....', '.....yy.....', '....yyyy....', 'yyyyyyyyyyyy', '.yyyyyyyyyy.', '..yyyyyyyy..', '..yyyyyyyy..', '.yyyy..yyyy.', '.yyy....yyy.', 'yy........yy'],
+    crown: ['y....y....y', 'yy..yyy..yy', 'yyyyyyyyyyy', 'yyryyyyyryy', 'yyyyyyyyyyy', 'YYYYYYYYYYY'],
+    ticket:['.yyyyyyyyyy.', 'yyyYyyyyyyyy', 'yyyYyyhhhyyy', 'yyyYyyyyyyyy', '.yyyyyyyyyy.'],
+    sword: ['..........ww', '.........wwg', '........wwg.', '.......wwg..', '..y...wwg...', '...y.wwg....', '....ywg.....', '.....yy.....', '....nyy.....', '...nn.......'],
+    shield:['aaaaaaaaaa', 'alaaaaaaad', 'alaaaaaaad', 'alaaaaaaad', '.aaaaaaad.', '.aaaaaaad.', '..aaaaad..', '...aaad...', '....dd....'],
+    potion:['...gg...', '...gg...', '..gggg..', '..gggg..', '.aaaaaa.', 'aaalaaaa', 'aaalaaaa', 'aaaaaaad', '.aaaaad.'],
+    egg:   ['...aaaa...', '..aaaaaa..', '.aalaaaaa.', '.aalaaaaa.', 'aaaaaddaaa', 'aaaaaddaaa', 'aaaaaaaaaa', '.aaaaaaaa.', '..aaaaaa..'],
+    book:  ['nnnnnnnnnn', 'naaaaaaaan', 'naawwwwaan', 'naaaaaaaan', 'naawwwwaan', 'naaaaaaaan', 'nnnnnnnnnn'],
+    box:   ['aaaaaaaaaa', 'alllllllld', 'alllllllld', 'dddyyddddd', 'aaayyaaaaa', 'aaaaaaaaaa', 'aaaaaaaaad', 'dddddddddd'],
+    heart: ['.rr..rr.', 'rrrrrrrr', 'rhrrrrrr', 'rrrrrrrr', '.rrrrrr.', '..rrrr..', '...rr...'],
+    skull: ['.wwwwww.', 'wwwwwwww', 'wkkwwkkw', 'wkkwwkkw', 'wwwkkwww', '.wwwwww.', '.wkwkwk.'],
+    bolt:  ['...yyy.', '..yyy..', '.yyy...', 'yyyyyy.', '..yyy..', '.yy....', 'yy.....']
+  };
+  var KEYWORDS = [
+    ['ball', /ball|pokeball|poke_ball|sphere/], ['candy', /candy|sweet|lollipop/], ['egg', /egg/], ['key', /key|tripwire|hook/],
+    ['ticket', /ticket|voucher|coupon|paper|pass/], ['crown', /crown|rank|vip|tiara/], ['sword', /sword|axe|trident|blade|bow|dagger|weapon/],
+    ['shield', /shield|helmet|chestplate|leggings|boots|armor|armour/], ['potion', /potion|bottle|elixir|bucket|vial/],
+    ['book', /book|scroll|map|tome/], ['heart', /heart|apple|health|revive|heal/], ['bolt', /lightning|bolt|dust|blaze|redstone|glowstone|energy|boost/],
+    ['coin', /coin|ingot|nugget|gold|money|cash|token|currency|\$/], ['gem', /diamond|emerald|amethyst|gem|crystal|shard|quartz|prism|jewel|ruby|sapphire/],
+    ['skull', /skull|head$/], ['star', /star|perk|bonus|prize/]
+  ];
+  function pickArt(rw) {
+    var hint = String(rw.icon || '').toLowerCase().replace(/^[a-z0-9_.-]+:/, '');
+    if (ART[hint]) return hint;
+    var s = hint || String(rw.item || '').toLowerCase().replace(/^[a-z0-9_.-]+:/, '');
+    for (var i = 0; i < KEYWORDS.length; i++) if (KEYWORDS[i][1].test(s)) return KEYWORDS[i][0];
+    if (!hint) { var nm = String(rw.name || '').toLowerCase(); for (var j = 0; j < KEYWORDS.length; j++) if (KEYWORDS[j][1].test(nm)) return KEYWORDS[j][0]; }
+    return rw.kind === 'perk' ? 'star' : 'box';
+  }
+  var cache = {};
+  function art(name, rgb, item) {
+    var key = name + '|' + rgb.join(',') + '|' + (name === 'ball' ? item : '');
+    if (cache[key]) return cache[key];
+    var grid = ART[name] || ART.box, gw = 0; grid.forEach(function (r) { gw = Math.max(gw, r.length); });
+    var gh = grid.length, W2 = gw + 2, H2 = gh + 2;
+    var ballRed = [214, 58, 58]; var it = String(item || '');
+    if (/great/.test(it)) ballRed = [52, 110, 220]; else if (/ultra/.test(it)) ballRed = [240, 200, 40]; else if (/master/.test(it)) ballRed = [150, 70, 210];
+    else if (/premier/.test(it)) ballRed = [240, 240, 240]; else if (/beast/.test(it)) ballRed = [40, 90, 200]; else if (/luxury/.test(it)) ballRed = [40, 40, 40];
+    var pal = {
+      a: rgb, d: mix(rgb, [0, 0, 0], .38), l: mix(rgb, [255, 255, 255], .45), h: mix(rgb, [255, 255, 255], .6),
+      r: ballRed, y: [244, 200, 52], Y: [176, 130, 24], b: [60, 120, 230], k: [34, 30, 38], w: [240, 240, 244], g: [150, 156, 170],
+      n: [140, 92, 54], p: [255, 140, 190], c: [80, 220, 230], v: [160, 90, 230]
+    };
+    if (name === 'ball') { pal.l = mix(ballRed, [255, 255, 255], .5); }
+    if (name === 'coin' || name === 'crown' || name === 'key' || name === 'star' || name === 'bolt' || name === 'ticket') { pal.h = [255, 244, 170]; }
+    var cv = document.createElement('canvas'); cv.width = W2; cv.height = H2; var cx = cv.getContext('2d');
+    var filled = [];
+    for (var y = 0; y < H2; y++) { filled[y] = []; for (var x = 0; x < W2; x++) { var ch = (grid[y - 1] || '')[x - 1]; filled[y][x] = !!(ch && ch !== '.' && pal[ch]); } }
+    for (y = 0; y < H2; y++) for (x = 0; x < W2; x++) {
+      if (filled[y][x]) { cx.fillStyle = css(pal[grid[y - 1][x - 1]]); cx.fillRect(x, y, 1, 1); continue; }
+      var near = false;
+      for (var dy = -1; dy <= 1 && !near; dy++) for (var dx = -1; dx <= 1; dx++) { if ((dx || dy) && filled[y + dy] && filled[y + dy][x + dx]) { near = true; break; } }
+      if (near) { cx.fillStyle = '#0e0b18'; cx.fillRect(x, y, 1, 1); }
+    }
+    var out = { url: cv.toDataURL('image/png'), w: W2, h: H2 };
+    cache[key] = out; return out;
+  }
+  function pic(rw, rgb, px) {
+    var a = art(pickArt(rw), rgb, rw.item), img = new Image(); img.alt = ''; img.src = a.url;
+    var s = Math.max(1, Math.floor(px / Math.max(a.w, a.h)));
+    img.width = a.w * s; img.height = a.h * s; return img;
+  }
+  function gemImg(rgb, h) { var a = art('gem', rgb, ''), img = new Image(); img.alt = ''; img.src = a.url; var s = Math.max(1, Math.floor(h / a.h)); img.width = a.w * s; img.height = a.h * s; return img; }
+
+  // ---- the chest ----
+  var PER = 18;   // 6 x 3 slots a page
+  var DATA = null, byRarity = {}, rIndex = {}, rewards = [], page = 0;
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function pct(c) { if (c < 0) return '?'; var p = c * 100; return (p >= 10 ? p.toFixed(1) : p >= 1 ? p.toFixed(2) : p.toFixed(3)).replace(/\.?0+$/, '') + '%'; }
+  function count(rw) { return rw.min === rw.max ? (rw.max > 1 ? 'x' + rw.max : '') : rw.min + '-' + rw.max; }
+  function rar(id) { return byRarity[id] || { id: id, name: id, rgb: [200, 200, 200] }; }
+  function pages() { return Math.max(1, Math.ceil(rewards.length / PER)); }
+  function go(d) { if (!DATA || DATA.empty) return; var n = Math.max(0, Math.min(pages() - 1, page + d)); if (n !== page) { page = n; renderPage(); } }
+  $('prev').addEventListener('click', function () { go(-1); }); $('next').addEventListener('click', function () { go(1); });
+
+  function showInfo(rw) {
+    var box = $('info'); box.textContent = '';
+    if (!rw) {
+      var h = el('div', 'txt'); h.appendChild(el('div', 't', 'Point at a reward to inspect it.'));
+      h.appendChild(el('div', 's', DATA && DATA.showChances ? 'Rarest first. Chances are per opening.' : 'Rarest first.'));
+      box.appendChild(h); box.style.removeProperty('--rc'); return;
+    }
+    var r = rar(rw.rarity), rgb = r.rgb;
+    box.style.setProperty('--rc', css(rgb));
+    var p = el('div', 'pic'); p.appendChild(pic(rw, rgb, 34)); box.appendChild(p);
+    var b = el('div', 'txt'); b.appendChild(el('div', 't', rw.name));
+    var s = el('div', 's'), rn = el('b', null, r.name.toUpperCase()); rn.style.color = css(rgb); s.appendChild(rn);
+    var tail = [];
+    if (rw.chance >= 0) tail.push(pct(rw.chance) + (rw.chance > 0 ? ' (1 in ' + Math.max(1, Math.round(1 / rw.chance)).toLocaleString('en-US') + ')' : ''));
+    if (rw.min !== rw.max) tail.push('Amount ' + rw.min + ' to ' + rw.max); else if (rw.max > 1) tail.push('Amount ' + rw.max);
+    if (rw.kind === 'perk') tail.push('PERK'); else if (rw.kind === 'both') tail.push('ITEM + PERK');
+    if (tail.length) s.appendChild(document.createTextNode('  ·  ' + tail.join('  ·  ')));
+    b.appendChild(s);
+    b.appendChild(el('div', 'd', rw.desc || (rw.lore && rw.lore.length ? rw.lore.join(' ') : '')));
+    box.appendChild(b);
+  }
+
+  function renderPage() {
+    var list = $('list'); list.textContent = '';
+    var top = Math.max(0, DATA.rarities.length - 3), slice = rewards.slice(page * PER, page * PER + PER);
+    for (var i = 0; i < PER; i++) {
+      var rw = slice[i], t = el('div', 'slot');
+      if (rw) {
+        var r = rar(rw.rarity);
+        t.className = 'slot has' + ((rIndex[rw.rarity] || 0) >= top && DATA.rarities.length > 3 ? ' hi' : '');
+        t.style.setProperty('--rc', css(r.rgb));
+        var p = el('div', 'pic'); p.appendChild(pic(rw, r.rgb, 40)); t.appendChild(p);
+        t.appendChild(el('div', 'nm', rw.name));
+        var c = count(rw); if (c) t.appendChild(el('div', 'ct', c));
+        if (rw.kind === 'perk') t.appendChild(el('div', 'pk', 'PERK'));
+        (function (x) { t.addEventListener('mouseenter', function () { showInfo(x); }); })(rw);
+      }
+      list.appendChild(t);
+    }
+    setText($('pn'), (page + 1) + ' / ' + pages());
+    $('prev').disabled = page <= 0; $('next').disabled = page >= pages() - 1;
+    showInfo(null);
+  }
+
+  function render(d) {
+    DATA = d; byRarity = {}; rIndex = {}; page = 0;
+    if (d.empty) {
+      setText($('name'), 'Nothing to show'); setText($('tag'), ''); setText($('key'), '');
+      $('list').textContent = ''; $('list').appendChild(el('div', 'empty', 'Left-click a crate in the world to see what it holds.'));
+      $('bar').textContent = ''; $('legend').textContent = ''; $('gems').textContent = ''; setText($('pn'), ''); $('prev').disabled = $('next').disabled = true; showInfo(null); return;
+    }
+    setText($('name'), d.name); setText($('tag'), d.tagline || (d.rewards.length + ' possible rewards'));
+    var key = $('key'); key.textContent = '';
+    if (d.needKey) { key.appendChild(document.createTextNode('Opens with: ')); key.appendChild(el('i', null, d.keyName)); } else key.appendChild(document.createTextNode('No key needed'));
+    var gems = $('gems'); gems.textContent = '';
+    [[242, 85, 154], [82, 178, 238], [164, 72, 232]].forEach(function (c) { gems.appendChild(gemImg(c, 30)); });
+    d.rarities.forEach(function (r, i) { r.rgb = hex(r.color); byRarity[r.id] = r; rIndex[r.id] = i; });
+
+    // odds bar: how much of all openings each rarity takes
+    var tot = {}, num = {}, sum = 0;
+    d.rewards.forEach(function (rw) { var c = Math.max(0, rw.chance); tot[rw.rarity] = (tot[rw.rarity] || 0) + c; num[rw.rarity] = (num[rw.rarity] || 0) + 1; sum += c; });
+    var bar = $('bar'), lg = $('legend'); bar.textContent = ''; lg.textContent = '';
+    d.rarities.forEach(function (r) {
+      if (!num[r.id]) return;
+      if (d.showChances && sum > 0) { var seg = el('i'); seg.style.flex = String(Math.max(tot[r.id], 0.002)); seg.style.background = css(r.rgb); bar.appendChild(seg); }
+      var sp = el('span'); sp.style.setProperty('--c', css(r.rgb));
+      sp.appendChild(document.createTextNode(r.name + ' ')); sp.appendChild(el('b', null, d.showChances ? pct(tot[r.id] / (sum || 1)) : String(num[r.id])));
+      lg.appendChild(sp);
+    });
+    bar.style.display = bar.firstChild ? '' : 'none';
+
+    // rarest first (the server sends them lowest chance first; ties keep the rarity order)
+    rewards = d.rewards.slice().sort(function (a, b) { return (a.chance - b.chance) || ((rIndex[b.rarity] || 0) - (rIndex[a.rarity] || 0)); });
+    if (!d.showChances) rewards.sort(function (a, b) { return (rIndex[b.rarity] || 0) - (rIndex[a.rarity] || 0); });
+    renderPage();
+  }
+
+  W.on('crate_view', function (p) { try { render(typeof p === 'string' ? JSON.parse(p) : p); } catch (e) { if (window.console) console.error(e); } });
+  window.__crateRender = render;   // used by the offline preview
+  window.__crateGo = go;
+  if (inMod) {
+    // ask for the crate, and again a few times in case the first answer is lost while the page is still loading
+    var tries = 0;
+    (function ask() { if (DATA || tries++ > 6) return; send({ kind: 'hello' }); setTimeout(ask, 700); })();
+    window.addEventListener('beforeunload', function () { send({ kind: 'bye' }); });
+  }
+})();
+</script>
+</body>
+</html>

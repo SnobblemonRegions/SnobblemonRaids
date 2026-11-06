@@ -1,0 +1,22 @@
+[
+ {
+  "case": "f7_prog__p01_progress",
+  "shot": "p01_progress",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_prog__p01_progress",
+  "budget": 9795,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_prog\\p01_progress.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f7_prog__p02_ranks",
+  "shot": "p02_ranks",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_prog__p02_ranks",
+  "budget": 12295,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_prog\\p02_ranks.png",
+  "unmappable": [],
+  "steps": 5
+ }
+]

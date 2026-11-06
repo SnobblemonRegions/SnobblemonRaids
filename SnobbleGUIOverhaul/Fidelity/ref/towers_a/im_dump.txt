@@ -1,0 +1,108 @@
+body  0 0 1280 720 | rgb(18, 10, 7) none | rgb(248, 231, 194) 16px 400 | 0px rgb(248, 231, 194) 0px none |  
+  div  0 0 1280 720 | rgba(0, 0, 0, 0) none | rgb(248, 231, 194) 16px 400 | 0px rgb(248, 231, 194) 0px none | 
+    div main 0 0 1280 720 | rgba(0, 0, 0, 0) none | rgb(248, 231, 194) 16px 400 | 0px rgb(248, 231, 194) 0px none | 
+      div fd 0 0 1280 720 | rgba(0, 0, 0, 0) linear-gradient(rgb( | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+        div dtop 0 0 1280 63.7 | rgb(22, 33, 63) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+          span logo 30.7 12.8 251.6 37.1 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 23.04px 800 | 0px rgb(233, 238, 252) 0px none | 
+            span  78.1 19.8 204.3 23 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 23.04px 800 | 0px rgb(233, 238, 252) 0px none | COBBLE
+              b  177.7 16.8 104.7 29 | rgba(0, 0, 0, 0) none | rgb(126, 162, 255) 23.04px 900 | 0px rgb(126, 162, 255) 0px none | TOWERS
+          span dcrumb 307.9 20.8 113.1 21 | rgba(0, 0, 0, 0) none | rgb(147, 162, 201) 16.64px 600 | 0px rgb(147, 162, 201) 0px none | 
+            b  307.9 20.8 113.1 21 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16.64px 800 | 0px rgb(233, 238, 252) 0px none | Floor 1 cleared
+          button tl 1095.7 18 92.2 26.7 | rgba(0, 0, 0, 0) none | rgb(147, 162, 201) 14.72px 600 | 0px rgb(147, 162, 201) 0px none | Current run
+          button x 1213.5 13.4 35.8 35.8 | rgb(29, 42, 80) none | rgb(147, 162, 201) 19.2px 400 | 1px rgb(43, 59, 104) 50% none | ×
+        div dbody 0 63.7 1280 580.7 | rgba(0, 0, 0, 0) url("data:image/svg+ | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+          div dcard dcol 30.7 86.7 245.1 537.2 | rgb(22, 33, 63) none | rgb(233, 238, 252) 16px 500 | 1px rgb(43, 59, 104) 17.92px rgba(0, 0, 0, 0.4) 0px 3.84px  | 
+            div ch 31.7 87.7 243.1 64 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+              h3  49.6 103.1 82 41 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 20.48px 800 | 0px rgb(233, 238, 252) 0px none | Your team
+              span lbl 131.6 110.1 125.4 26.9 | rgba(0, 0, 0, 0) none | rgb(147, 162, 201) 13.44px 700 | 0px rgb(147, 162, 201) 0px none | After this floor
+            div empty 31.7 151.7 243.1 71.2 | rgba(0, 0, 0, 0) none | rgb(147, 162, 201) 16px 500 | 0px rgb(147, 162, 201) 0px none | No team to show.
+          div  301.5 86.7 607 537.2 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+            div dhint 301.5 86.7 607 23 | rgba(0, 0, 0, 0) none | rgb(147, 162, 201) 17.92px 600 | 0px rgb(147, 162, 201) 0px none | Choose a modifier for the next floor 
+            div dchoices 301.5 122.5 607 501.4 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+              button dmc 301.5 122.5 190.4 501.4 | rgb(22, 33, 63) none | rgb(233, 238, 252) 16px 500 | 2px rgb(43, 59, 104) 17.92px rgba(0, 0, 0, 0.4) 0px 3.84px  | 
+                div dart 303.5 124.5 186.4 101 | rgb(29, 42, 80) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px rgb(14, 154, 167) 0px -3.2px 0 | 
+                  canvas  303.5 124.5 186.4 101 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                  span dglyph 360.1 131.6 73.2 73.2 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                  span dsprite 310.9 155.7 97.3 68.8 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                    i sp 310.9 155.7 97.3 64.8 | rgba(0, 0, 0, 0) url("http://127.0.0. | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                  span dcat 311.1 132.2 68.4 20.5 | rgba(10, 14, 28, 0.78) none | rgb(244, 236, 216) 11.52px 800 | 0px rgb(244, 236, 216) 6.4px none | SCOUT
+                div dmbody 303.5 225.5 186.4 396.4 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                  h4  318.8 238.3 155.7 26.9 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 25.6px 800 | 0px rgb(233, 238, 252) 0px none | Far Sight
+                  div dtags 318.8 274.1 155.7 21 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                    span dgems g0 318.8 277.2 51.8 14.7 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                      i on 318.8 277.2 14.7 14.7 | rgb(95, 214, 142) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                      i  337.4 277.2 14.7 14.7 | rgb(42, 58, 102) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                      i  355.9 277.2 14.7 14.7 | rgb(42, 58, 102) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                    span ty rk-ok 378.3 274.1 95.3 21 | rgb(63, 163, 77) none | rgb(16, 24, 40) 12.8px 700 | 0px rgb(16, 24, 40) 6.4px none | Minor risk
+                  div dpl p 318.8 304 155.7 59.9 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 15.36px 500 | 0px rgb(233, 238, 252) 0px none | Your scouts see 3 floors further ahead.
+                    i  318.8 304 23 23 | rgb(21, 128, 61) none | rgb(255, 255, 255) 15.36px 800 | 0px rgb(255, 255, 255) 50% none | +
+                  div dpay 318.8 567.6 155.7 40.2 | rgba(0, 0, 0, 0) none | rgb(147, 162, 201) 14.72px 500 | 1px rgb(43, 59, 104) 0px none | 
+                    b  389.1 578.8 85.4 29 | rgba(0, 0, 0, 0) none | rgb(242, 199, 92) 23.04px 800 | 0px rgb(242, 199, 92) 0px none | +3%
+                      small  431.5 588.8 43 16 | rgba(0, 0, 0, 0) none | rgb(147, 162, 201) 12.8px 600 | 0px rgb(147, 162, 201) 0px none | payout
+              button dmc 509.8 122.5 190.4 501.4 | rgb(22, 33, 63) none | rgb(233, 238, 252) 16px 500 | 2px rgb(43, 59, 104) 17.92px rgba(0, 0, 0, 0.4) 0px 3.84px  | 
+                div dart 511.8 124.5 186.4 101 | rgb(29, 42, 80) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px rgb(140, 92, 201) 0px -3.2px 0 | 
+                  canvas  511.8 124.5 186.4 101 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                  span dglyph 571.7 131.6 66.5 59.9 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                  span dsprite 519.2 155.7 97.3 68.8 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                    i sp 519.2 155.7 97.3 64.8 | rgba(0, 0, 0, 0) url("http://127.0.0. | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                  span dcat 519.4 132.2 56.8 20.5 | rgba(10, 14, 28, 0.78) none | rgb(244, 236, 216) 11.52px 800 | 0px rgb(244, 236, 216) 6.4px none | RULE
+                div dmbody 511.8 225.5 186.4 396.4 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                  h4  527.1 238.3 155.7 53.7 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 25.6px 800 | 0px rgb(233, 238, 252) 0px none | Empty Pockets
+                  div dtags 527.1 301 155.7 43.4 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                    span dgems g1 527.1 301 51.8 14.7 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                      i on 527.1 301 14.7 14.7 | rgb(242, 199, 92) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                      i on 545.7 301 14.7 14.7 | rgb(242, 199, 92) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                      i  564.2 301 14.7 14.7 | rgb(42, 58, 102) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                    span ty rk-warn 527.1 323.4 124.5 21 | rgb(217, 138, 6) none | rgb(16, 24, 40) 12.8px 700 | 0px rgb(16, 24, 40) 6.4px none | Moderate risk
+                  div dpl c 527.1 353.3 155.7 39.9 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 15.36px 500 | 0px rgb(233, 238, 252) 0px none | No items in battle: trust your team.
+                    i  527.1 353.3 23 23 | rgb(214, 38, 78) none | rgb(255, 255, 255) 15.36px 800 | 0px rgb(255, 255, 255) 50% none | −
+                  div dpay 527.1 567.6 155.7 40.2 | rgba(0, 0, 0, 0) none | rgb(147, 162, 201) 14.72px 500 | 1px rgb(43, 59, 104) 0px none | 
+                    b  597.4 578.8 85.4 29 | rgba(0, 0, 0, 0) none | rgb(242, 199, 92) 23.04px 800 | 0px rgb(242, 199, 92) 0px none | +8%
+                      small  639.8 588.8 43 16 | rgba(0, 0, 0, 0) none | rgb(147, 162, 201) 12.8px 600 | 0px rgb(147, 162, 201) 0px none | payout
+              button dmc 718.1 122.5 190.4 501.4 | rgb(22, 33, 63) none | rgb(233, 238, 252) 16px 500 | 2px rgb(43, 59, 104) 17.92px rgba(0, 0, 0, 0.4) 0px 3.84px  | 
+                div dart 720.1 124.5 186.4 101 | rgb(29, 42, 80) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px rgb(59, 130, 214) 0px -3.2px 0 | 
+                  canvas  720.1 124.5 186.4 101 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                  span dglyph 773.4 131.6 79.9 79.9 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                  span dsprite 727.5 155.7 97.3 68.8 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                    i sp 727.5 155.7 97.3 64.8 | rgba(0, 0, 0, 0) url("http://127.0.0. | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                  span dcat 727.8 132.2 61.8 20.5 | rgba(10, 14, 28, 0.78) none | rgb(244, 236, 216) 11.52px 800 | 0px rgb(244, 236, 216) 6.4px none | FIELD
+                div dmbody 720.1 225.5 186.4 396.4 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                  h4  735.4 238.3 155.7 53.7 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 25.6px 800 | 0px rgb(233, 238, 252) 0px none | Electric Terrain
+                  div dtags 735.4 301 155.7 43.4 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                    span dgems g1 735.4 301 51.8 14.7 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                      i on 735.4 301 14.7 14.7 | rgb(242, 199, 92) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                      i on 754 301 14.7 14.7 | rgb(242, 199, 92) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                      i  772.5 301 14.7 14.7 | rgb(42, 58, 102) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                    span ty rk-warn 735.4 323.4 124.5 21 | rgb(217, 138, 6) none | rgb(16, 24, 40) 12.8px 700 | 0px rgb(16, 24, 40) 6.4px none | Moderate risk
+                  div dpl n 735.4 353.3 155.7 59.9 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 15.36px 500 | 0px rgb(233, 238, 252) 0px none | The ground shifts: Electric terrain in every battle.
+                    i  735.4 353.3 23 23 | rgb(77, 94, 144) none | rgb(255, 255, 255) 15.36px 800 | 0px rgb(255, 255, 255) 50% none | ·
+                  div dpay 735.4 567.6 155.7 40.2 | rgba(0, 0, 0, 0) none | rgb(147, 162, 201) 14.72px 500 | 1px rgb(43, 59, 104) 0px none | 
+                    b  805.7 578.8 85.4 29 | rgba(0, 0, 0, 0) none | rgb(242, 199, 92) 23.04px 800 | 0px rgb(242, 199, 92) 0px none | +8%
+                      small  848.1 588.8 43 16 | rgba(0, 0, 0, 0) none | rgb(147, 162, 201) 12.8px 600 | 0px rgb(147, 162, 201) 0px none | payout
+          div dcard dcol dside 934.1 86.7 315.2 537.2 | rgb(22, 33, 63) none | rgb(233, 238, 252) 16px 500 | 1px rgb(43, 59, 104) 17.92px rgba(0, 0, 0, 0.4) 0px 3.84px  | 
+            div dart wide 935.1 87.7 313.2 104.4 | rgb(29, 42, 80) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px rgb(14, 154, 167) 0px -3.2px 0 | 
+              canvas  935.1 87.7 313.2 104.4 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+              span dglyph 1099.7 97.1 59.1 59.1 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+              span dsprite 972.7 132.5 81.9 58.6 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+                i sp 972.7 132.5 81.9 54.6 | rgba(0, 0, 0, 0) url("http://127.0.0. | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+              span dcat 942.8 95.4 68.4 20.5 | rgba(10, 14, 28, 0.78) none | rgb(244, 236, 216) 11.52px 800 | 0px rgb(244, 236, 216) 6.4px none | SCOUT
+            div ch 935.1 192.1 313.2 44 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+              h3  953 207.7 87.6 20.5 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 20.48px 800 | 0px rgb(233, 238, 252) 0px none | Far Sight
+              span ty rk-ok 1135.1 207.5 95.3 21 | rgb(63, 163, 77) none | rgb(16, 24, 40) 12.8px 700 | 0px rgb(16, 24, 40) 6.4px none | Minor risk
+            div dlines 935.1 236.1 313.2 321.3 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 0px rgb(233, 238, 252) 0px none | 
+              div dpl p 953 243.8 277.4 23 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 15.36px 500 | 0px rgb(233, 238, 252) 0px none | Minor risk · +3% to your final payout
+                i  953 243.8 23 23 | rgb(21, 128, 61) none | rgb(255, 255, 255) 15.36px 800 | 0px rgb(255, 255, 255) 50% none | +
+              div dpl p 953 275.8 277.4 39.9 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 15.36px 500 | 0px rgb(233, 238, 252) 0px none | Your scouts see 3 floors further ahead.
+                i  953 275.8 23 23 | rgb(21, 128, 61) none | rgb(255, 255, 255) 15.36px 800 | 0px rgb(255, 255, 255) 50% none | +
+              div dpl n 953 324.7 277.4 39.9 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 15.36px 500 | 0px rgb(233, 238, 252) 0px none | The risk you carry is paid out when the tower ends.
+                i  953 324.7 23 23 | rgb(77, 94, 144) none | rgb(255, 255, 255) 15.36px 800 | 0px rgb(255, 255, 255) 50% none | ·
+            div dmembers 935.1 557.5 313.2 65.4 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 16px 500 | 1px rgb(43, 59, 104) 0px none | 
+              span lbl 953 571.3 277.4 13.4 | rgba(0, 0, 0, 0) none | rgb(147, 162, 201) 13.44px 700 | 0px rgb(147, 162, 201) 0px none | Party
+              div dmem 953 591.1 277.4 19 | rgba(0, 0, 0, 0) none | rgb(233, 238, 252) 15.36px 600 | 0px rgb(233, 238, 252) 0px none | WebPlayer
+                span dot  953 594.2 12.8 12.8 | rgb(77, 94, 144) none | rgb(233, 238, 252) 15.36px 600 | 0px rgb(233, 238, 252) 50% none | 
+                small  1187 592.6 43.3 16 | rgba(0, 0, 0, 0) none | rgb(147, 162, 201) 12.8px 600 | 0px rgb(147, 162, 201) 0px none | waiting
+        div dft 0 644.4 1280 75.6 | rgb(22, 33, 63) none | rgb(233, 238, 252) 16px 500 | 1px rgb(43, 59, 104) 0px none | 
+          button dbtn 30.7 660.5 171.9 44.5 | rgb(42, 51, 85) none | rgb(147, 162, 201) 19.2px 800 | 0px rgb(147, 162, 201) 14.08px rgb(30, 38, 68) 0px 3.84px 0px | Choose a card
+          button dbtn gh 215.4 659.5 113.5 46.5 | rgb(29, 42, 80) none | rgb(233, 238, 252) 19.2px 800 | 1px rgb(43, 59, 104) 14.08px rgb(43, 59, 104) 0px 3.84px 0p | Vendor
+          button dbtn gh 341.7 659.5 104.5 46.5 | rgb(42, 51, 85) none | rgb(147, 162, 201) 19.2px 800 | 1px rgb(43, 59, 104) 14.08px rgb(30, 38, 68) 0px 3.84px 0px | Ready
+          button dbtn gh 459 659.5 126.1 46.5 | rgb(29, 42, 80) none | rgb(233, 238, 252) 19.2px 800 | 1px rgb(43, 59, 104) 14.08px rgb(43, 59, 104) 0px 3.84px 0p | Cash out

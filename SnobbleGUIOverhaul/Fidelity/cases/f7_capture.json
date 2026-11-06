@@ -1,0 +1,92 @@
+[
+ {
+  "case": "f7_capture__c01_reveal_choose",
+  "shot": "c01_reveal_choose",
+  "page": "cobbleraids_reveal",
+  "url": "/cobbleraids/reveal/reveal.html?refcase=f7_capture__c01_reveal_choose",
+  "budget": 3920,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_capture\\c01_reveal_choose.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_capture__c02_capture_offer",
+  "shot": "c02_capture_offer",
+  "page": "cobbleraids_capture",
+  "url": "/cobbleraids/capture/capture.html?refcase=f7_capture__c02_capture_offer",
+  "budget": 4420,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_capture\\c02_capture_offer.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f7_capture__c03_pulse1_a",
+  "shot": "c03_pulse1_a",
+  "page": "cobbleraids_capture",
+  "url": "/cobbleraids/capture/capture.html?refcase=f7_capture__c03_pulse1_a",
+  "budget": 5420,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_capture\\c03_pulse1_a.png",
+  "unmappable": [],
+  "steps": 5
+ },
+ {
+  "case": "f7_capture__c04_pulse1_b",
+  "shot": "c04_pulse1_b",
+  "page": "cobbleraids_capture",
+  "url": "/cobbleraids/capture/capture.html?refcase=f7_capture__c04_pulse1_b",
+  "budget": 5420,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_capture\\c04_pulse1_b.png",
+  "unmappable": [],
+  "steps": 5
+ },
+ {
+  "case": "f7_capture__c05_pulse2",
+  "shot": "c05_pulse2",
+  "page": "cobbleraids_capture",
+  "url": "/cobbleraids/capture/capture.html?refcase=f7_capture__c05_pulse2",
+  "budget": 7697,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_capture\\c05_pulse2.png",
+  "unmappable": [],
+  "steps": 7
+ },
+ {
+  "case": "f7_capture__c06_pulse3",
+  "shot": "c06_pulse3",
+  "page": "cobbleraids_capture",
+  "url": "/cobbleraids/capture/capture.html?refcase=f7_capture__c06_pulse3",
+  "budget": 10227,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_capture\\c06_pulse3.png",
+  "unmappable": [],
+  "steps": 9
+ },
+ {
+  "case": "f7_capture__c07_throw",
+  "shot": "c07_throw",
+  "page": "cobbleraids_capture",
+  "url": "/cobbleraids/capture/capture.html?refcase=f7_capture__c07_throw",
+  "budget": 12757,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_capture\\c07_throw.png",
+  "unmappable": [],
+  "steps": 11
+ },
+ {
+  "case": "f7_capture__c08_throw_waiting",
+  "shot": "c08_throw_waiting",
+  "page": "cobbleraids_capture",
+  "url": "/cobbleraids/capture/capture.html?refcase=f7_capture__c08_throw_waiting",
+  "budget": 15287,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_capture\\c08_throw_waiting.png",
+  "unmappable": [],
+  "steps": 13
+ },
+ {
+  "case": "f7_capture__c09_result",
+  "shot": "c09_result",
+  "page": "cobbleraids_capture",
+  "url": "/cobbleraids/capture/capture.html?refcase=f7_capture__c09_result",
+  "budget": 16266,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_capture\\c09_result.png",
+  "unmappable": [],
+  "steps": 13
+ }
+]

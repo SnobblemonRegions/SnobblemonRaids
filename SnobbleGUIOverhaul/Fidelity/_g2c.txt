@@ -1,0 +1,16 @@
+cases: 7 for g2_cases3 | pages: ['cases']
+ref y01_queue ok
+ref y02_ticket ok
+ref y03_stamp_early ok
+ref y04_stamp ok
+ref y05_stamp_gone ok
+ref y06_sugs ok
+ref y07_mine ok
+y01_queue                          cases                       88.0% 
+y02_ticket                         cases                       88.7% 
+y03_stamp_early                    cases                       88.0% 
+y04_stamp                          cases                       88.0% 
+y05_stamp_gone                     cases                       88.7% 
+y06_sugs                           cases                       89.2% 
+y07_mine                           cases                       89.0% 
+FIN

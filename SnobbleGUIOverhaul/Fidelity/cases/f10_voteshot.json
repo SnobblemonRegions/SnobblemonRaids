@@ -1,0 +1,62 @@
+[
+ {
+  "case": "f10_voteshot__v01_route_open",
+  "shot": "v01_route_open",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_voteshot__v01_route_open",
+  "budget": 5136,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_voteshot\\v01_route_open.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f10_voteshot__v02_route_picked",
+  "shot": "v02_route_picked",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_voteshot__v02_route_picked",
+  "budget": 6837,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_voteshot\\v02_route_picked.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f10_voteshot__v03_route_sending",
+  "shot": "v03_route_sending",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_voteshot__v03_route_sending",
+  "budget": 8049,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_voteshot\\v03_route_sending.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f10_voteshot__v04_cards_open",
+  "shot": "v04_cards_open",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_voteshot__v04_cards_open",
+  "budget": 9260,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_voteshot\\v04_cards_open.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f10_voteshot__v05_cards_picked",
+  "shot": "v05_cards_picked",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_voteshot__v05_cards_picked",
+  "budget": 10930,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_voteshot\\v05_cards_picked.png",
+  "unmappable": [],
+  "steps": 5
+ },
+ {
+  "case": "f10_voteshot__v06_cards_sending",
+  "shot": "v06_cards_sending",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_voteshot__v06_cards_sending",
+  "budget": 12136,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_voteshot\\v06_cards_sending.png",
+  "unmappable": [],
+  "steps": 6
+ }
+]

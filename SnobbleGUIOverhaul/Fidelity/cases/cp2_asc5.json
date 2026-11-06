@@ -1,0 +1,72 @@
+[
+ {
+  "case": "cp2_asc5__r01_back",
+  "shot": "r01_back",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=cp2_asc5__r01_back",
+  "budget": 4882,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\cp2_asc5\\r01_back.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "cp2_asc5__r02_turn1",
+  "shot": "r02_turn1",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=cp2_asc5__r02_turn1",
+  "budget": 4882,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\cp2_asc5\\r02_turn1.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "cp2_asc5__r03_turn2",
+  "shot": "r03_turn2",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=cp2_asc5__r03_turn2",
+  "budget": 4882,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\cp2_asc5\\r03_turn2.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "cp2_asc5__r04_burst1",
+  "shot": "r04_burst1",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=cp2_asc5__r04_burst1",
+  "budget": 4882,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\cp2_asc5\\r04_burst1.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "cp2_asc5__r05_burst2",
+  "shot": "r05_burst2",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=cp2_asc5__r05_burst2",
+  "budget": 4995,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\cp2_asc5\\r05_burst2.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "cp2_asc5__r06_burst3",
+  "shot": "r06_burst3",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=cp2_asc5__r06_burst3",
+  "budget": 5543,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\cp2_asc5\\r06_burst3.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "cp2_asc5__r07_card",
+  "shot": "r07_card",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=cp2_asc5__r07_card",
+  "budget": 6382,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\cp2_asc5\\r07_card.png",
+  "unmappable": [],
+  "steps": 2
+ }
+]

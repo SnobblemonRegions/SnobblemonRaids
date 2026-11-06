@@ -1,0 +1,42 @@
+[
+ {
+  "case": "f_tw3__t01_inter",
+  "shot": "t01_inter",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f_tw3__t01_inter",
+  "budget": 5484,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_tw3\\t01_inter.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_tw3__t02_selected",
+  "shot": "t02_selected",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f_tw3__t02_selected",
+  "budget": 7348,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_tw3\\t02_selected.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_tw3__t03_reward",
+  "shot": "t03_reward",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f_tw3__t03_reward",
+  "budget": 8690,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_tw3\\t03_reward.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f_tw3__t04_vendor",
+  "shot": "t04_vendor",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f_tw3__t04_vendor",
+  "budget": 11842,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_tw3\\t04_vendor.png",
+  "unmappable": [],
+  "steps": 5
+ }
+]

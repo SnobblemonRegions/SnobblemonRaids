@@ -1,0 +1,42 @@
+[
+ {
+  "case": "f7_asc2__b01_owned",
+  "shot": "b01_owned",
+  "page": "ascensionlib_inspect",
+  "url": "/ascensionlib/inspect.html?refcase=f7_asc2__b01_owned",
+  "budget": 5010,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_asc2\\b01_owned.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_asc2__b02_row3",
+  "shot": "b02_row3",
+  "page": "ascensionlib_inspect",
+  "url": "/ascensionlib/inspect.html?refcase=f7_asc2__b02_row3",
+  "budget": 6848,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_asc2\\b02_row3.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f7_asc2__b03_scout",
+  "shot": "b03_scout",
+  "page": "ascensionlib_inspect",
+  "url": "/ascensionlib/inspect.html?refcase=f7_asc2__b03_scout",
+  "budget": 5414,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_asc2\\b03_scout.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_asc2__b04_scout2",
+  "shot": "b04_scout2",
+  "page": "ascensionlib_inspect",
+  "url": "/ascensionlib/inspect.html?refcase=f7_asc2__b04_scout2",
+  "budget": 7800,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_asc2\\b04_scout2.png",
+  "unmappable": [],
+  "steps": 2
+ }
+]

@@ -1,0 +1,52 @@
+[
+ {
+  "case": "f10_rental__r01_warn",
+  "shot": "r01_warn",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_rental__r01_warn",
+  "budget": 5138,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_rental\\r01_warn.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f10_rental__r02_sealed",
+  "shot": "r02_sealed",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_rental__r02_sealed",
+  "budget": 7488,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_rental\\r02_sealed.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f10_rental__r03_choose",
+  "shot": "r03_choose",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_rental__r03_choose",
+  "budget": 11138,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_rental\\r03_choose.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f10_rental__r04_picked",
+  "shot": "r04_picked",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_rental__r04_picked",
+  "budget": 12441,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_rental\\r04_picked.png",
+  "unmappable": [],
+  "steps": 5
+ },
+ {
+  "case": "f10_rental__r05_done",
+  "shot": "r05_done",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_rental__r05_done",
+  "budget": 14591,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_rental\\r05_done.png",
+  "unmappable": [],
+  "steps": 6
+ }
+]

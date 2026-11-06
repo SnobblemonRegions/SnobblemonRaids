@@ -1,0 +1,26 @@
+[
+ [
+  "x01_empty_reply_toast",
+  "cases",
+  97.0,
+  []
+ ],
+ [
+  "x02_typed_reply",
+  "cases",
+  96.9,
+  []
+ ],
+ [
+  "x03_new_ticket_typed",
+  "cases",
+  96.6,
+  []
+ ],
+ [
+  "x04_search",
+  "cases",
+  96.4,
+  []
+ ]
+]

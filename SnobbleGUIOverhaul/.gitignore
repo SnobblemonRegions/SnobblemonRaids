@@ -1,0 +1,30 @@
+# build output, archives, binaries
+**/build/
+**/.gradle/
+**/.idea/
+**/out/
+*.jar
+*.zip
+*.mp4
+*.gif
+# deploy bundles (built from the sources; attach to a GitHub Release instead)
+**/DEPLOY*/
+# third-party mod jars / extracted copies of other people's mods and pages
+mods_src/
+webgui_pages_src/
+Backing Mods/
+# local test rig: game installs, worlds, screenshots, logs
+Two-Mod Rework/tests/client*/
+Two-Mod Rework/tests/rig*/
+Two-Mod Rework/tests/shots_ui/
+Two-Mod Rework/tests/results/
+Two-Mod Rework/tests/harness*/build/
+tests/
+**/*.log
+**/*.pid
+**/__pycache__/
+
+# browser profiles (cookies/session data) and caches
+**/_chrome_profile/
+**/Default/
+**/node_modules/

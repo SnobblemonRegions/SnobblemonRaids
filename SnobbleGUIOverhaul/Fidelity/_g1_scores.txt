@@ -1,0 +1,243 @@
+=== rules2
+cases: 7 for g1_rules2 | pages: ['rules']
+ref r01_first_page ok
+ref r02_conduct ok
+ref r03_bottom ok
+ref r04_enforcement ok
+ref r05_enforcement_mid ok
+ref r06_all_read ok
+ref r07_done ok
+r01_first_page                     rules                       97.6% 
+r02_conduct                        rules                       96.7% 
+r03_bottom                         rules                       96.5% 
+r04_enforcement                    rules                       96.6% 
+r05_enforcement_mid                rules                       96.6% 
+r06_all_read                       rules                       96.4% 
+r07_done                           rules                       98.4% 
+=== verify2
+cases: 2 for g1_verify2 | pages: ['verify']
+ref v01_accepted ok
+ref v02_not_finished ok
+v01_accepted                       verify                      98.6% 
+v02_not_finished                   verify                      99.1% 
+=== goal2
+cases: 5 for g1_goal2 | pages: ['goal']
+ref g01_goal ok
+ref g02_points ok
+ref g03_milestones ok
+ref g04_my_stats ok
+ref g05_players ok
+g01_goal                           goal                        98.3% 
+g02_points                         goal                        98.4% 
+g03_milestones                     goal                        98.7% 
+g04_my_stats                       goal                        98.6% 
+g05_players                        goal                        97.7% 
+=== raids2
+ref y02_shop_items ok
+ref y03_shop_pokemon ok
+ref y04_trophy_full ok
+ref y05_trophy_tier_selected ok
+ref y06_legends_full ok
+ref y07_leaders_full ok
+ref y08_leaders_time_weekly ok
+y01_hub                            cobbleraids_hub             98.6% 
+y02_shop_items                     cobbleraids_shop            98.4% 
+y03_shop_pokemon                   cobbleraids_shop            98.1% 
+y04_trophy_full                    cobbleraids_trophy          97.3% 
+y05_trophy_tier_selected           cobbleraids_trophy          97.3% 
+y06_legends_full                   cobbleraids_legends         98.2% 
+y07_leaders_full                   cobbleraids_leaders         98.5% 
+y08_leaders_time_weekly            cobbleraids_leaders         98.6% 
+=== capture
+ref c04_pulse1_b ok
+ref c05_pulse2 ok
+ref c06_pulse3 ok
+ref c07_throw ok
+ref c08_throw_waiting ok
+ref c09_result ok
+c01_reveal_choose                  cobbleraids_reveal          98.4% 
+c02_capture_offer                  cobbleraids_capture         98.2% 
+c03_pulse1_a                       cobbleraids_capture         98.0% 
+c04_pulse1_b                       cobbleraids_capture         98.0% 
+c05_pulse2                         cobbleraids_capture         98.0% 
+c06_pulse3                         cobbleraids_capture         98.0% 
+c07_throw                          cobbleraids_capture         98.0% 
+c08_throw_waiting                  cobbleraids_capture         98.5% 
+c09_result                         cobbleraids_capture         98.5% 
+=== wiki
+cases: 7 for g1_wiki | pages: ['wiki']
+ref w01_home ok
+ref w02_mod ok
+ref w03_page ok
+ref w04_next ok
+ref w05_home ok
+ref w06_towers ok
+ref w07_search ok
+w01_home                           wiki                        95.3% 
+w02_mod                            wiki                        95.7% 
+w03_page                           wiki                        97.6% 
+w04_next                           wiki                        94.3% 
+w05_home                           wiki                        95.3% 
+w06_towers                         wiki                        92.6% 
+w07_search                         wiki                        97.5% UNREPLAYED: clickbox search
+=== qd
+ref q02_selected ok
+ref q03_rootvale ok
+ref q04_rootvale_sel ok
+ref q04b_after_track ok
+ref q05_active ok
+ref q06_completed ok
+ref q07_rules_locked ok
+q01_tutorial                       questdex                    95.5% 
+q02_selected                       questdex                    95.0% 
+q03_rootvale                       questdex                    95.1% 
+q04_rootvale_sel                   questdex                    94.3% 
+q04b_after_track                   questdex                    94.3% 
+q05_active                         questdex                    97.8% 
+q06_completed                      questdex                    97.6% 
+q07_rules_locked                   questdex                    98.3% 
+=== gems
+cases: 4 for g1_gems | pages: ['snobblegems_shop']
+ref g01_main ok
+ref g02_selected ok
+ref g03_modal ok
+ref g04_result ok
+g01_main                           snobblegems_shop            99.0% 
+g02_selected                       snobblegems_shop            99.0% 
+g03_modal                          snobblegems_shop            99.4% 
+g04_result                         snobblegems_shop            98.4% 
+=== auc
+cases: 5 for g1_auc | pages: ['auction']
+ref a01_browse ok
+ref a02_detail ok
+ref a03_confirm ok
+ref a04_mine ok
+ref a05_sell ok
+a01_browse                         auction                     95.4% 
+a02_detail                         auction                     97.6% 
+a03_confirm                        auction                     98.0% 
+a04_mine                           auction                     97.3% 
+a05_sell                           auction                     97.5% 
+=== shell
+cases: 6 for g1_shell | pages: ['shellpack']
+ref s01_main ok
+ref s02_picked ok
+ref s02b_right ok
+ref s03_info ok
+ref s04_upgrade ok
+ref s05_options ok
+s01_main                           shellpack                   96.1% 
+s02_picked                         shellpack                   96.1% 
+s02b_right                         shellpack                   96.1% 
+s03_info                           shellpack                   96.1% 
+s04_upgrade                        shellpack                   96.1% 
+s05_options                        shellpack                   96.0% 
+=== crate
+cases: 3 for g1_crate | pages: ['snobblecrates_crate']
+ref x01_page1 ok
+ref x02_selected ok
+ref x03_page2 ok
+x01_page1                          snobblecrates_crate         97.0% 
+x02_selected                       snobblecrates_crate         97.0% 
+x03_page2                          snobblecrates_crate         97.0% 
+=== ward
+ref w03c_esc ok
+ref w04_skins ok
+ref w05_party ok
+ref w06_partyback ok
+ref w07_owned ok
+w01_hats                           wardrobe                    97.5% 
+w02_page2                          wardrobe                    98.9% 
+w02b_back                          wardrobe                    97.7% 
+w03_armor                          wardrobe                    98.0% 
+w03b_detail                        wardrobe                    98.4% 
+w03c_esc                           wardrobe                    98.0% 
+w04_skins                          wardrobe                    98.1% 
+w05_party                          wardrobe                    99.2% 
+w06_partyback                      wardrobe                    99.0% 
+w07_owned                          wardrobe                    97.6% 
+=== cases3
+cases: 7 for g1_cases3 | pages: ['cases']
+ref y01_queue ok
+ref y02_ticket ok
+ref y03_stamp_early ok
+ref y04_stamp ok
+ref y05_stamp_gone ok
+ref y06_sugs ok
+ref y07_mine ok
+y01_queue                          cases                       88.4% 
+y02_ticket                         cases                       88.7% 
+y03_stamp_early                    cases                       88.0% 
+y04_stamp                          cases                       88.0% 
+y05_stamp_gone                     cases                       88.7% 
+y06_sugs                           cases                       89.2% 
+y07_mine                           cases                       89.0% 
+=== asc
+cases: 5 for g1_asc | pages: ['ascensionlib_party', 'ascensionlib_wallet']
+ref a01_party ok
+ref a02_wallet_tab ok
+ref a03_guide_tab ok
+ref a04_wallet ok
+ref a05_wallet_256 ok
+a01_party                          ascensionlib_party          96.0% 
+a02_wallet_tab                     ascensionlib_party          95.3% 
+a03_guide_tab                      ascensionlib_party          93.6% 
+a04_wallet                         ascensionlib_wallet         95.2% 
+a05_wallet_256                     ascensionlib_wallet         95.0% 
+=== asc2
+cases: 4 for g1_asc2 | pages: ['ascensionlib_inspect']
+ref b01_owned ok
+ref b02_row3 ok
+ref b03_scout ok
+ref b04_scout2 ok
+b01_owned                          ascensionlib_inspect        95.2% 
+b02_row3                           ascensionlib_inspect        95.2% 
+b03_scout                          ascensionlib_inspect        96.6% 
+b04_scout2                         ascensionlib_inspect        96.0% 
+=== asc3
+ref c02_refine ok
+ref c03_review ok
+ref c04_unique ok
+ref c05_respec ok
+ref c06_overreach ok
+ref c07_done ok
+ref c08_real_reply ok
+c01_upgrade                        ascensionlib_craft          94.9% 
+c02_refine                         ascensionlib_craft          95.1% 
+c03_review                         ascensionlib_craft          97.7% 
+c04_unique                         ascensionlib_craft          95.6% 
+c05_respec                         ascensionlib_craft          94.8% 
+c06_overreach                      ascensionlib_craft          94.9% 
+c07_done                           ascensionlib_craft          95.0% 
+c08_real_reply                     ascensionlib_craft          82.8% 
+=== asc4
+cases: 4 for g1_asc4 | pages: ['ascensionlib_fusion']
+ref f01_host ok
+ref f02_picker ok
+ref f03_detail ok
+ref f04_review ok
+f01_host                           ascensionlib_fusion         96.6% 
+f02_picker                         ascensionlib_fusion         97.9% 
+f03_detail                         ascensionlib_fusion         95.7% 
+f04_review                         ascensionlib_fusion         96.4% 
+=== asc5
+cases: 2 for g1_asc5 | pages: ['ascensionlib_capture']
+ref r01_early ok
+ref r02_card ok
+r01_early                          ascensionlib_capture        92.0% 
+r02_card                           ascensionlib_capture        92.0% 
+=== asc6
+cases: 3 for g1_asc6 | pages: ['ascensionlib_completion']
+ref k01_start ok
+ref k02_mid ok
+ref k03_end ok
+k01_start                          ascensionlib_completion     94.3% 
+k02_mid                            ascensionlib_completion     93.9% 
+k03_end                            ascensionlib_completion     93.9% 
+=== asc7
+cases: 2 for g1_asc7 | pages: ['ascensionlib_hud']
+ref h01_hud ok
+ref h02_after_flash ok
+h01_hud                            ascensionlib_hud            95.3% 
+h02_after_flash                    ascensionlib_hud            95.6% 
+FIN

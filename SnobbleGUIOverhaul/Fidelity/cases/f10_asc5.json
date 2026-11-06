@@ -1,0 +1,92 @@
+[
+ {
+  "case": "f10_asc5__r01_a",
+  "shot": "r01_a",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=f10_asc5__r01_a",
+  "budget": 4879,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_asc5\\r01_a.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f10_asc5__r02_b",
+  "shot": "r02_b",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=f10_asc5__r02_b",
+  "budget": 4879,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_asc5\\r02_b.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f10_asc5__r03_c",
+  "shot": "r03_c",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=f10_asc5__r03_c",
+  "budget": 4879,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_asc5\\r03_c.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f10_asc5__r04_d",
+  "shot": "r04_d",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=f10_asc5__r04_d",
+  "budget": 4879,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_asc5\\r04_d.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f10_asc5__r05_e",
+  "shot": "r05_e",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=f10_asc5__r05_e",
+  "budget": 4879,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_asc5\\r05_e.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f10_asc5__r06_f",
+  "shot": "r06_f",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=f10_asc5__r06_f",
+  "budget": 4879,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_asc5\\r06_f.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f10_asc5__r06_g",
+  "shot": "r06_g",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=f10_asc5__r06_g",
+  "budget": 4879,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_asc5\\r06_g.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f10_asc5__r06_h",
+  "shot": "r06_h",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=f10_asc5__r06_h",
+  "budget": 4879,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_asc5\\r06_h.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f10_asc5__r07_card",
+  "shot": "r07_card",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=f10_asc5__r07_card",
+  "budget": 6379,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_asc5\\r07_card.png",
+  "unmappable": [],
+  "steps": 2
+ }
+]

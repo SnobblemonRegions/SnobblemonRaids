@@ -1,0 +1,302 @@
+[
+ {
+  "case": "f_ward2__w01_hats",
+  "shot": "w01_hats",
+  "page": "ascensionlib_hud",
+  "url": "/ascensionlib/hud.html?refcase=f_ward2__w01_hats",
+  "budget": 4330,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w01_hats.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_ward2__w02_page2",
+  "shot": "w02_page2",
+  "page": "ascensionlib_hud",
+  "url": "/ascensionlib/hud.html?refcase=f_ward2__w02_page2",
+  "budget": 4330,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w02_page2.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_ward2__w02b_back",
+  "shot": "w02b_back",
+  "page": "ascensionlib_hud",
+  "url": "/ascensionlib/hud.html?refcase=f_ward2__w02b_back",
+  "budget": 4453,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w02b_back.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_ward2__w03_armor",
+  "shot": "w03_armor",
+  "page": "ascensionlib_hud",
+  "url": "/ascensionlib/hud.html?refcase=f_ward2__w03_armor",
+  "budget": 6299,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w03_armor.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_ward2__w03b_detail",
+  "shot": "w03b_detail",
+  "page": "ascensionlib_hud",
+  "url": "/ascensionlib/hud.html?refcase=f_ward2__w03b_detail",
+  "budget": 6940,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w03b_detail.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f_ward2__w03c_esc",
+  "shot": "w03c_esc",
+  "page": "ascensionlib_hud",
+  "url": "/ascensionlib/hud.html?refcase=f_ward2__w03c_esc",
+  "budget": 8549,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w03c_esc.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f_ward2__w04_skins",
+  "shot": "w04_skins",
+  "page": "ascensionlib_hud",
+  "url": "/ascensionlib/hud.html?refcase=f_ward2__w04_skins",
+  "budget": 10393,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w04_skins.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f_ward2__w05_party",
+  "shot": "w05_party",
+  "page": "ascensionlib_hud",
+  "url": "/ascensionlib/hud.html?refcase=f_ward2__w05_party",
+  "budget": 11178,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w05_party.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f_ward2__w06_partyback",
+  "shot": "w06_partyback",
+  "page": "ascensionlib_hud",
+  "url": "/ascensionlib/hud.html?refcase=f_ward2__w06_partyback",
+  "budget": 11178,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w06_partyback.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f_ward2__w07_owned",
+  "shot": "w07_owned",
+  "page": "ascensionlib_hud",
+  "url": "/ascensionlib/hud.html?refcase=f_ward2__w07_owned",
+  "budget": 11894,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w07_owned.png",
+  "unmappable": [],
+  "steps": 5
+ },
+ {
+  "case": "f_ward2__w01_hats",
+  "shot": "w01_hats",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w01_hats",
+  "budget": 4977,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w01_hats.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_ward2__w02_page2",
+  "shot": "w02_page2",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w02_page2",
+  "budget": 6451,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w02_page2.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_ward2__w02b_back",
+  "shot": "w02b_back",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w02b_back",
+  "budget": 8312,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w02b_back.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f_ward2__w03_armor",
+  "shot": "w03_armor",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w03_armor",
+  "budget": 10146,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w03_armor.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f_ward2__w03b_detail",
+  "shot": "w03b_detail",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w03b_detail",
+  "budget": 12016,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w03b_detail.png",
+  "unmappable": [],
+  "steps": 5
+ },
+ {
+  "case": "f_ward2__w03c_esc",
+  "shot": "w03c_esc",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w03c_esc",
+  "budget": 13600,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w03c_esc.png",
+  "unmappable": [],
+  "steps": 6
+ },
+ {
+  "case": "f_ward2__w04_skins",
+  "shot": "w04_skins",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w04_skins",
+  "budget": 15451,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w04_skins.png",
+  "unmappable": [],
+  "steps": 7
+ },
+ {
+  "case": "f_ward2__w05_party",
+  "shot": "w05_party",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w05_party",
+  "budget": 17857,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w05_party.png",
+  "unmappable": [],
+  "steps": 9
+ },
+ {
+  "case": "f_ward2__w06_partyback",
+  "shot": "w06_partyback",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w06_partyback",
+  "budget": 19446,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w06_partyback.png",
+  "unmappable": [],
+  "steps": 10
+ },
+ {
+  "case": "f_ward2__w07_owned",
+  "shot": "w07_owned",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w07_owned",
+  "budget": 21902,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w07_owned.png",
+  "unmappable": [],
+  "steps": 11
+ },
+ {
+  "case": "f_ward2__w01_hats",
+  "shot": "w01_hats",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w01_hats",
+  "budget": 4988,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w01_hats.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_ward2__w02_page2",
+  "shot": "w02_page2",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w02_page2",
+  "budget": 6449,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w02_page2.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_ward2__w02b_back",
+  "shot": "w02b_back",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w02b_back",
+  "budget": 8320,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w02b_back.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f_ward2__w03_armor",
+  "shot": "w03_armor",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w03_armor",
+  "budget": 10155,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w03_armor.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f_ward2__w03b_detail",
+  "shot": "w03b_detail",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w03b_detail",
+  "budget": 12017,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w03b_detail.png",
+  "unmappable": [],
+  "steps": 5
+ },
+ {
+  "case": "f_ward2__w03c_esc",
+  "shot": "w03c_esc",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w03c_esc",
+  "budget": 13603,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w03c_esc.png",
+  "unmappable": [],
+  "steps": 6
+ },
+ {
+  "case": "f_ward2__w04_skins",
+  "shot": "w04_skins",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w04_skins",
+  "budget": 15455,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w04_skins.png",
+  "unmappable": [],
+  "steps": 7
+ },
+ {
+  "case": "f_ward2__w05_party",
+  "shot": "w05_party",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w05_party",
+  "budget": 17863,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w05_party.png",
+  "unmappable": [],
+  "steps": 9
+ },
+ {
+  "case": "f_ward2__w06_partyback",
+  "shot": "w06_partyback",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w06_partyback",
+  "budget": 19456,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w06_partyback.png",
+  "unmappable": [],
+  "steps": 10
+ },
+ {
+  "case": "f_ward2__w07_owned",
+  "shot": "w07_owned",
+  "page": "wardrobe",
+  "url": "/wardrobe/index.html?refcase=f_ward2__w07_owned",
+  "budget": 21905,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_ward2\\w07_owned.png",
+  "unmappable": [],
+  "steps": 11
+ }
+]

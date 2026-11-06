@@ -1,0 +1,82 @@
+[
+ {
+  "case": "f10_aucbuy__u0_confirm",
+  "shot": "u0_confirm",
+  "page": "auction",
+  "url": "/auction/index.html?refcase=f10_aucbuy__u0_confirm",
+  "budget": 7956,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_aucbuy\\u0_confirm.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f10_aucbuy__u1",
+  "shot": "u1",
+  "page": "auction",
+  "url": "/auction/index.html?refcase=f10_aucbuy__u1",
+  "budget": 9150,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_aucbuy\\u1.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f10_aucbuy__u2",
+  "shot": "u2",
+  "page": "auction",
+  "url": "/auction/index.html?refcase=f10_aucbuy__u2",
+  "budget": 9150,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_aucbuy\\u2.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f10_aucbuy__u3",
+  "shot": "u3",
+  "page": "auction",
+  "url": "/auction/index.html?refcase=f10_aucbuy__u3",
+  "budget": 9150,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_aucbuy\\u3.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f10_aucbuy__u4",
+  "shot": "u4",
+  "page": "auction",
+  "url": "/auction/index.html?refcase=f10_aucbuy__u4",
+  "budget": 9150,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_aucbuy\\u4.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f10_aucbuy__u5",
+  "shot": "u5",
+  "page": "auction",
+  "url": "/auction/index.html?refcase=f10_aucbuy__u5",
+  "budget": 9150,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_aucbuy\\u5.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f10_aucbuy__u6",
+  "shot": "u6",
+  "page": "auction",
+  "url": "/auction/index.html?refcase=f10_aucbuy__u6",
+  "budget": 9150,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_aucbuy\\u6.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f10_aucbuy__u7_closed",
+  "shot": "u7_closed",
+  "page": "auction",
+  "url": "/auction/index.html?refcase=f10_aucbuy__u7_closed",
+  "budget": 10650,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_aucbuy\\u7_closed.png",
+  "unmappable": [],
+  "steps": 4
+ }
+]

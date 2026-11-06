@@ -1,0 +1,42 @@
+[
+ {
+  "case": "f_asc4b__f01_host",
+  "shot": "f01_host",
+  "page": "ascensionlib_fusion",
+  "url": "/ascensionlib/fusion.html?refcase=f_asc4b__f01_host",
+  "budget": 4857,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_asc4b\\f01_host.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_asc4b__f02_picker",
+  "shot": "f02_picker",
+  "page": "ascensionlib_fusion",
+  "url": "/ascensionlib/fusion.html?refcase=f_asc4b__f02_picker",
+  "budget": 7784,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_asc4b\\f02_picker.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f_asc4b__f03_detail",
+  "shot": "f03_detail",
+  "page": "ascensionlib_fusion",
+  "url": "/ascensionlib/fusion.html?refcase=f_asc4b__f03_detail",
+  "budget": 10706,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_asc4b\\f03_detail.png",
+  "unmappable": [],
+  "steps": 7
+ },
+ {
+  "case": "f_asc4b__f04_review",
+  "shot": "f04_review",
+  "page": "ascensionlib_fusion",
+  "url": "/ascensionlib/fusion.html?refcase=f_asc4b__f04_review",
+  "budget": 13056,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_asc4b\\f04_review.png",
+  "unmappable": [],
+  "steps": 8
+ }
+]

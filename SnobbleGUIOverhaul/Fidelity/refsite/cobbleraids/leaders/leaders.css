@@ -1,0 +1,19 @@
+#board { margin: 1.4cqw 3cqw 0; height: calc(100% - 7.4cqw - 3cqw); padding: 1.6cqw 2.4cqw 1.2cqw; display: flex; flex-direction: column; gap: 0.8cqw; }
+#nav { display: flex; align-items: center; gap: 1.6cqw; }
+#nav .btn { padding: 0.5cqw 1.6cqw; }
+#boardTitle { flex: 1; text-align: center; font: 700 max(14px, 2cqw) var(--pix); letter-spacing: 0.04em; }
+#head, .row { display: grid; grid-template-columns: 7cqw 1fr 16cqw; align-items: center; gap: 1cqw; padding: 0 1.4cqw; }
+#head { color: var(--mu); font-size: var(--fs-s); letter-spacing: 0.14em; padding-bottom: 0.4cqw; border-bottom: 1px dashed rgba(70, 227, 255, 0.25); }
+#head span:last-child, .row .val { text-align: right; }
+#rows { flex: 1; display: flex; flex-direction: column; gap: 0.4cqw; min-height: 0; overflow: hidden; }
+.row { position: relative; flex: 1 1 0; max-height: 3.7cqw; min-height: 0; background: rgba(7, 42, 69, 0.6); border-left: 0.35cqw solid #1d6f8f; font-size: var(--fs-l); }
+.row .rank { color: var(--mu); font-weight: 600; }
+.row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .val { color: var(--hi); font-weight: 600; }
+.row.r1 { border-left-color: var(--leg); } .row.r1 .rank { color: var(--leg); }
+.row.r2 { border-left-color: #c8d6df; } .row.r2 .rank { color: #c8d6df; }
+.row.r3 { border-left-color: #d98b52; } .row.r3 .rank { color: #d98b52; }
+.row.you { background: rgba(70, 227, 255, 0.16); box-shadow: 0 0 0 1px var(--hi) inset; }
+.row.you .name::after { content: "  YOU"; color: var(--hi); font-size: var(--fs-s); letter-spacing: 0.1em; }
+#rows .empty { padding: 6cqw 0; }
+#counts { color: var(--mu); text-align: center; font-size: var(--fs-s); letter-spacing: 0.08em; }

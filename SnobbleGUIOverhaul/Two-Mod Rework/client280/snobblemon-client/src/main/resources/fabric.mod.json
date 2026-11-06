@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "snobblemon_client",
+  "version": "${version}",
+  "name": "Snobblemon Client",
+  "description": "Generic GUI framework for Snobblemon servers: draws server-defined menus with art delivered by the server's resource pack. Contains no server branding.",
+  "authors": ["Snobblemon"],
+  "license": "All Rights Reserved",
+  "environment": "client",
+  "mixins": ["snobblemon_client.mixins.json"],
+  "provides": ["snobblehubclient"],
+  "entrypoints": {
+    "main": ["net.snobblemon.hubclient.HubClientMain"],
+    "client": ["net.snobblemon.hubclient.HubClient", "net.snobblemon.client.SnobblemonClient", "net.snobblemon.client.cosmetics.CosmeticsClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*",
+    "owo-lib": ">=0.12.15"
+  }
+}

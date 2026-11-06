@@ -1,0 +1,32 @@
+[
+ [
+  "a01_browse",
+  "auction",
+  95.6,
+  []
+ ],
+ [
+  "a02_detail",
+  "auction",
+  97.6,
+  []
+ ],
+ [
+  "a03_confirm",
+  "auction",
+  94.4,
+  []
+ ],
+ [
+  "a04_mine",
+  "auction",
+  94.5,
+  []
+ ],
+ [
+  "a05_sell",
+  "auction",
+  94.5,
+  []
+ ]
+]

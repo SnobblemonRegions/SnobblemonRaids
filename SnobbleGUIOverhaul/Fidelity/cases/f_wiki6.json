@@ -1,0 +1,74 @@
+[
+ {
+  "case": "f_wiki6__w01_home",
+  "shot": "w01_home",
+  "page": "wiki",
+  "url": "/wiki/index.html?refcase=f_wiki6__w01_home",
+  "budget": 3503,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_wiki6\\w01_home.png",
+  "unmappable": [],
+  "steps": 0
+ },
+ {
+  "case": "f_wiki6__w02_mod",
+  "shot": "w02_mod",
+  "page": "wiki",
+  "url": "/wiki/index.html?refcase=f_wiki6__w02_mod",
+  "budget": 5300,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_wiki6\\w02_mod.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_wiki6__w03_page",
+  "shot": "w03_page",
+  "page": "wiki",
+  "url": "/wiki/index.html?refcase=f_wiki6__w03_page",
+  "budget": 7641,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_wiki6\\w03_page.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_wiki6__w04_next",
+  "shot": "w04_next",
+  "page": "wiki",
+  "url": "/wiki/index.html?refcase=f_wiki6__w04_next",
+  "budget": 9992,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_wiki6\\w04_next.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f_wiki6__w05_home",
+  "shot": "w05_home",
+  "page": "wiki",
+  "url": "/wiki/index.html?refcase=f_wiki6__w05_home",
+  "budget": 12345,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_wiki6\\w05_home.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f_wiki6__w06_towers",
+  "shot": "w06_towers",
+  "page": "wiki",
+  "url": "/wiki/index.html?refcase=f_wiki6__w06_towers",
+  "budget": 14492,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_wiki6\\w06_towers.png",
+  "unmappable": [],
+  "steps": 6
+ },
+ {
+  "case": "f_wiki6__w07_search",
+  "shot": "w07_search",
+  "page": "wiki",
+  "url": "/wiki/index.html?refcase=f_wiki6__w07_search",
+  "budget": 14522,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_wiki6\\w07_search.png",
+  "unmappable": [
+   "clickbox search"
+  ],
+  "steps": 7
+ }
+]

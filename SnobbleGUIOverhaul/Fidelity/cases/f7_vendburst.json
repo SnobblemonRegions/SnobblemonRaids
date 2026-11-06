@@ -1,0 +1,52 @@
+[
+ {
+  "case": "f7_vendburst__v01_before",
+  "shot": "v01_before",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_vendburst__v01_before",
+  "budget": 5123,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_vendburst\\v01_before.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_vendburst__v02_burst_a",
+  "shot": "v02_burst_a",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_vendburst__v02_burst_a",
+  "budget": 7473,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_vendburst\\v02_burst_a.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f7_vendburst__v03_burst_b",
+  "shot": "v03_burst_b",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_vendburst__v03_burst_b",
+  "budget": 7473,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_vendburst\\v03_burst_b.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f7_vendburst__v04_burst_c",
+  "shot": "v04_burst_c",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_vendburst__v04_burst_c",
+  "budget": 8693,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_vendburst\\v04_burst_c.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f7_vendburst__v05_after",
+  "shot": "v05_after",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_vendburst__v05_after",
+  "budget": 8973,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_vendburst\\v05_after.png",
+  "unmappable": [],
+  "steps": 2
+ }
+]

@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.snobblemon.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "HumanoidArmorLayerMixin",
+    "PlayerRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

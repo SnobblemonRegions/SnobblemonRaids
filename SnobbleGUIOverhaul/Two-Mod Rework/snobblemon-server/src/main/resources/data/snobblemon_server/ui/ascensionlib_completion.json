@@ -1,0 +1,711 @@
+{
+ "v": 2,
+ "id": "ascensionlib_completion",
+ "channel": "ascension_completion_ready",
+ "hello": "ready",
+ "bye": false,
+ "title": "Tower completion",
+ "width": 720,
+ "height": 560,
+ "root": {
+  "type": "column",
+  "w": 720,
+  "h": 560,
+  "children": [
+   {
+    "type": "column",
+    "w": 684,
+    "h": 524,
+    "bg": "#07131C",
+    "children": [
+     {
+      "type": "row",
+      "w": "fill",
+      "pad": [
+       8,
+       14,
+       8,
+       14
+      ],
+      "gap": 10,
+      "cross": "center",
+      "bg": "#0A1B27",
+      "bsides": "b",
+      "border": "#1F6B86",
+      "bw": 2,
+      "children": [
+       {
+        "type": "column",
+        "w": 90,
+        "h": 14,
+        "children": [
+         {
+          "type": "column",
+          "x": -14,
+          "y": -13,
+          "w": 120,
+          "h": 40,
+          "bg": "tex:ascensionlib/headdeco.png",
+          "children": []
+         }
+        ]
+       },
+       {
+        "type": "label",
+        "text": "TOWER COMPLETION",
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "ls": 1.2,
+        "color": "#4AD8F6",
+        "shadow": false
+       },
+       {
+        "type": "spacer",
+        "w": "fill"
+       },
+       {
+        "type": "button",
+        "text": "Calm",
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false,
+        "color": "#BDF1FF",
+        "hover_color": "#ffffff",
+        "bg": "#0d2230",
+        "hover": "#0d2230",
+        "border": "#1F6B86",
+        "hover_border": "#4AD8F6",
+        "bw": 2,
+        "pad": [
+         1,
+         8,
+         1,
+         8
+        ],
+        "shrink": true,
+        "h": 22,
+        "id": "calm_off",
+        "set": {
+         "calm": "'1'"
+        },
+        "args": {
+         "calm": "bool"
+        },
+        "argv": {
+         "calm": "'true'"
+        },
+        "msg": {
+         "channel": "ascension_ui_set",
+         "calm": "{calm}"
+        },
+        "if": "$calm != '1'"
+       },
+       {
+        "type": "button",
+        "text": "Calm",
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false,
+        "color": "#ffffff",
+        "hover_color": "#ffffff",
+        "bg": "#0d2230",
+        "hover": "#0d2230",
+        "border": "#4AD8F6",
+        "hover_border": "#4AD8F6",
+        "bw": 2,
+        "pad": [
+         1,
+         8,
+         1,
+         8
+        ],
+        "shrink": true,
+        "h": 22,
+        "id": "calm_on",
+        "set": {
+         "calm": "''"
+        },
+        "args": {
+         "calm": "bool"
+        },
+        "argv": {
+         "calm": "'false'"
+        },
+        "msg": {
+         "channel": "ascension_ui_set",
+         "calm": "{calm}"
+        },
+        "if": "$calm == '1'"
+       },
+       {
+        "type": "row",
+        "gap": 4,
+        "cross": "center",
+        "children": [
+         {
+          "type": "button",
+          "text": "\u2212",
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "color": "#BDF1FF",
+          "hover_color": "#ffffff",
+          "bg": "#0d2230",
+          "hover": "#0d2230",
+          "border": "#1F6B86",
+          "hover_border": "#4AD8F6",
+          "bw": 2,
+          "pad": [
+           1,
+           8,
+           1,
+           8
+          ],
+          "shrink": true,
+          "h": 22,
+          "id": "ui_minus",
+          "set": {
+           "zoompct": "$zoompct - 10"
+          },
+          "args": {
+           "percent": "int:60:160"
+          },
+          "argv": {
+           "percent": "$zoompct - 10"
+          },
+          "msg": {
+           "channel": "ascension_ui_set",
+           "percent": "{percent}"
+          }
+         },
+         {
+          "type": "label",
+          "text": "{$zoompct}%",
+          "font": "monocraft",
+          "size": 11,
+          "lh": 15.4,
+          "color": "#5DA6BD",
+          "shadow": false,
+          "min_w": 44,
+          "text_align": "center"
+         },
+         {
+          "type": "button",
+          "text": "+",
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "color": "#BDF1FF",
+          "hover_color": "#ffffff",
+          "bg": "#0d2230",
+          "hover": "#0d2230",
+          "border": "#1F6B86",
+          "hover_border": "#4AD8F6",
+          "bw": 2,
+          "pad": [
+           1,
+           8,
+           1,
+           8
+          ],
+          "shrink": true,
+          "h": 22,
+          "id": "ui_plus",
+          "set": {
+           "zoompct": "$zoompct + 10"
+          },
+          "args": {
+           "percent": "int:60:160"
+          },
+          "argv": {
+           "percent": "$zoompct + 10"
+          },
+          "msg": {
+           "channel": "ascension_ui_set",
+           "percent": "{percent}"
+          }
+         }
+        ]
+       },
+       {
+        "type": "button",
+        "text": "X",
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false,
+        "color": "#BDF1FF",
+        "hover_color": "#ffffff",
+        "bg": "#0d2230",
+        "hover": "#0d2230",
+        "border": "#1F6B86",
+        "hover_border": "#4AD8F6",
+        "bw": 2,
+        "pad": [
+         1,
+         8,
+         1,
+         8
+        ],
+        "shrink": true,
+        "h": 22,
+        "id": "x_close",
+        "close": true
+       }
+      ]
+     },
+     {
+      "type": "column",
+      "w": "fill",
+      "h": "fill",
+      "pad": [
+       10,
+       16,
+       10,
+       16
+      ],
+      "gap": 8,
+      "children": [
+       {
+        "type": "label",
+        "text": "{vm.banner}",
+        "color": "{vm.tierColor}",
+        "bg": "{vm.tierBg}",
+        "border": "{vm.tierColor}",
+        "w": "fill",
+        "text_align": "center",
+        "pad": [
+         12,
+         8,
+         12,
+         8
+        ],
+        "anim": "pop",
+        "anim_ms": 500,
+        "font": "monocraft",
+        "size": 24.0,
+        "lh": 33.6,
+        "shadow": false
+       },
+       {
+        "type": "label",
+        "text": "{vm.sub}",
+        "color": "#5DA6BD",
+        "w": "fill",
+        "text_align": "center",
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false
+       },
+       {
+        "type": "row",
+        "w": "fill",
+        "gap": 4,
+        "children": [
+         {
+          "type": "column",
+          "w": "fill",
+          "gap": 2,
+          "cross": "center",
+          "repeat": {
+           "for": "vm.tiers",
+           "as": "tt",
+           "limit": 6
+          },
+          "children": [
+           {
+            "type": "bar",
+            "w": "fill",
+            "h": 8,
+            "value": "tt.v",
+            "max": "1",
+            "fill": "{tt.color}",
+            "fill_bg": "#0A2A3A",
+            "radius": 1
+           },
+           {
+            "type": "label",
+            "text": "{tt.text}",
+            "color": "#5DA6BD",
+            "font": "monocraft",
+            "size": 12,
+            "lh": 16.8,
+            "shadow": false
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "type": "scroll",
+        "id": "reveal",
+        "w": "fill",
+        "h": "fill",
+        "children": [
+         {
+          "type": "column",
+          "w": "fill",
+          "gap": 5,
+          "children": [
+           {
+            "type": "row",
+            "w": "fill",
+            "gap": 10,
+            "cross": "center",
+            "bg": "#0C2231",
+            "border": "#1F6B86",
+            "pad": [
+             5,
+             8,
+             5,
+             8
+            ],
+            "anim": "slide",
+            "anim_ms": 250,
+            "repeat": {
+             "for": "vm.pile",
+             "as": "l",
+             "limit": 12
+            },
+            "children": [
+             {
+              "type": "image",
+              "pokemon": "{l.icon}",
+              "w": 32,
+              "h": 32,
+              "bg": "#0A2A3A",
+              "border": "#1F6B86"
+             },
+             {
+              "type": "label",
+              "text": "{l.name}",
+              "color": "{l.color}",
+              "w": "fill",
+              "font": "monocraft",
+              "size": 12,
+              "lh": 16.8,
+              "shadow": false
+             },
+             {
+              "type": "label",
+              "text": "{l.amount}",
+              "color": "#4AD8F6",
+              "font": "monocraft",
+              "size": 14.4,
+              "lh": 20.2,
+              "shadow": false
+             }
+            ]
+           },
+           {
+            "type": "label",
+            "text": "THE CROWN",
+            "if": "vm.crownLabel",
+            "color": "#F2CF3A",
+            "w": "fill",
+            "text_align": "center",
+            "pad": [
+             6,
+             0,
+             2,
+             0
+            ],
+            "font": "monocraft",
+            "size": 12,
+            "lh": 16.8,
+            "shadow": false
+           },
+           {
+            "type": "row",
+            "w": "fill",
+            "h": 64,
+            "gap": 12,
+            "cross": "center",
+            "bg": "#0C2231",
+            "border": "{c.border}",
+            "pad": [
+             8,
+             10,
+             8,
+             10
+            ],
+            "anim": "pop",
+            "anim_ms": 350,
+            "repeat": {
+             "for": "vm.crowns",
+             "as": "c",
+             "limit": 6
+            },
+            "children": [
+             {
+              "type": "image",
+              "pokemon": "{c.icon}",
+              "w": 48,
+              "h": 48,
+              "bg": "#0A2A3A",
+              "border": "#1F6B86"
+             },
+             {
+              "type": "label",
+              "text": "*",
+              "if": "c.star",
+              "color": "#F2CF3A",
+              "w": 48,
+              "text_align": "center",
+              "font": "monocraft",
+              "size": 24.0,
+              "lh": 33.6,
+              "shadow": false
+             },
+             {
+              "type": "label",
+              "text": "?",
+              "if": "c.rolling",
+              "color": "#F2CF3A",
+              "w": 48,
+              "text_align": "center",
+              "anim": "pulse",
+              "anim_ms": 500,
+              "font": "monocraft",
+              "size": 24.0,
+              "lh": 33.6,
+              "shadow": false
+             },
+             {
+              "type": "column",
+              "w": "fill",
+              "gap": 1,
+              "children": [
+               {
+                "type": "label",
+                "text": "{c.name}",
+                "color": "{c.color}",
+                "font": "monocraft",
+                "size": 14.4,
+                "lh": 20.2,
+                "shadow": false
+               },
+               {
+                "type": "label",
+                "text": "{c.hint}",
+                "color": "#5DA6BD",
+                "font": "monocraft",
+                "size": 12,
+                "lh": 16.8,
+                "shadow": false
+               }
+              ]
+             }
+            ]
+           },
+           {
+            "type": "label",
+            "text": "{vm.report}",
+            "color": "#5DA6BD",
+            "wrap": true,
+            "w": "fill",
+            "text_align": "center",
+            "pad": [
+             6,
+             0,
+             0,
+             0
+            ],
+            "font": "monocraft",
+            "size": 12,
+            "lh": 16.8,
+            "shadow": false
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "type": "row",
+      "w": "fill",
+      "pad": [
+       8,
+       14,
+       8,
+       14
+      ],
+      "gap": 8,
+      "cross": "center",
+      "bg": "#0A1B27",
+      "border": "#1F6B86",
+      "children": [
+       {
+        "type": "label",
+        "text": "{vm.msg}",
+        "color": "#5DA6BD",
+        "w": "fill",
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false
+       },
+       {
+        "type": "button",
+        "text": "Share",
+        "h": 22,
+        "pad": [
+         3,
+         10,
+         3,
+         10
+        ],
+        "cross": "center",
+        "align": "center",
+        "bg": "#0f3347",
+        "border": "#1F6B86",
+        "hover": "#0f3347",
+        "disabled": "#0a1b27",
+        "color": "#BDF1FF",
+        "id": "share",
+        "w": 80,
+        "enabled": "vm.canShare",
+        "msg": {
+         "channel": "snobble_view",
+         "action": "share"
+        },
+        "args": {},
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false,
+        "hover_border": "#4AD8F6",
+        "hover_color": "#ffffff",
+        "bw": 2
+       },
+       {
+        "type": "button",
+        "text": "Replay",
+        "h": 22,
+        "pad": [
+         3,
+         10,
+         3,
+         10
+        ],
+        "cross": "center",
+        "align": "center",
+        "bg": "#0f3347",
+        "border": "#1F6B86",
+        "hover": "#0f3347",
+        "disabled": "#0a1b27",
+        "color": "#BDF1FF",
+        "id": "replay",
+        "w": 80,
+        "msg": {
+         "channel": "snobble_view",
+         "action": "replay"
+        },
+        "args": {},
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false,
+        "hover_border": "#4AD8F6",
+        "hover_color": "#ffffff",
+        "bw": 2
+       },
+       {
+        "type": "button",
+        "text": "Collect",
+        "h": 22,
+        "pad": [
+         3,
+         10,
+         3,
+         10
+        ],
+        "cross": "center",
+        "align": "center",
+        "bg": "#8e1426",
+        "border": "#eef2f7",
+        "hover": "#a51a30",
+        "disabled": "#2a1a22",
+        "color": "#ffffff",
+        "id": "finish",
+        "w": 100,
+        "msg": {
+         "channel": "snobble_view",
+         "action": "finish"
+        },
+        "args": {},
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false,
+        "hover_color": "#ffffff",
+        "bw": 2
+       }
+      ],
+      "bsides": "t",
+      "bw": 2
+     },
+     {
+      "type": "spacer",
+      "id": "tick",
+      "w": 0,
+      "h": 0,
+      "every_ms": 500,
+      "args": {},
+      "msg": {
+       "channel": "snobble_view",
+       "action": "tick"
+      }
+     },
+     {
+      "type": "spacer",
+      "id": "beat",
+      "w": 0,
+      "h": 0,
+      "every_ms": 2000,
+      "args": {},
+      "msg": {
+       "channel": "ascension_gui_beat"
+      }
+     }
+    ],
+    "x": 18,
+    "y": 18
+   },
+   {
+    "type": "column",
+    "x": 18,
+    "y": 18,
+    "w": 684,
+    "h": 524,
+    "bg": "tex:ascensionlib/scan.png",
+    "children": []
+   },
+   {
+    "type": "column",
+    "x": 0,
+    "y": 0,
+    "w": 720,
+    "h": 560,
+    "bg": "sprite:ascensionlib/bezel_none",
+    "children": []
+   }
+  ]
+ },
+ "fit": [
+  878.048780487805,
+  682.9268292682927
+ ],
+ "nodim": true,
+ "state": {
+  "zoompct": 100,
+  "calm": ""
+ }
+}

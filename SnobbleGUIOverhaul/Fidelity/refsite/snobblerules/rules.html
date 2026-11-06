@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head><script src="/_inject.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snobblemon Regions Rules</title>
+<style>
+/* No animations, no blend modes, no big shadows, no hover movement: in the game this page is drawn by an off-screen browser and every
+   repaint is copied to the screen, so a quiet page stays responsive (see the QuestDex notes). */
+:root {
+  --bg0: #0b1019; --bg1: #121a29; --panel: #151e30; --panel2: #1b2740; --line: #2b3a58; --ink: #eef3fb; --mute: #9fb0cb; --dim: #6c7c99;
+  --root: #6fcf6a; --tide: #5bb8ff; --dusk: #b48cff; --gold: #ffd166; --ok: #4ade80; --okd: #1f9d55; --bad: #ff6b6b;
+  --emoji: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  background: linear-gradient(115deg, #0a1a18 0%, #0b1019 34%, #0d1224 66%, #17102b 100%);
+  color: var(--ink); font: 15px/1.5 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; user-select: none; -webkit-user-select: none;
+}
+.emo { font-family: var(--emoji); }
+.book {
+  position: absolute; left: 0; right: 0; margin: 0 auto; top: 0; display: flex; background: var(--bg1);
+  border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+}
+/* ---- left column ---- */
+.side { width: 270px; flex: none; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 18px 14px 14px; }
+.brand { display: flex; gap: 11px; align-items: center; padding: 2px 6px 16px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+.logo { width: 44px; height: 44px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 24px; flex: none; }
+.brand .t { font-weight: 800; letter-spacing: .06em; font-size: 15px; line-height: 1.15; }
+.brand .s { color: var(--mute); font-size: 12px; letter-spacing: .04em; }
+.steps { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 5px; }
+.step {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: transparent; color: var(--mute); border: 1px solid transparent;
+  border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 14px; cursor: pointer;
+}
+.step:hover { background: var(--panel2); color: var(--ink); }
+.step.cur { background: var(--panel2); border-color: var(--line); color: var(--ink); font-weight: 700; }
+.step .mark { width: 26px; height: 26px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;
+  background: #243250; color: var(--mute); border: 1px solid var(--line); }
+.step.done .mark { background: var(--okd); border-color: var(--ok); color: #fff; }
+.step .nm { flex: 1; line-height: 1.2; }
+.step .ic { font-size: 16px; font-family: var(--emoji); }
+.prog { padding: 12px 6px 2px; border-top: 1px solid var(--line); margin-top: 10px; }
+.prog .lab { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--mute); margin-bottom: 6px; }
+.prog .lab b { color: var(--ink); }
+.track { height: 9px; border-radius: 6px; background: #223048; overflow: hidden; }
+.track i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--root), var(--tide), var(--dusk)); border-radius: 6px; }
+/* ---- right column ---- */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.phead { display: flex; align-items: center; gap: 12px; padding: 16px 26px 12px; border-bottom: 1px solid var(--line); }
+.phead .pi { font-size: 28px; font-family: var(--emoji); }
+.phead h2 { font-size: 22px; letter-spacing: .02em; flex: 1; }
+.phead .pn { color: var(--mute); font-size: 13px; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 3px 12px; }
+.scrollwrap { flex: 1; min-height: 0; position: relative; }
+.scroll { position: absolute; inset: 0; overflow-y: auto; padding: 18px 28px 26px; }
+.scroll::-webkit-scrollbar { width: 12px; }
+.scroll::-webkit-scrollbar-track { background: #101827; }
+.scroll::-webkit-scrollbar-thumb { background: #3b4f78; border-radius: 6px; border: 2px solid #101827; }
+.more { position: absolute; left: 0; right: 0; bottom: 0; height: 46px; pointer-events: none; display: none; align-items: flex-end; justify-content: center; padding-bottom: 6px;
+  background: linear-gradient(0deg, rgba(18,26,41,.96), rgba(18,26,41,0)); color: var(--gold); font-size: 13px; font-weight: 700; letter-spacing: .04em; }
+.more.on { display: flex; }
+/* ---- blocks ---- */
+.banner { text-align: center; padding: 22px 0 12px; }
+.banner .bi { font-size: 56px; line-height: 1; font-family: var(--emoji); }
+.banner h1 { font-size: 34px; letter-spacing: .12em; margin-top: 8px; background: linear-gradient(90deg, var(--root), var(--tide), var(--dusk)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.banner .sub { color: var(--mute); letter-spacing: .28em; font-size: 14px; margin-top: 4px; font-weight: 700; }
+.tagline { text-align: center; font-size: 19px; color: var(--gold); font-weight: 700; padding: 10px 0 14px; }
+.tagline span { font-family: var(--emoji); }
+p.t { color: #dbe5f6; font-size: 16px; padding: 6px 0; }
+.h { display: flex; align-items: center; gap: 9px; font-size: 18px; font-weight: 800; color: var(--gold); padding: 14px 0 6px; }
+.h span { font-family: var(--emoji); }
+.rule { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px 12px; margin: 0 0 12px; }
+.rule .rt { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.rule .n { min-width: 34px; height: 26px; padding: 0 8px; border-radius: 13px; background: var(--panel2); border: 1px solid var(--line); color: var(--gold); font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+.rule .ri { font-size: 20px; font-family: var(--emoji); }
+.rule h3 { font-size: 17px; font-weight: 800; }
+.rule p { color: #c9d6ec; font-size: 15px; padding: 3px 0; }
+.rule .emph { margin-top: 6px; background: #3a1d28; border: 1px solid #7a2e45; color: #ffc4cf; border-radius: 8px; padding: 6px 12px; font-weight: 800; }
+ul.l { list-style: none; padding: 2px 0 6px; }
+ul.l li { display: flex; gap: 10px; align-items: center; padding: 6px 12px; margin: 5px 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; color: #dbe5f6; font-size: 15.5px; }
+ul.l li span { font-family: var(--emoji); font-size: 18px; width: 26px; text-align: center; }
+.regions { display: flex; gap: 12px; justify-content: center; padding: 8px 0 12px; flex-wrap: wrap; }
+.regions div { min-width: 170px; text-align: center; padding: 12px 18px; border-radius: 12px; background: var(--panel); border: 2px solid var(--c, var(--line)); color: var(--c, var(--ink)); font-weight: 800; letter-spacing: .1em; font-size: 16px; }
+.regions div span { display: block; font-size: 28px; font-family: var(--emoji); line-height: 1.2; }
+.howto { background: var(--panel2); border: 1px solid var(--line); border-left: 4px solid var(--gold); border-radius: 10px; padding: 12px 18px; margin: 14px 0 6px; }
+.howto h4 { color: var(--gold); font-size: 15px; margin-bottom: 4px; letter-spacing: .04em; }
+.howto ol { padding-left: 22px; color: #dbe5f6; font-size: 15px; }
+.howto li { padding: 2px 0; }
+.note { background: #12301f; border: 1px solid #2a6a45; color: #b9f3cf; border-radius: 10px; padding: 10px 16px; margin: 8px 0; font-weight: 700; text-align: center; font-size: 16px; }
+.note .emo { font-family: var(--emoji); }
+/* ---- bottom bar ---- */
+.status { padding: 8px 26px; border-top: 1px solid var(--line); background: var(--panel); font-size: 13.5px; color: var(--mute); min-height: 36px; display: flex; align-items: center; gap: 8px; }
+.status.ok { color: var(--ok); font-weight: 700; }
+.bar { display: flex; align-items: center; gap: 12px; padding: 12px 22px 14px; background: var(--panel); border-top: 1px solid var(--line); }
+.bar .sp { flex: 1; }
+.btn { font: inherit; font-weight: 700; font-size: 15px; border-radius: 10px; padding: 10px 18px; border: 1px solid var(--line); background: var(--panel2); color: var(--ink); cursor: pointer; }
+.btn:hover { background: #26375a; }
+.btn.next { background: #1d4f88; border-color: #3a7bc0; }
+.btn.next:hover { background: #2461a8; }
+.btn:disabled, .btn:disabled:hover { background: #20283a; border-color: #2b344a; color: #5f6b84; cursor: not-allowed; }
+/* The confirm button: grey and dead until every page has been read, then green. */
+.btn.confirm { padding: 12px 26px; font-size: 16px; letter-spacing: .02em; background: #1f9d55; border-color: #4ade80; color: #fff; }
+.btn.confirm:hover { background: #25b563; }
+.btn.confirm:disabled, .btn.confirm:disabled:hover { background: #3a3f4c; border-color: #4a4f5c; color: #8a909e; cursor: not-allowed; }
+.cnote { font-size: 12px; color: var(--dim); text-align: right; min-width: 0; }
+/* ---- done ---- */
+.overlay { position: absolute; inset: 0; background: rgba(6,9,15,.88); display: none; align-items: center; justify-content: center; z-index: 5; }
+.overlay.on { display: flex; }
+.card { width: 540px; max-width: 92%; background: var(--panel); border: 2px solid var(--ok); border-radius: 16px; padding: 28px 30px; text-align: center; }
+.card .big { font-size: 54px; font-family: var(--emoji); }
+.card h2 { font-size: 26px; color: var(--ok); margin: 6px 0 8px; }
+.card p { color: #cfdcf2; font-size: 16px; padding: 4px 0; }
+.card .btn { margin-top: 16px; }
+.toast { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); background: #3a1d28; border: 1px solid #7a2e45; color: #ffd0d8; padding: 9px 18px; border-radius: 10px; font-weight: 700; display: none; z-index: 9; max-width: 80%; text-align: center; }
+.toast.on { display: block; }
+.toast.good { background: #12301f; border-color: #2a6a45; color: #b9f3cf; }
+</style>
+</head>
+<body>
+<div class="book" id="book">
+  <aside class="side">
+    <div class="brand"><div class="logo emo" id="logo">📜</div><div><div class="t" id="title">RULES</div><div class="s" id="subtitle"></div></div></div>
+    <nav class="steps" id="steps"></nav>
+    <div class="prog"><div class="lab"><span id="progText">Loading…</span><b id="progNum"></b></div><div class="track"><i id="fill"></i></div></div>
+  </aside>
+  <section class="main">
+    <header class="phead"><span class="pi" id="pIcon"></span><h2 id="pTitle"></h2><span class="pn" id="pNum"></span></header>
+    <div class="scrollwrap"><div class="scroll" id="scroll"><div id="content"></div></div><div class="more" id="more">▼ scroll down to keep reading ▼</div></div>
+    <div class="status" id="status"></div>
+    <footer class="bar">
+      <button class="btn" id="prev">◀ Previous</button>
+      <button class="btn next" id="next">Next page ▶</button>
+      <span class="sp"></span>
+      <span class="cnote" id="cnote"></span>
+      <button class="btn confirm" id="confirm" disabled>I have read the rules</button>
+      <button class="btn" id="close">Close</button>
+    </footer>
+  </section>
+  <div class="overlay" id="done"><div class="card"><div class="big">🎉</div><h2>Rules quest complete!</h2>
+    <p>Thank you for reading the rules. Every other quest is now open to you.</p>
+    <button class="btn confirm" id="doneClose">Start playing</button></div></div>
+  <div class="toast" id="toast"></div>
+</div>
+<script>
+(function () {
+'use strict';
+// ---- environment: inside the game WebGUI provides window.webgui; anywhere else the page just waits (the test harness stands in) ----
+window.webgui = window.webgui || {};
+var W = window.webgui;
+W.postToGame = W.postToGame || function () {};
+W.closeGui = W.closeGui || function () {};
+W.on = W.on || function (n, f) { window.addEventListener('webgui:' + n, function (e) { f(e.detail); }); };
+
+var $ = function (id) { return document.getElementById(id); };
+// Same trick as QuestDex: writing identical markup/text is skipped, so a quiet page never repaints.
+function setHtml(el, v) { v = String(v); if (el._h === v) return; el._h = v; el.innerHTML = v; }
+function setText(el, v) { v = String(v); if (el._t === v) return; el._t = v; el.textContent = v; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+var S = { book: null, pages: [], read: {}, cur: 0, accepted: false, acceptedAt: 0, minMs: 3000, shownAt: 0, pend: {}, busy: false, live: false, trainer: '', doneShown: false };
+
+function send(m) { m.channel = 'snobblerules'; W.postToGame(m); }
+
+// The book is fitted to the window like the QuestDex: text scales with the window height.
+function fit() {
+  var vw = window.innerWidth, vh = window.innerHeight, z = Math.max(.7, Math.min(1.7, vh / 780 * .92)), b = $('book');
+  b.style.zoom = z; b.style.width = Math.min(vw / z - 24, 1240) + 'px'; b.style.height = (vh / z - 24) + 'px'; b.style.top = (12 / z) + 'px';
+  checkBottom();
+}
+window.addEventListener('resize', fit);
+
+// ---- rendering ----
+function block(b) {
+  var t = b.t;
+  if (t === 'banner') return '<div class="banner"><div class="bi">' + esc(b.icon || '') + '</div><h1>' + esc(b.text) + '</h1>' + (b.sub ? '<div class="sub">' + esc(b.sub) + '</div>' : '') + '</div>';
+  if (t === 'tagline') return '<div class="tagline"><span>' + esc(b.icon || '') + '</span> ' + esc(b.text) + ' <span>' + esc(b.icon2 || '') + '</span></div>';
+  if (t === 'p') return '<p class="t">' + esc(b.text) + '</p>';
+  if (t === 'h') return '<div class="h"><span>' + esc(b.icon || '') + '</span>' + esc(b.text) + '</div>';
+  if (t === 'note') return '<div class="note emo">' + esc(b.text) + '</div>';
+  if (t === 'rule') {
+    var paras = (b.text || []).map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('');
+    return '<div class="rule"><div class="rt"><span class="n">' + esc(b.n == null ? '' : b.n) + '</span><span class="ri">' + esc(b.icon || '') + '</span><h3>' + esc(b.title) + '</h3></div>' + paras +
+      (b.emph ? '<div class="emph">' + esc(b.emph) + '</div>' : '') + '</div>';
+  }
+  if (t === 'list') return '<ul class="l">' + (b.items || []).map(function (it) {
+    return typeof it === 'string' ? '<li>' + esc(it) + '</li>' : '<li><span>' + esc(it.icon || '') + '</span>' + esc(it.text) + '</li>'; }).join('') + '</ul>';
+  if (t === 'regions') return '<div class="regions">' + (b.items || []).map(function (r) {
+    var c = /^#[0-9a-fA-F]{3,8}$/.test(r.color || '') ? r.color : '#9fb0cb';
+    return '<div style="--c:' + c + '"><span>' + esc(r.icon || '') + '</span>' + esc(r.name) + '</div>'; }).join('') + '</div>';
+  return '';
+}
+// Only on the first page, only until the rules are accepted: what the player has to do to unlock the button.
+function howto() {
+  var n = S.pages.length;
+  return '<div class="howto"><h4>How this works</h4><ol><li>There are <b>' + n + ' pages</b>. Read each one to the very end (scroll down).</li>' +
+    '<li>Press <b>Next page</b> to continue. A page counts once it has been open for a few seconds and you reached its end.</li>' +
+    '<li>When all ' + n + ' pages are ticked ✔ the grey <b>I have read the rules</b> button turns green. Press it to finish the Rules quest.</li></ol></div>';
+}
+function isRead(i) { return S.accepted || !!S.read[i]; }
+function readCount() { var n = 0; for (var i = 0; i < S.pages.length; i++) if (isRead(i)) n++; return n; }
+
+function renderSteps() {
+  setHtml($('steps'), S.pages.map(function (p, i) {
+    return '<button class="step' + (i === S.cur ? ' cur' : '') + (isRead(i) ? ' done' : '') + '" data-i="' + i + '"><span class="mark">' + (isRead(i) ? '✔' : (i + 1)) + '</span>' +
+      '<span class="nm">' + esc(p.title) + '</span><span class="ic">' + esc(p.icon || '') + '</span></button>';
+  }).join(''));
+}
+function renderPage() {
+  var p = S.pages[S.cur]; if (!p) return;
+  setText($('pTitle'), p.title); setText($('pIcon'), p.icon || ''); setText($('pNum'), 'Page ' + (S.cur + 1) + ' of ' + S.pages.length);
+  setHtml($('content'), (p.blocks || []).map(block).join('') + (S.cur === 0 && !S.accepted ? howto() : ''));
+}
+function renderChrome() {
+  var n = readCount(), total = S.pages.length, all = n >= total;
+  setText($('progText'), S.accepted ? 'All pages read' : 'Pages read'); setText($('progNum'), n + ' / ' + total);
+  $('fill').style.width = (total ? Math.round(n / total * 100) : 0) + '%';
+  $('prev').disabled = S.cur <= 0; $('next').disabled = S.cur >= total - 1;
+  var c = $('confirm');
+  if (S.accepted) {
+    c.disabled = true; setText(c, '✔ Rules quest completed'); setText($('cnote'), S.acceptedAt ? 'Accepted ' + new Date(S.acceptedAt).toLocaleDateString() : '');
+  } else {
+    c.disabled = !all || S.busy; setText(c, S.busy ? 'Sending…' : 'I have read the rules');
+    setText($('cnote'), all ? 'Press the button to finish the Rules quest.' : 'Greyed out until you have read all ' + total + ' pages (' + n + '/' + total + ').');
+  }
+  renderSteps();
+}
+// What the status line under the text says about the page on screen: the page must be shown a minimum time AND scrolled to its end.
+var atBottom = false;
+function checkBottom() {
+  var s = $('scroll'), b = s.scrollTop + s.clientHeight >= s.scrollHeight - 10;
+  if (b !== atBottom) { atBottom = b; }
+  $('more').classList.toggle('on', !b);
+  updateStatus();
+}
+function updateStatus() {
+  var el = $('status');
+  if (!S.live) { el.className = 'status'; setText(el, 'Connecting to the server…'); return; }
+  if (isRead(S.cur)) { el.className = 'status ok'; setText(el, S.accepted ? '✔ You have already completed the rules. This page is for reference.' : '✔ Page read. Go to the next page.'); return; }
+  el.className = 'status';
+  var left = Math.ceil((S.shownAt + S.minMs + 300 - Date.now()) / 1000);
+  if (!atBottom) setText(el, '📖 Scroll down to the end of the page to finish reading it.');
+  else if (left > 0) setText(el, '📖 Keep reading… (' + left + 's)');
+  else setText(el, '📖 Checking with the server…');
+}
+function show(i) {
+  if (i < 0 || i >= S.pages.length) return;
+  S.cur = i; S.shownAt = Date.now(); renderPage(); $('scroll').scrollTop = 0; atBottom = false;
+  send({ kind: 'view', page: i }); renderChrome();
+  setTimeout(checkBottom, 30);
+}
+// Every half second: if this page has been up long enough and read to the end, tell the server (it checks again with its own clock).
+setInterval(function () {
+  if (!S.live || S.accepted) return;
+  checkBottom();
+  var i = S.cur;
+  if (isRead(i) || !atBottom || Date.now() - S.shownAt < S.minMs + 300) return;
+  if (!S.pend[i] || Date.now() - S.pend[i] > 2000) { S.pend[i] = Date.now(); send({ kind: 'read', page: i }); }
+}, 500);
+
+$('scroll').addEventListener('scroll', checkBottom);
+$('steps').addEventListener('click', function (e) { var b = e.target.closest('[data-i]'); if (b) show(+b.getAttribute('data-i')); });
+$('prev').onclick = function () { show(S.cur - 1); };
+$('next').onclick = function () { show(S.cur + 1); };
+$('close').onclick = function () { send({ kind: 'bye' }); W.closeGui(); };
+$('doneClose').onclick = function () { $('done').classList.remove('on'); W.closeGui(); };
+$('confirm').onclick = function () {
+  if ($('confirm').disabled || S.busy) return;
+  S.busy = true; renderChrome(); send({ kind: 'accept' });
+  setTimeout(function () { if (S.busy) { S.busy = false; renderChrome(); } }, 6000);
+};
+window.addEventListener('keydown', function (e) {
+  if (e.key === 'ArrowRight') show(S.cur + 1); else if (e.key === 'ArrowLeft') show(S.cur - 1);
+});
+window.addEventListener('pagehide', function () { send({ kind: 'bye' }); });
+
+var toastT;
+function toast(msg, good) { var t = $('toast'); t.textContent = msg; t.className = 'toast on' + (good ? ' good' : ''); clearTimeout(toastT); toastT = setTimeout(function () { t.className = 'toast'; }, 3200); }
+
+// ---- server -> page ----
+W.on('rules_state', function (p) {
+  var wasAccepted = S.accepted;
+  S.book = p.book; S.pages = (p.book && p.book.pages) || []; S.accepted = !!p.accepted; S.acceptedAt = p.acceptedAt || 0;
+  S.minMs = Math.max(0, (p.minSeconds || 0) * 1000); S.trainer = p.trainer || '';
+  S.read = {}; (p.read || []).forEach(function (i) { S.read[i] = true; });
+  var first = !S.live; S.live = true; S.busy = false;
+  setText($('title'), p.book.title || 'RULES'); setText($('subtitle'), p.book.subtitle || '');
+  if (first) { var start = 0; if (!S.accepted) { while (start < S.pages.length - 1 && S.read[start]) start++; } S.cur = start; S.shownAt = Date.now(); renderPage(); send({ kind: 'view', page: S.cur }); }
+  renderChrome(); fit(); updateStatus();
+  if (S.accepted && !wasAccepted && !first && !S.doneShown) { S.doneShown = true; $('done').classList.add('on'); }
+});
+W.on('rules_progress', function (p) {
+  (p.read || []).forEach(function (i) { S.read[i] = true; });
+  renderChrome(); updateStatus();
+});
+W.on('rules_result', function (p) {
+  S.busy = false; renderChrome();
+  if (p.ok) { S.doneShown = true; $('done').classList.add('on'); } else toast(p.message || 'Something went wrong.', false);
+});
+
+// Ask for the rules; keep asking until the server answers (the page may open before the server has noticed).
+send({ kind: 'hello' });
+var helloT = setInterval(function () { if (S.live) clearInterval(helloT); else send({ kind: 'hello' }); }, 2500);
+fit();
+})();
+</script>
+</body>
+</html>

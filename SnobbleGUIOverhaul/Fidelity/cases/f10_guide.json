@@ -1,0 +1,22 @@
+[
+ {
+  "case": "f10_guide__g01_guide",
+  "shot": "g01_guide",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_guide__g01_guide",
+  "budget": 6686,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_guide\\g01_guide.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f10_guide__g02_settings",
+  "shot": "g02_settings",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_guide__g02_settings",
+  "budget": 9186,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_guide\\g02_settings.png",
+  "unmappable": [],
+  "steps": 3
+ }
+]

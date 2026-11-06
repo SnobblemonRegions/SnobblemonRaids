@@ -1,0 +1,92 @@
+[
+ {
+  "case": "f_asc2b__b01_owned",
+  "shot": "b01_owned",
+  "page": "ascensionlib_inspect",
+  "url": "/ascensionlib/inspect.html?refcase=f_asc2b__b01_owned",
+  "budget": 4984,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_asc2b\\b01_owned.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_asc2b__b02_row3",
+  "shot": "b02_row3",
+  "page": "ascensionlib_inspect",
+  "url": "/ascensionlib/inspect.html?refcase=f_asc2b__b02_row3",
+  "budget": 6848,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_asc2b\\b02_row3.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_asc2b__b03_scout",
+  "shot": "b03_scout",
+  "page": "ascensionlib_inspect",
+  "url": "/ascensionlib/inspect.html?refcase=f_asc2b__b03_scout",
+  "budget": 5412,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_asc2b\\b03_scout.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_asc2b__b04_scout2",
+  "shot": "b04_scout2",
+  "page": "ascensionlib_inspect",
+  "url": "/ascensionlib/inspect.html?refcase=f_asc2b__b04_scout2",
+  "budget": 7800,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_asc2b\\b04_scout2.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_asc2b__a01_party",
+  "shot": "a01_party",
+  "page": "ascensionlib_party",
+  "url": "/ascensionlib/party.html?refcase=f_asc2b__a01_party",
+  "budget": 5009,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_asc2b\\a01_party.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_asc2b__a02_wallet_tab",
+  "shot": "a02_wallet_tab",
+  "page": "ascensionlib_party",
+  "url": "/ascensionlib/party.html?refcase=f_asc2b__a02_wallet_tab",
+  "budget": 7571,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_asc2b\\a02_wallet_tab.png",
+  "unmappable": [],
+  "steps": 5
+ },
+ {
+  "case": "f_asc2b__a03_guide_tab",
+  "shot": "a03_guide_tab",
+  "page": "ascensionlib_party",
+  "url": "/ascensionlib/party.html?refcase=f_asc2b__a03_guide_tab",
+  "budget": 9967,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_asc2b\\a03_guide_tab.png",
+  "unmappable": [],
+  "steps": 6
+ },
+ {
+  "case": "f_asc2b__a04_wallet",
+  "shot": "a04_wallet",
+  "page": "ascensionlib_wallet",
+  "url": "/ascensionlib/wallet.html?refcase=f_asc2b__a04_wallet",
+  "budget": 3495,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_asc2b\\a04_wallet.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_asc2b__a05_wallet_256",
+  "shot": "a05_wallet_256",
+  "page": "ascensionlib_wallet",
+  "url": "/ascensionlib/wallet.html?refcase=f_asc2b__a05_wallet_256",
+  "budget": 6437,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_asc2b\\a05_wallet_256.png",
+  "unmappable": [],
+  "steps": 4
+ }
+]

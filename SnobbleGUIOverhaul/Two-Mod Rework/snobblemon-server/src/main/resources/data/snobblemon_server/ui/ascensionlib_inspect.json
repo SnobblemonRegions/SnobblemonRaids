@@ -1,0 +1,863 @@
+{
+ "v": 2,
+ "id": "ascensionlib_inspect",
+ "channel": "ascension_inspect_ready",
+ "hello": "ready",
+ "bye": false,
+ "title": "Inspect",
+ "width": 1040,
+ "height": 600,
+ "root": {
+  "type": "column",
+  "w": 1040,
+  "h": 600,
+  "children": [
+   {
+    "type": "column",
+    "w": 1004,
+    "h": 564,
+    "bg": "#07131C",
+    "children": [
+     {
+      "type": "row",
+      "w": "fill",
+      "pad": [
+       8,
+       14,
+       8,
+       14
+      ],
+      "gap": 10,
+      "cross": "center",
+      "bg": "#0A1B27",
+      "border": "#1F6B86",
+      "children": [
+       {
+        "type": "label",
+        "text": "{vm.title}",
+        "color": "#4AD8F6",
+        "font": "monocraft",
+        "size": 15.6,
+        "lh": 21.8,
+        "shadow": false
+       },
+       {
+        "type": "spacer",
+        "w": "fill"
+       },
+       {
+        "type": "button",
+        "text": "X",
+        "h": 22,
+        "pad": [
+         3,
+         10,
+         3,
+         10
+        ],
+        "cross": "center",
+        "align": "center",
+        "bg": "#0f3347",
+        "border": "#1F6B86",
+        "hover": "#0f3347",
+        "disabled": "#0a1b27",
+        "color": "#BDF1FF",
+        "w": 26,
+        "close": true,
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false,
+        "hover_border": "#4AD8F6",
+        "hover_color": "#ffffff",
+        "bw": 2
+       }
+      ],
+      "bsides": "t",
+      "bw": 2
+     },
+     {
+      "type": "column",
+      "w": "fill",
+      "h": "fill",
+      "repeat": {
+       "for": "vm.entries",
+       "as": "e",
+       "limit": 24,
+       "if": "e.i == $ix"
+      },
+      "children": [
+       {
+        "type": "row",
+        "w": "fill",
+        "h": "fill",
+        "pad": [
+         12,
+         14,
+         6,
+         14
+        ],
+        "gap": 12,
+        "children": [
+         {
+          "type": "column",
+          "w": 280,
+          "h": "fill",
+          "bg": "#0D2230",
+          "border": "#1F6B86",
+          "pad": [
+           8,
+           10,
+           8,
+           10
+          ],
+          "gap": 4,
+          "cross": "center",
+          "children": [
+           {
+            "type": "row",
+            "w": "fill",
+            "cross": "center",
+            "children": [
+             {
+              "type": "label",
+              "text": "{e.dex}",
+              "color": "#5DA6BD",
+              "font": "monocraft",
+              "size": 12,
+              "lh": 16.8,
+              "shadow": false
+             },
+             {
+              "type": "spacer",
+              "w": "fill"
+             },
+             {
+              "type": "label",
+              "text": "{e.type}",
+              "if": "e.hasType",
+              "color": "#FFFFFF",
+              "bg": "{e.typeColor}",
+              "pad": [
+               0,
+               5,
+               0,
+               5
+              ],
+              "font": "monocraft",
+              "size": 12,
+              "lh": 16.8,
+              "shadow": false
+             }
+            ]
+           },
+           {
+            "type": "image",
+            "pokemon": "{e.sprite}",
+            "w": 120,
+            "h": 100
+           },
+           {
+            "type": "label",
+            "text": "{e.name}",
+            "color": "#BDF1FF",
+            "font": "monocraft",
+            "size": 15.6,
+            "lh": 21.8,
+            "shadow": false
+           },
+           {
+            "type": "label",
+            "text": "{e.sub}",
+            "color": "#5DA6BD",
+            "font": "monocraft",
+            "size": 12,
+            "lh": 16.8,
+            "shadow": false
+           },
+           {
+            "type": "spacer",
+            "h": 4
+           },
+           {
+            "type": "column",
+            "w": "fill",
+            "gap": 3,
+            "children": [
+             {
+              "type": "row",
+              "w": "fill",
+              "gap": 6,
+              "cross": "center",
+              "repeat": {
+               "for": "e.stats",
+               "as": "st",
+               "limit": 6
+              },
+              "children": [
+               {
+                "type": "label",
+                "text": "{st.k}",
+                "color": "#5DA6BD",
+                "w": 30,
+                "font": "monocraft",
+                "size": 12,
+                "lh": 16.8,
+                "shadow": false
+               },
+               {
+                "type": "bar",
+                "w": "fill",
+                "h": 8,
+                "value": "st.bar",
+                "max": "160",
+                "fill": "#4AD8F6",
+                "fill_bg": "#0A2A3A",
+                "radius": 1
+               },
+               {
+                "type": "label",
+                "text": "{st.v}",
+                "color": "#BDF1FF",
+                "w": 28,
+                "text_align": "right",
+                "font": "monocraft",
+                "size": 12,
+                "lh": 16.8,
+                "shadow": false
+               }
+              ]
+             }
+            ]
+           },
+           {
+            "type": "spacer",
+            "h": "fill"
+           },
+           {
+            "type": "label",
+            "text": "{e.grade}",
+            "color": "{e.gradeColor}",
+            "bg": "{e.gradeBg}",
+            "w": "fill",
+            "pad": [
+             6,
+             6,
+             6,
+             6
+            ],
+            "text_align": "center",
+            "font": "monocraft",
+            "size": 12,
+            "lh": 16.8,
+            "shadow": false
+           }
+          ],
+          "bw": 2
+         },
+         {
+          "type": "column",
+          "w": "fill",
+          "h": "fill",
+          "bg": "#0D2230",
+          "border": "#1F6B86",
+          "pad": [
+           0,
+           0,
+           8,
+           0
+          ],
+          "gap": 6,
+          "children": [
+           {
+            "type": "row",
+            "w": "fill",
+            "bg": "#0A1B27",
+            "border": "#1F6B86",
+            "pad": [
+             6,
+             10,
+             6,
+             10
+            ],
+            "children": [
+             {
+              "type": "label",
+              "text": "Affixes",
+              "color": "#5DA6BD",
+              "font": "monocraft",
+              "size": 12,
+              "lh": 16.8,
+              "shadow": false
+             },
+             {
+              "type": "spacer",
+              "w": "fill"
+             },
+             {
+              "type": "label",
+              "text": "{e.count}",
+              "color": "#5DA6BD",
+              "font": "monocraft",
+              "size": 12,
+              "lh": 16.8,
+              "shadow": false
+             }
+            ],
+            "bsides": "t",
+            "bw": 2
+           },
+           {
+            "type": "scroll",
+            "id": "arows",
+            "w": "fill",
+            "h": "fill",
+            "pad": [
+             0,
+             8,
+             0,
+             8
+            ],
+            "children": [
+             {
+              "type": "column",
+              "w": "fill",
+              "gap": 4,
+              "children": [
+               {
+                "type": "button",
+                "id": "arow",
+                "w": "fill",
+                "h": 38,
+                "bg": "#0C2231",
+                "border": "#1F6B86",
+                "hover": "#12425A",
+                "pad": [
+                 4,
+                 8,
+                 4,
+                 8
+                ],
+                "set": {
+                 "sel": "r.i"
+                },
+                "repeat": {
+                 "for": "e.rows",
+                 "as": "r",
+                 "limit": 12
+                },
+                "children": [
+                 {
+                  "type": "row",
+                  "w": "fill",
+                  "h": "fill",
+                  "gap": 8,
+                  "cross": "center",
+                  "children": [
+                   {
+                    "type": "label",
+                    "text": ">",
+                    "if": "r.i == $sel",
+                    "color": "#F2CF3A",
+                    "w": 8,
+                    "font": "monocraft",
+                    "size": 12,
+                    "lh": 16.8,
+                    "shadow": false
+                   },
+                   {
+                    "type": "label",
+                    "text": " ",
+                    "if": "r.i != $sel",
+                    "w": 8,
+                    "font": "monocraft",
+                    "size": 12,
+                    "lh": 16.8,
+                    "shadow": false
+                   },
+                   {
+                    "type": "image",
+                    "pokemon": "{r.icon}",
+                    "w": 22,
+                    "h": 22
+                   },
+                   {
+                    "type": "column",
+                    "w": "fill",
+                    "gap": 1,
+                    "children": [
+                     {
+                      "type": "label",
+                      "text": "{r.name}",
+                      "color": "#BDF1FF",
+                      "font": "monocraft",
+                      "size": 12,
+                      "lh": 16.8,
+                      "shadow": false
+                     },
+                     {
+                      "type": "row",
+                      "gap": 8,
+                      "children": [
+                       {
+                        "type": "label",
+                        "text": "{r.rank}",
+                        "color": "#5DA6BD",
+                        "font": "monocraft",
+                        "size": 12,
+                        "lh": 16.8,
+                        "shadow": false
+                       },
+                       {
+                        "type": "label",
+                        "text": "{r.tag}",
+                        "if": "r.tag",
+                        "color": "{r.tagColor}",
+                        "font": "monocraft",
+                        "size": 12,
+                        "lh": 16.8,
+                        "shadow": false
+                       }
+                      ]
+                     }
+                    ]
+                   },
+                   {
+                    "type": "label",
+                    "text": "{r.value}",
+                    "color": "#4AD8F6",
+                    "font": "monocraft",
+                    "size": 14.4,
+                    "lh": 20.2,
+                    "shadow": false
+                   }
+                  ]
+                 }
+                ]
+               },
+               {
+                "type": "label",
+                "text": "{e.emptyText}",
+                "if": "!e.hasRows",
+                "color": "#5DA6BD",
+                "wrap": true,
+                "w": "fill",
+                "pad": [
+                 8,
+                 8,
+                 8,
+                 8
+                ],
+                "font": "monocraft",
+                "size": 12,
+                "lh": 16.8,
+                "shadow": false
+               }
+              ]
+             }
+            ]
+           },
+           {
+            "type": "label",
+            "text": "{e.reso}",
+            "if": "e.hasReso",
+            "color": "#4AD8F6",
+            "w": "fill",
+            "pad": [
+             0,
+             10,
+             0,
+             10
+            ],
+            "wrap": true,
+            "font": "monocraft",
+            "size": 12,
+            "lh": 16.8,
+            "shadow": false
+           },
+           {
+            "type": "label",
+            "text": "{e.rows[$sel].cond}",
+            "if": "e.hasRows",
+            "color": "#BDF1FF",
+            "wrap": true,
+            "w": "fill",
+            "h": 40,
+            "bg": "#0A1B27",
+            "border": "#1F6B86",
+            "pad": [
+             6,
+             10,
+             6,
+             10
+            ],
+            "font": "monocraft",
+            "size": 12,
+            "lh": 16.8,
+            "shadow": false,
+            "bsides": "t",
+            "bw": 2
+           },
+           {
+            "type": "label",
+            "text": "Click a modifier to see what it does.",
+            "if": "!e.hasRows",
+            "color": "#5DA6BD",
+            "w": "fill",
+            "pad": [
+             0,
+             10,
+             0,
+             10
+            ],
+            "font": "monocraft",
+            "size": 12,
+            "lh": 16.8,
+            "shadow": false
+           }
+          ],
+          "bw": 2
+         }
+        ]
+       },
+       {
+        "type": "label",
+        "text": "{e.bottom}",
+        "color": "#5DA6BD",
+        "w": "fill",
+        "pad": [
+         2,
+         16,
+         6,
+         16
+        ],
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false
+       },
+       {
+        "type": "row",
+        "w": "fill",
+        "pad": [
+         8,
+         14,
+         8,
+         14
+        ],
+        "gap": 8,
+        "cross": "center",
+        "bg": "#0A1B27",
+        "border": "#1F6B86",
+        "children": [
+         {
+          "type": "button",
+          "text": "<",
+          "h": 22,
+          "pad": [
+           3,
+           10,
+           3,
+           10
+          ],
+          "cross": "center",
+          "align": "center",
+          "bg": "#0f3347",
+          "border": "#1F6B86",
+          "hover": "#0f3347",
+          "disabled": "#0a1b27",
+          "color": "#BDF1FF",
+          "id": "aprev",
+          "w": 30,
+          "if": "vm.multi",
+          "set": {
+           "ix": "e.pi",
+           "sel": "0"
+          },
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "hover_border": "#4AD8F6",
+          "hover_color": "#ffffff",
+          "bw": 2
+         },
+         {
+          "type": "button",
+          "text": ">",
+          "h": 22,
+          "pad": [
+           3,
+           10,
+           3,
+           10
+          ],
+          "cross": "center",
+          "align": "center",
+          "bg": "#0f3347",
+          "border": "#1F6B86",
+          "hover": "#0f3347",
+          "disabled": "#0a1b27",
+          "color": "#BDF1FF",
+          "id": "anext",
+          "w": 30,
+          "if": "vm.multi",
+          "set": {
+           "ix": "e.ni",
+           "sel": "0"
+          },
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "hover_border": "#4AD8F6",
+          "hover_color": "#ffffff",
+          "bw": 2
+         },
+         {
+          "type": "label",
+          "text": "{vm.info}",
+          "color": "#5DA6BD",
+          "w": "fill",
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false
+         },
+         {
+          "type": "button",
+          "text": "Scout",
+          "h": 22,
+          "pad": [
+           3,
+           10,
+           3,
+           10
+          ],
+          "cross": "center",
+          "align": "center",
+          "bg": "#8e1426",
+          "border": "#eef2f7",
+          "hover": "#a51a30",
+          "disabled": "#2a1a22",
+          "color": "#ffffff",
+          "id": "scout",
+          "w": 80,
+          "enabled": "e.scoutOk",
+          "args": {
+           "encounterId": "str:64",
+           "subjectId": "str:64"
+          },
+          "argv": {
+           "encounterId": "vm.encounterId",
+           "subjectId": "e.subjectId"
+          },
+          "msg": {
+           "channel": "ascension_inspect_use",
+           "encounterId": "{encounterId}",
+           "subjectId": "{subjectId}"
+          },
+          "if": "vm.scout",
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "hover_color": "#ffffff",
+          "bw": 2
+         },
+         {
+          "type": "button",
+          "text": "{e.sigText}",
+          "h": 22,
+          "pad": [
+           3,
+           10,
+           3,
+           10
+          ],
+          "cross": "center",
+          "align": "center",
+          "bg": "#8e1426",
+          "border": "#eef2f7",
+          "hover": "#a51a30",
+          "disabled": "#2a1a22",
+          "color": "#ffffff",
+          "id": "sigil",
+          "w": 190,
+          "enabled": "e.sigOk",
+          "if": "e.bare && !$arm",
+          "set": {
+           "arm": "true"
+          },
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "hover_color": "#ffffff",
+          "bw": 2
+         },
+         {
+          "type": "button",
+          "text": "Click again to spend 1 Sigil",
+          "h": 22,
+          "pad": [
+           3,
+           10,
+           3,
+           10
+          ],
+          "cross": "center",
+          "align": "center",
+          "bg": "#8e1426",
+          "border": "#eef2f7",
+          "hover": "#a51a30",
+          "disabled": "#2a1a22",
+          "color": "#ffffff",
+          "id": "sigil2",
+          "w": 190,
+          "args": {
+           "pokemonId": "str:64"
+          },
+          "argv": {
+           "pokemonId": "e.pokemonId"
+          },
+          "msg": {
+           "channel": "ascension_inspect_sigil",
+           "pokemonId": "{pokemonId}"
+          },
+          "if": "e.bare && $arm",
+          "set": {
+           "arm": "false"
+          },
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "hover_color": "#ffffff",
+          "bw": 2
+         },
+         {
+          "type": "button",
+          "text": "{e.upText}",
+          "h": 22,
+          "pad": [
+           3,
+           10,
+           3,
+           10
+          ],
+          "cross": "center",
+          "align": "center",
+          "bg": "#8e1426",
+          "border": "#eef2f7",
+          "hover": "#a51a30",
+          "disabled": "#2a1a22",
+          "color": "#ffffff",
+          "id": "upgrade",
+          "w": 110,
+          "enabled": "e.upOk",
+          "args": {
+           "pokemonId": "str:64"
+          },
+          "argv": {
+           "pokemonId": "e.pokemonId"
+          },
+          "msg": {
+           "channel": "ascension_craft_open",
+           "pokemonId": "{pokemonId}"
+          },
+          "if": "e.canUp",
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "hover_color": "#ffffff",
+          "bw": 2
+         },
+         {
+          "type": "button",
+          "text": "Close",
+          "h": 22,
+          "pad": [
+           3,
+           10,
+           3,
+           10
+          ],
+          "cross": "center",
+          "align": "center",
+          "bg": "#0f3347",
+          "border": "#1F6B86",
+          "hover": "#0f3347",
+          "disabled": "#0a1b27",
+          "color": "#BDF1FF",
+          "w": 70,
+          "close": true,
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "hover_border": "#4AD8F6",
+          "hover_color": "#ffffff",
+          "bw": 2
+         }
+        ],
+        "bsides": "t",
+        "bw": 2
+       }
+      ]
+     },
+     {
+      "type": "spacer",
+      "id": "beat",
+      "w": 0,
+      "h": 0,
+      "every_ms": 2000,
+      "args": {},
+      "msg": {
+       "channel": "ascension_gui_beat"
+      }
+     }
+    ],
+    "x": 18,
+    "y": 18
+   },
+   {
+    "type": "column",
+    "x": 18,
+    "y": 18,
+    "w": 1004,
+    "h": 564,
+    "bg": "tex:ascensionlib/scan.png",
+    "children": []
+   },
+   {
+    "type": "column",
+    "x": 0,
+    "y": 0,
+    "w": 1040,
+    "h": 600,
+    "bg": "{e.bezel}",
+    "children": [],
+    "repeat": {
+     "for": "vm.entries",
+     "as": "e",
+     "limit": 24,
+     "if": "e.i == $ix"
+    }
+   }
+  ]
+ },
+ "state": {
+  "ix": 0,
+  "sel": 0,
+  "arm": false,
+  "zoompct": 100,
+  "calm": ""
+ },
+ "fit": [
+  1268.2926829268295,
+  731.7073170731708
+ ],
+ "nodim": true
+}

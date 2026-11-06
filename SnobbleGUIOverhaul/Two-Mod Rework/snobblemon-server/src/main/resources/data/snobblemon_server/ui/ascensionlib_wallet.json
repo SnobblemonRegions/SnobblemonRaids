@@ -1,0 +1,802 @@
+{
+ "v": 2,
+ "id": "ascensionlib_wallet",
+ "channel": "ascension_wallet_ready",
+ "hello": "ready",
+ "bye": false,
+ "title": "Wallet",
+ "width": 760,
+ "height": 560,
+ "root": {
+  "type": "column",
+  "w": 760,
+  "h": 560,
+  "children": [
+   {
+    "type": "column",
+    "w": 724,
+    "h": 524,
+    "bg": "#07131C",
+    "children": [
+     {
+      "type": "row",
+      "w": "fill",
+      "pad": [
+       8,
+       14,
+       8,
+       14
+      ],
+      "gap": 10,
+      "cross": "center",
+      "bg": "#0A1B27",
+      "bsides": "b",
+      "border": "#1F6B86",
+      "bw": 2,
+      "children": [
+       {
+        "type": "column",
+        "w": 90,
+        "h": 14,
+        "children": [
+         {
+          "type": "column",
+          "x": -14,
+          "y": -13,
+          "w": 120,
+          "h": 40,
+          "bg": "tex:ascensionlib/headdeco.png",
+          "children": []
+         }
+        ]
+       },
+       {
+        "type": "label",
+        "text": "WALLET",
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "ls": 1.2,
+        "color": "#4AD8F6",
+        "shadow": false
+       },
+       {
+        "type": "spacer",
+        "w": "fill"
+       },
+       {
+        "type": "button",
+        "text": "Calm",
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false,
+        "color": "#BDF1FF",
+        "hover_color": "#ffffff",
+        "bg": "#0d2230",
+        "hover": "#0d2230",
+        "border": "#1F6B86",
+        "hover_border": "#4AD8F6",
+        "bw": 2,
+        "pad": [
+         1,
+         8,
+         1,
+         8
+        ],
+        "shrink": true,
+        "h": 22,
+        "id": "calm_off",
+        "set": {
+         "calm": "'1'"
+        },
+        "args": {
+         "calm": "bool"
+        },
+        "argv": {
+         "calm": "'true'"
+        },
+        "msg": {
+         "channel": "ascension_ui_set",
+         "calm": "{calm}"
+        },
+        "if": "$calm != '1'"
+       },
+       {
+        "type": "button",
+        "text": "Calm",
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false,
+        "color": "#ffffff",
+        "hover_color": "#ffffff",
+        "bg": "#0d2230",
+        "hover": "#0d2230",
+        "border": "#4AD8F6",
+        "hover_border": "#4AD8F6",
+        "bw": 2,
+        "pad": [
+         1,
+         8,
+         1,
+         8
+        ],
+        "shrink": true,
+        "h": 22,
+        "id": "calm_on",
+        "set": {
+         "calm": "''"
+        },
+        "args": {
+         "calm": "bool"
+        },
+        "argv": {
+         "calm": "'false'"
+        },
+        "msg": {
+         "channel": "ascension_ui_set",
+         "calm": "{calm}"
+        },
+        "if": "$calm == '1'"
+       },
+       {
+        "type": "row",
+        "gap": 4,
+        "cross": "center",
+        "children": [
+         {
+          "type": "button",
+          "text": "\u2212",
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "color": "#BDF1FF",
+          "hover_color": "#ffffff",
+          "bg": "#0d2230",
+          "hover": "#0d2230",
+          "border": "#1F6B86",
+          "hover_border": "#4AD8F6",
+          "bw": 2,
+          "pad": [
+           1,
+           8,
+           1,
+           8
+          ],
+          "shrink": true,
+          "h": 22,
+          "id": "ui_minus",
+          "set": {
+           "zoompct": "$zoompct - 10"
+          },
+          "args": {
+           "percent": "int:60:160"
+          },
+          "argv": {
+           "percent": "$zoompct - 10"
+          },
+          "msg": {
+           "channel": "ascension_ui_set",
+           "percent": "{percent}"
+          }
+         },
+         {
+          "type": "label",
+          "text": "{$zoompct}%",
+          "font": "monocraft",
+          "size": 11,
+          "lh": 15.4,
+          "color": "#5DA6BD",
+          "shadow": false,
+          "min_w": 44,
+          "text_align": "center"
+         },
+         {
+          "type": "button",
+          "text": "+",
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "color": "#BDF1FF",
+          "hover_color": "#ffffff",
+          "bg": "#0d2230",
+          "hover": "#0d2230",
+          "border": "#1F6B86",
+          "hover_border": "#4AD8F6",
+          "bw": 2,
+          "pad": [
+           1,
+           8,
+           1,
+           8
+          ],
+          "shrink": true,
+          "h": 22,
+          "id": "ui_plus",
+          "set": {
+           "zoompct": "$zoompct + 10"
+          },
+          "args": {
+           "percent": "int:60:160"
+          },
+          "argv": {
+           "percent": "$zoompct + 10"
+          },
+          "msg": {
+           "channel": "ascension_ui_set",
+           "percent": "{percent}"
+          }
+         }
+        ]
+       },
+       {
+        "type": "button",
+        "text": "X",
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false,
+        "color": "#BDF1FF",
+        "hover_color": "#ffffff",
+        "bg": "#0d2230",
+        "hover": "#0d2230",
+        "border": "#1F6B86",
+        "hover_border": "#4AD8F6",
+        "bw": 2,
+        "pad": [
+         1,
+         8,
+         1,
+         8
+        ],
+        "shrink": true,
+        "h": 22,
+        "id": "x_close",
+        "close": true
+       }
+      ]
+     },
+     {
+      "type": "column",
+      "w": "fill",
+      "h": "fill",
+      "pad": [
+       10,
+       14,
+       6,
+       14
+      ],
+      "gap": 8,
+      "children": [
+       {
+        "type": "label",
+        "text": "Take currency out as items you can trade (a {vm.fee}% fee, rounded up, is paid on top), then redeem them back with Deposit. Tower Marks are bound to you.",
+        "color": "#5DA6BD",
+        "wrap": true,
+        "w": "fill",
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false
+       },
+       {
+        "type": "row",
+        "w": "fill",
+        "gap": 6,
+        "cross": "center",
+        "children": [
+         {
+          "type": "label",
+          "text": "Amount per Take:",
+          "color": "#5DA6BD",
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false
+         },
+         {
+          "type": "label",
+          "text": "{vm.amts[$ai]}",
+          "color": "#4AD8F6",
+          "w": 40,
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false
+         },
+         {
+          "type": "button",
+          "text": "1",
+          "h": 18,
+          "pad": [
+           3,
+           10,
+           3,
+           10
+          ],
+          "cross": "center",
+          "align": "center",
+          "bg": "#0f3347",
+          "border": "#1F6B86",
+          "hover": "#0f3347",
+          "disabled": "#0a1b27",
+          "color": "#4AD8F6",
+          "id": "amt0",
+          "w": 40,
+          "set": {
+           "ai": 0
+          },
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "hover_border": "#4AD8F6",
+          "hover_color": "#ffffff",
+          "bw": 2
+         },
+         {
+          "type": "button",
+          "text": "8",
+          "h": 18,
+          "pad": [
+           3,
+           10,
+           3,
+           10
+          ],
+          "cross": "center",
+          "align": "center",
+          "bg": "#0f3347",
+          "border": "#1F6B86",
+          "hover": "#0f3347",
+          "disabled": "#0a1b27",
+          "color": "#4AD8F6",
+          "id": "amt1",
+          "w": 40,
+          "set": {
+           "ai": 1
+          },
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "hover_border": "#4AD8F6",
+          "hover_color": "#ffffff",
+          "bw": 2
+         },
+         {
+          "type": "button",
+          "text": "64",
+          "h": 18,
+          "pad": [
+           3,
+           10,
+           3,
+           10
+          ],
+          "cross": "center",
+          "align": "center",
+          "bg": "#0f3347",
+          "border": "#1F6B86",
+          "hover": "#0f3347",
+          "disabled": "#0a1b27",
+          "color": "#4AD8F6",
+          "id": "amt2",
+          "w": 40,
+          "set": {
+           "ai": 2
+          },
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "hover_border": "#4AD8F6",
+          "hover_color": "#ffffff",
+          "bw": 2
+         },
+         {
+          "type": "button",
+          "text": "256",
+          "h": 18,
+          "pad": [
+           3,
+           10,
+           3,
+           10
+          ],
+          "cross": "center",
+          "align": "center",
+          "bg": "#0f3347",
+          "border": "#1F6B86",
+          "hover": "#0f3347",
+          "disabled": "#0a1b27",
+          "color": "#4AD8F6",
+          "id": "amt3",
+          "w": 40,
+          "set": {
+           "ai": 3
+          },
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false,
+          "hover_border": "#4AD8F6",
+          "hover_color": "#ffffff",
+          "bw": 2
+         }
+        ]
+       },
+       {
+        "type": "row",
+        "if": "vm.hasCatalyst",
+        "w": "fill",
+        "gap": 10,
+        "cross": "center",
+        "bg": "#0C2231",
+        "border": "#1F6B86",
+        "pad": [
+         6,
+         10,
+         6,
+         10
+        ],
+        "children": [
+         {
+          "type": "label",
+          "text": "Catalyst",
+          "color": "#BDF1FF",
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false
+         },
+         {
+          "type": "bar",
+          "w": "fill",
+          "h": 10,
+          "value": "vm.catPct",
+          "max": "100",
+          "fill": "#4AD8F6",
+          "fill_bg": "#0A2A3A",
+          "radius": 1
+         },
+         {
+          "type": "label",
+          "text": "{vm.catText}",
+          "color": "#5DA6BD",
+          "font": "monocraft",
+          "size": 12,
+          "lh": 16.8,
+          "shadow": false
+         }
+        ]
+       },
+       {
+        "type": "scroll",
+        "id": "lines",
+        "w": "fill",
+        "h": "fill",
+        "children": [
+         {
+          "type": "column",
+          "w": "fill",
+          "gap": 6,
+          "children": [
+           {
+            "type": "row",
+            "repeat": {
+             "for": "vm.lines",
+             "as": "l",
+             "limit": 24
+            },
+            "w": "fill",
+            "gap": 10,
+            "cross": "center",
+            "bg": "#0C2231",
+            "border": "#1F6B86",
+            "pad": [
+             6,
+             8,
+             6,
+             8
+            ],
+            "children": [
+             {
+              "type": "image",
+              "pokemon": "{l.icon}",
+              "w": 32,
+              "h": 32,
+              "bg": "#0A2A3A",
+              "border": "#1F6B86"
+             },
+             {
+              "type": "label",
+              "text": "{l.name}",
+              "color": "{l.color}",
+              "w": "fill",
+              "font": "monocraft",
+              "size": 12,
+              "lh": 16.8,
+              "shadow": false
+             },
+             {
+              "type": "label",
+              "text": "{l.amount}",
+              "color": "#4AD8F6",
+              "w": 60,
+              "text_align": "right",
+              "font": "monocraft",
+              "size": 12,
+              "lh": 16.8,
+              "shadow": false
+             },
+             {
+              "type": "button",
+              "text": "{l.takeText}",
+              "h": 22,
+              "pad": [
+               3,
+               10,
+               3,
+               10
+              ],
+              "cross": "center",
+              "align": "center",
+              "bg": "#0f3347",
+              "border": "#1F6B86",
+              "hover": "#0f3347",
+              "disabled": "#0a1b27",
+              "color": "#BDF1FF",
+              "id": "take",
+              "w": 56,
+              "args": {
+               "material": "str:48",
+               "amount": "int:1:2304"
+              },
+              "argv": {
+               "material": "l.id",
+               "amount": "vm.amts[$ai]"
+              },
+              "enabled": "l.takeOk[$ai]",
+              "msg": {
+               "channel": "ascension_wallet_withdraw",
+               "material": "{material}",
+               "amount": "{amount}"
+              },
+              "font": "monocraft",
+              "size": 12,
+              "lh": 16.8,
+              "shadow": false,
+              "hover_border": "#4AD8F6",
+              "hover_color": "#ffffff",
+              "bw": 2
+             },
+             {
+              "type": "label",
+              "text": "{l.feeText[$ai]}",
+              "color": "#5DA6BD",
+              "w": 170,
+              "wrap": true,
+              "font": "monocraft",
+              "size": 12,
+              "lh": 16.8,
+              "shadow": false
+             },
+             {
+              "type": "row",
+              "if": "l.hasCarried",
+              "gap": 6,
+              "cross": "center",
+              "w": 130,
+              "children": [
+               {
+                "type": "label",
+                "text": "{l.carried}",
+                "color": "#5DA6BD",
+                "font": "monocraft",
+                "size": 12,
+                "lh": 16.8,
+                "shadow": false
+               },
+               {
+                "type": "button",
+                "text": "Deposit",
+                "h": 18,
+                "pad": [
+                 3,
+                 10,
+                 3,
+                 10
+                ],
+                "cross": "center",
+                "align": "center",
+                "bg": "#0f3347",
+                "border": "#1F6B86",
+                "hover": "#0f3347",
+                "disabled": "#0a1b27",
+                "color": "#BDF1FF",
+                "id": "deposit",
+                "w": 58,
+                "args": {
+                 "material": "str:48"
+                },
+                "argv": {
+                 "material": "l.id"
+                },
+                "msg": {
+                 "channel": "ascension_wallet_deposit",
+                 "material": "{material}"
+                },
+                "font": "monocraft",
+                "size": 12,
+                "lh": 16.8,
+                "shadow": false,
+                "hover_border": "#4AD8F6",
+                "hover_color": "#ffffff",
+                "bw": 2
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "type": "label",
+        "text": "{vm.msg}",
+        "if": "vm.hasMsg",
+        "w": "fill",
+        "wrap": true,
+        "color": "{vm.msgColor}",
+        "bg": "#0C2231",
+        "border": "#1F6B86",
+        "pad": [
+         6,
+         10,
+         6,
+         10
+        ],
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false
+       }
+      ]
+     },
+     {
+      "type": "row",
+      "w": "fill",
+      "pad": [
+       8,
+       14,
+       8,
+       14
+      ],
+      "gap": 10,
+      "cross": "center",
+      "bg": "#0A1B27",
+      "border": "#1F6B86",
+      "children": [
+       {
+        "type": "label",
+        "text": "{vm.free}",
+        "color": "#5DA6BD",
+        "w": "fill",
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false
+       },
+       {
+        "type": "button",
+        "text": "Deposit all vouchers",
+        "h": 22,
+        "pad": [
+         3,
+         10,
+         3,
+         10
+        ],
+        "cross": "center",
+        "align": "center",
+        "bg": "#8e1426",
+        "border": "#eef2f7",
+        "hover": "#a51a30",
+        "disabled": "#2a1a22",
+        "color": "#ffffff",
+        "id": "deposit_all",
+        "w": 150,
+        "enabled": "vm.canDepositAll",
+        "args": {},
+        "msg": {
+         "channel": "ascension_wallet_deposit"
+        },
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false,
+        "hover_color": "#ffffff",
+        "bw": 2
+       },
+       {
+        "type": "button",
+        "text": "Close",
+        "h": 22,
+        "pad": [
+         3,
+         10,
+         3,
+         10
+        ],
+        "cross": "center",
+        "align": "center",
+        "bg": "#0f3347",
+        "border": "#1F6B86",
+        "hover": "#0f3347",
+        "disabled": "#0a1b27",
+        "color": "#BDF1FF",
+        "w": 70,
+        "close": true,
+        "font": "monocraft",
+        "size": 12,
+        "lh": 16.8,
+        "shadow": false,
+        "hover_border": "#4AD8F6",
+        "hover_color": "#ffffff",
+        "bw": 2
+       }
+      ],
+      "bsides": "t",
+      "bw": 2
+     },
+     {
+      "type": "spacer",
+      "id": "beat",
+      "w": 0,
+      "h": 0,
+      "every_ms": 2000,
+      "args": {},
+      "msg": {
+       "channel": "ascension_gui_beat"
+      }
+     }
+    ],
+    "x": 18,
+    "y": 18
+   },
+   {
+    "type": "column",
+    "x": 18,
+    "y": 18,
+    "w": 724,
+    "h": 524,
+    "bg": "tex:ascensionlib/scan.png",
+    "children": []
+   },
+   {
+    "type": "column",
+    "x": 0,
+    "y": 0,
+    "w": 760,
+    "h": 560,
+    "bg": "sprite:ascensionlib/bezel_none",
+    "children": []
+   }
+  ]
+ },
+ "state": {
+  "ai": 2,
+  "zoompct": 100,
+  "calm": ""
+ },
+ "fit": [
+  926.829268292683,
+  682.9268292682927
+ ],
+ "nodim": true
+}

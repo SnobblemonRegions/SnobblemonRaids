@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "snobblehub",
+  "version": "${version}",
+  "name": "Snobble Trainer Hub",
+  "description": "Server-only Pokedex-style hub menus for Snobblemon Regions: inventory hub, wiki, trainer card, cosmetics shop, warps, gyms and updates. Vanilla container menus plus a resource pack, no client mod.",
+  "authors": ["Snobblemon"],
+  "license": "All Rights Reserved",
+  "environment": "server",
+  "entrypoints": { "main": ["net.snobblemon.hub.SnobbleHub"] },
+  "mixins": ["snobblehub.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "snobblemon_cosmetics": ">=1.7.0",
+    "placeholder-api": "*",
+    "luckperms": "*",
+    "snobblegemcurrency": "*"
+  },
+  "custom": {
+    "polymer:resource_pack_include": true,
+    "polymer:resource_pack_require": true
+  }
+}

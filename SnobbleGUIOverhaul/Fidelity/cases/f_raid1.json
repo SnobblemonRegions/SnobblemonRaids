@@ -1,0 +1,82 @@
+[
+ {
+  "case": "f_raid1__y01_hub",
+  "shot": "y01_hub",
+  "page": "cobbleraids_hub",
+  "url": "/cobbleraids/hub/hub.html?refcase=f_raid1__y01_hub",
+  "budget": 3467,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_raid1\\y01_hub.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_raid1__y02_shop_items",
+  "shot": "y02_shop_items",
+  "page": "cobbleraids_shop",
+  "url": "/cobbleraids/shop/shop.html?refcase=f_raid1__y02_shop_items",
+  "budget": 3362,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_raid1\\y02_shop_items.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_raid1__y03_shop_pokemon",
+  "shot": "y03_shop_pokemon",
+  "page": "cobbleraids_shop",
+  "url": "/cobbleraids/shop/shop.html?refcase=f_raid1__y03_shop_pokemon",
+  "budget": 5481,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_raid1\\y03_shop_pokemon.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f_raid1__y04_trophy_full",
+  "shot": "y04_trophy_full",
+  "page": "cobbleraids_trophy",
+  "url": "/cobbleraids/trophy/trophy.html?refcase=f_raid1__y04_trophy_full",
+  "budget": 5001,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_raid1\\y04_trophy_full.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_raid1__y05_trophy_tier_selected",
+  "shot": "y05_trophy_tier_selected",
+  "page": "cobbleraids_trophy",
+  "url": "/cobbleraids/trophy/trophy.html?refcase=f_raid1__y05_trophy_tier_selected",
+  "budget": 7417,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_raid1\\y05_trophy_tier_selected.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f_raid1__y06_legends_full",
+  "shot": "y06_legends_full",
+  "page": "cobbleraids_legends",
+  "url": "/cobbleraids/legends/legends.html?refcase=f_raid1__y06_legends_full",
+  "budget": 5001,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_raid1\\y06_legends_full.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_raid1__y07_leaders_full",
+  "shot": "y07_leaders_full",
+  "page": "cobbleraids_leaders",
+  "url": "/cobbleraids/leaders/leaders.html?refcase=f_raid1__y07_leaders_full",
+  "budget": 5031,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_raid1\\y07_leaders_full.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f_raid1__y08_leaders_time_weekly",
+  "shot": "y08_leaders_time_weekly",
+  "page": "cobbleraids_leaders",
+  "url": "/cobbleraids/leaders/leaders.html?refcase=f_raid1__y08_leaders_time_weekly",
+  "budget": 7541,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_raid1\\y08_leaders_time_weekly.png",
+  "unmappable": [],
+  "steps": 4
+ }
+]

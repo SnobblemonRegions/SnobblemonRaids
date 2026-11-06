@@ -1,0 +1,24 @@
+#filters { display: flex; gap: 1cqw; padding: 1cqw 3cqw 0; height: 4.6cqw; align-items: center; }
+#filters .field { flex: 1; height: 3.4cqw; }
+#filters .btn { height: 3.4cqw; padding-top: 0; padding-bottom: 0; min-width: 12cqw; }
+#cases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2cqw; padding: 1.4cqw 3cqw 0; height: calc(100% - 7.4cqw - 4.6cqw - 6.4cqw); }
+.case { display: flex; flex-direction: column; padding: 1.2cqw 1.4cqw; gap: 0.7cqw; min-width: 0; }
+.case .stagebox { flex: 1; min-height: 0; position: relative; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 75%, color-mix(in srgb, var(--tc, #46e3ff) 38%, transparent), transparent 70%), rgba(2, 10, 18, 0.9);
+  border: 1px solid rgba(70, 227, 255, 0.18); }
+.case .sprite { width: 80%; aspect-ratio: 3 / 2; background-repeat: no-repeat; background-size: 100% 100%; background-position: center; image-rendering: pixelated; }
+.case .noart { font: 700 6cqw var(--pix); color: var(--mu); }
+.case .lvl { position: absolute; right: 0.8cqw; top: 0.6cqw; color: var(--mu); font-size: var(--fs-s); letter-spacing: 0.1em; }
+.case .name { font: 700 max(14px, 1.9cqw) var(--pix); overflow: hidden; text-overflow: clip; white-space: nowrap; }
+.case .tags { display: flex; justify-content: space-between; align-items: center; font-size: var(--fs-s); letter-spacing: 0.12em; }
+.case .tier { color: var(--tc); font-weight: 600; }
+.case .shine { color: var(--mu); } .case .shine.on { color: #ffe066; }
+.case .stats { display: grid; grid-template-columns: auto 1fr; gap: 0.2cqw 0.8cqw; align-items: center; font-size: var(--fs-s); color: var(--mu); }
+.case .stats b { color: var(--tx); font-weight: 600; }
+.bar { height: 0.55cqw; background: rgba(70, 227, 255, 0.14); position: relative; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--hi); }
+.case .when { color: var(--mu); font-size: var(--fs-s); border-top: 1px dashed rgba(70, 227, 255, 0.22); padding-top: 0.5cqw; display: flex; justify-content: space-between; white-space: nowrap; }
+.case.blank { justify-content: center; align-items: center; color: var(--mu); letter-spacing: 0.12em; text-align: center; gap: 0.5cqw; }
+.case.blank b { font: 700 var(--fs-l) var(--pix); color: #4a7488; }
+#pager { position: absolute; left: 3cqw; right: 3cqw; bottom: 2.2cqw; display: flex; align-items: center; justify-content: space-between; }
+#where { color: var(--mu); letter-spacing: 0.14em; font-size: var(--fs-s); }

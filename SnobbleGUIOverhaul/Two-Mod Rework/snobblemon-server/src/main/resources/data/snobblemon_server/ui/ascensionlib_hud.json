@@ -1,0 +1,239 @@
+{
+ "v": 2,
+ "id": "ascensionlib_hud",
+ "channel": "ascension_hud_ready",
+ "hello": "ready",
+ "bye": false,
+ "title": "Ascension HUD",
+ "width": 1000,
+ "height": 700,
+ "hud_anchor": "tl",
+ "hud_x": 0,
+ "hud_y": 0,
+ "root": {
+  "type": "column",
+  "w": "fill",
+  "h": "fill",
+  "pad": [
+   0,
+   12,
+   0,
+   12
+  ],
+  "children": [
+   {
+    "type": "row",
+    "w": "fill",
+    "h": "fill",
+    "pad": [
+     90,
+     0,
+     0,
+     0
+    ],
+    "gap": 10,
+    "children": [
+     {
+      "type": "column",
+      "w": 330,
+      "gap": 5,
+      "children": [
+       {
+        "type": "label",
+        "text": "{b.text}",
+        "color": "{b.color}",
+        "bg": "{b.bg}",
+        "border": "{b.border}",
+        "pad": [
+         3,
+         9,
+         3,
+         9
+        ],
+        "anim": "slide",
+        "anim_ms": 250,
+        "repeat": {
+         "for": "vm.badges",
+         "as": "b",
+         "limit": 12
+        }
+       }
+      ]
+     },
+     {
+      "type": "spacer",
+      "w": "fill"
+     },
+     {
+      "type": "column",
+      "if": "vm.panel",
+      "w": 270,
+      "bg": "#0D2230",
+      "border": "#1F6B86",
+      "gap": 2,
+      "children": [
+       {
+        "type": "row",
+        "w": "fill",
+        "bg": "#0A1B27",
+        "pad": [
+         5,
+         10,
+         5,
+         10
+        ],
+        "children": [
+         {
+          "type": "label",
+          "text": "Ascension",
+          "color": "#BDF1FF"
+         }
+        ]
+       },
+       {
+        "type": "row",
+        "w": "fill",
+        "pad": [
+         4,
+         10,
+         2,
+         10
+        ],
+        "children": [
+         {
+          "type": "label",
+          "text": "OPPONENTS",
+          "color": "#5DA6BD"
+         },
+         {
+          "type": "spacer",
+          "w": "fill"
+         },
+         {
+          "type": "label",
+          "text": "{vm.scouters}",
+          "color": "#5DA6BD"
+         }
+        ]
+       },
+       {
+        "type": "row",
+        "w": "fill",
+        "gap": 6,
+        "cross": "center",
+        "bg": "#0C2231",
+        "border": "#1F6B86",
+        "pad": [
+         4,
+         8,
+         4,
+         8
+        ],
+        "repeat": {
+         "for": "vm.opp",
+         "as": "o",
+         "limit": 8
+        },
+        "children": [
+         {
+          "type": "label",
+          "text": "{o.name}",
+          "color": "#BDF1FF",
+          "w": "fill"
+         },
+         {
+          "type": "label",
+          "text": "{o.rarity}",
+          "color": "{o.color}",
+          "bg": "{o.bg}",
+          "pad": [
+           0,
+           5,
+           0,
+           5
+          ]
+         }
+        ]
+       },
+       {
+        "type": "label",
+        "text": "YOUR TEAM",
+        "color": "#5DA6BD",
+        "pad": [
+         4,
+         10,
+         2,
+         10
+        ]
+       },
+       {
+        "type": "row",
+        "w": "fill",
+        "gap": 6,
+        "cross": "center",
+        "bg": "#0C2231",
+        "border": "#1F6B86",
+        "pad": [
+         4,
+         8,
+         4,
+         8
+        ],
+        "repeat": {
+         "for": "vm.team",
+         "as": "m",
+         "limit": 8
+        },
+        "children": [
+         {
+          "type": "label",
+          "text": "{m.name}",
+          "color": "#BDF1FF",
+          "w": "fill"
+         },
+         {
+          "type": "label",
+          "text": "{m.rarity}",
+          "color": "{m.color}",
+          "bg": "{m.bg}",
+          "pad": [
+           0,
+           5,
+           0,
+           5
+          ]
+         }
+        ]
+       },
+       {
+        "type": "label",
+        "text": "Inspect with /ascend scout or the AscensionDex.",
+        "color": "#5DA6BD",
+        "wrap": true,
+        "w": "fill",
+        "pad": [
+         4,
+         10,
+         6,
+         10
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "type": "spacer",
+    "id": "tick",
+    "w": 0,
+    "h": 0,
+    "every_ms": 500,
+    "args": {},
+    "msg": {
+     "channel": "snobble_view",
+     "action": "tick"
+    }
+   }
+  ]
+ }
+}

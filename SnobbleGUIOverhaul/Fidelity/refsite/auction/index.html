@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head><script src="/_inject.js"></script>
+<meta charset="utf-8">
+<title>Auction House</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+  <header id="titlebar">
+    <h1 id="title">AUCTION HOUSE</h1>
+    <div id="crumb"><span id="crumbText">/ LIVE LISTINGS</span><i></i></div>
+    <div id="meters">
+      <div class="meter"><label>Slots</label><b id="slots">0 / 2</b></div>
+      <div class="meter"><label>Balance</label><b id="balance" class="gold">$ 0</b></div>
+    </div>
+    <button class="tbtn" id="setBtn" title="Settings">&#9881;</button>
+    <div id="zoom"><button class="tbtn" id="zoomOut" title="Smaller">&minus;</button><span id="zoomPct">100%</span><button class="tbtn" id="zoomIn" title="Larger">+</button></div>
+    <button class="tbtn" id="close" title="Close">&times;</button>
+  </header>
+
+  <nav id="topTabs">
+    <button id="navBrowse">BROWSE</button>
+    <button id="navSell">SELL</button>
+    <button id="navMine">MY LISTINGS</button>
+    <span class="sep"></span>
+    <button id="tabMon" class="on">POK&Eacute;MON</button>
+    <button id="tabItem">ITEMS</button>
+  </nav>
+  <!-- left rail -->
+  <aside id="rail" class="panel">
+    <div id="railBrowse">
+      <label class="h">SEARCH</label>
+      <input id="search" type="text" maxlength="40" placeholder="species, move, ability..." autocomplete="off" spellcheck="false">
+      <div id="itemFilters" hidden>
+        <label class="h">CATEGORY</label>
+        <div id="cats">
+          <button data-c="" data-ic="minecraft:chest" class="catbtn on"><i class="cico"></i>All</button>
+          <button data-c="tools" data-ic="minecraft:iron_pickaxe" class="catbtn"><i class="cico"></i>Tools</button>
+          <button data-c="blocks" data-ic="minecraft:grass_block" class="catbtn"><i class="cico"></i>Blocks</button>
+          <button data-c="food" data-ic="minecraft:bread" class="catbtn"><i class="cico"></i>Food</button>
+          <button data-c="cobblemon" data-ic="cobblemon:poke_ball" class="catbtn"><i class="cico"></i>Cobblemon</button>
+          <button data-c="misc" data-ic="minecraft:ender_pearl" class="catbtn"><i class="cico"></i>Other</button>
+        </div>
+        <label class="h">MOD</label>
+        <select id="modSel"><option value="">Any mod</option></select>
+      </div>
+      <div id="monFilters">
+      <label class="h">FILTER</label>
+      <div id="filters">
+        <button class="chk" data-f="shiny"><i></i>Shiny only</button>
+        <button class="chk" data-f="legendary"><i></i>Legendary / Mythical</button>
+        <button class="chk" data-f="hiddenAbility"><i></i>Hidden ability</button>
+        <button class="chk" data-f="perfect5"><i></i>5+ perfect IVs</button>
+        <button class="chk" data-f="under"><i></i>Under 50,000</button>
+      </div>
+      </div>
+      <label class="h">SORT</label>
+      <div id="sorts"></div>
+    </div>
+    <div id="railOther" hidden>
+      <label class="h">AUCTION HOUSE</label>
+      <p class="dim" id="railHint"></p>
+    </div>
+  </aside>
+  <!-- views -->
+  <main id="main">
+    <section id="vBrowse" class="view">
+      <div id="grid"></div>
+      <div id="empty" class="dim" hidden>No listings match. Try clearing a filter.</div>
+    </section>
+
+    <section id="vSell" class="view" hidden>
+      <div id="sellParty" class="panel"><label class="h">YOUR PARTY</label><div id="partyList"></div></div>
+      <div id="sellForm" class="panel">
+        <label class="h">SET YOUR PRICE</label>
+        <div id="sellPick" class="dim">Pick a Pokemon from your party.</div>
+        <div id="sellBody" hidden>
+          <div class="sellHead">
+            <div id="sellSprite" class="sprite big"></div>
+            <div>
+              <div id="sellName" class="name2"></div>
+              <div id="sellMeta" class="dim"></div>
+              <div id="sellTags" class="tags"></div>
+            </div>
+          </div>
+          <div class="priceBox"><span class="gold">$</span><input id="price" type="text" inputmode="numeric" autocomplete="off" maxlength="12"></div>
+          <div id="priceHelp" class="dim"></div>
+          <div class="calc"><span>Listing tax <b id="taxPct"></b></span><span>You receive <b id="receive" class="gold"></b></span></div>
+          <div class="calc"><span>Duration</span><b id="duration">72 hours</b></div>
+          <button class="btn solid wide" id="listBtn">LIST FOR SALE</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="vSellItem" class="view" hidden>
+      <div id="invPanel" class="panel"><label class="h">YOUR INVENTORY</label><div id="invGrid"></div><div class="dim" id="invHint">Dimmed items cannot be sold on this server.</div></div>
+      <div id="itemForm" class="panel">
+        <label class="h">SET YOUR PRICE</label>
+        <div id="itemPick" class="dim">Pick an item from your inventory.</div>
+        <div id="itemBody" hidden>
+          <div class="sellHead">
+            <div id="itemIcon" class="sprite big"></div>
+            <div><div id="itemName" class="name2"></div><div id="itemMod" class="modtag"></div><div id="itemHave" class="dim"></div></div>
+          </div>
+          <div class="qty"><span class="dim">QUANTITY</span><button class="qb" id="qMinus">-</button><input id="qty" type="text" inputmode="numeric" maxlength="4" autocomplete="off"><button class="qb" id="qPlus">+</button><button class="qb qall" id="qAll">ALL</button></div>
+          <div class="seg"><button id="modeAll" class="on">PRICE FOR ALL</button><button id="modeEach">PRICE EACH</button></div>
+          <div class="priceBox"><span class="gold">$</span><input id="iprice" type="text" inputmode="numeric" autocomplete="off" maxlength="12"></div>
+          <div id="ipriceHelp" class="dim"></div>
+          <div class="calc"><span>Total price</span><b id="itotal" class="gold"></b></div>
+          <div class="calc"><span>Listing tax <b id="itaxPct"></b></span><span>You receive <b id="ireceive" class="gold"></b></span></div>
+          <div class="calc"><span>Duration</span><b id="iduration">72 hours</b></div>
+          <button class="btn solid wide" id="ilistBtn">LIST FOR SALE</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="vMine" class="view" hidden>
+      <div id="mineList" class="panel"><label class="h">MY LISTINGS</label><div id="mineRows"></div></div>
+      <div id="mineSales" class="panel"><label class="h">RECENT SALES</label><div id="saleRows"></div></div>
+    </section>
+  </main>
+
+  <footer id="bottom">
+    <div id="pager">
+      <button class="btn ghost" id="prev">&lt; PREV</button>
+      <span id="pageLabel" class="dim">PAGE 1 / 1</span>
+      <button class="btn ghost" id="next">NEXT &gt;</button>
+    </div>
+  </footer>
+
+  <!-- detail + confirm -->
+  <div id="overlay" hidden>
+    <div id="detail" class="panel">
+      <div id="dSprite" class="sprite huge"></div>
+      <div id="dInfo">
+        <div id="dName" class="name1"></div>
+        <div id="dMeta" class="dim"></div>
+        <div id="dTags" class="tags"></div>
+        
+        <label class="h" id="hIv">STATS (IV)</label>
+        <div id="dIvs"></div>
+        <label class="h" id="hMoves">MOVES</label>
+        <div id="dMoves"></div>
+        <label class="h" id="hLines" hidden>ITEM DETAILS</label>
+        <div id="dLines" class="tip" hidden></div>
+        <div id="dExtra" class="dim"></div>
+      </div>
+      <div id="dBuy" class="panel gold-edge">
+        <div><label class="dim">PRICE</label><div id="dPrice" class="bigprice gold"></div><div id="dTime" class="dim"></div></div>
+        <div class="dbtns">
+          <button class="btn solid" id="buyBtn">BUY NOW</button>
+          <button class="btn ghost" id="backBtn">&lt; BACK</button>
+        </div>
+      </div>
+    </div>
+    <div id="confirm" class="panel" hidden>
+      <label class="h" id="cTitle">CONFIRM PURCHASE</label>
+      <div id="cText"></div>
+      <div id="cMath" class="dim"></div>
+      <div class="dbtns">
+        <button class="btn solid" id="yesBtn">CONFIRM</button>
+        <button class="btn ghost" id="noBtn">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings" hidden>
+    <div id="setPanel">
+      <label class="h">SETTINGS</label>
+      <label class="h" style="margin-top:6px">COLOUR THEME</label>
+      <div id="themes"></div>
+      <div class="setrow"><span>Window size<small>Also the &minus; / + buttons in the title bar</small></span><span id="zoom2" style="display:flex;align-items:center;gap:6px"><button class="tbtn" id="zoomOut2">&minus;</button><span id="zoomPct2" style="min-width:52px;text-align:center">100%</span><button class="tbtn" id="zoomIn2">+</button></span></div>
+      <div class="setrow"><span>Rarity glow<small>A soft glow around uncommon and better cards</small></span><button class="switch" id="glowSw"></button></div>
+      <div class="setrow"><span>Hover tooltips<small>Details when you point at a card</small></span><button class="switch" id="tipsSw"></button></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:18px"><button class="btn solid" id="setDone">DONE</button></div>
+    </div>
+  </div>
+  <div id="tt" hidden></div>
+  <div id="toast" hidden></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

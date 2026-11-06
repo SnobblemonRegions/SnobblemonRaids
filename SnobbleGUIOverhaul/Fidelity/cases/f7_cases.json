@@ -1,0 +1,112 @@
+[
+ {
+  "case": "f7_cases__c01_queue",
+  "shot": "c01_queue",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases__c01_queue",
+  "budget": 5148,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases\\c01_queue.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_cases__c02_ticket",
+  "shot": "c02_ticket",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases__c02_ticket",
+  "budget": 6999,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases\\c02_ticket.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f7_cases__c03_reports",
+  "shot": "c03_reports",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases__c03_reports",
+  "budget": 8865,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases\\c03_reports.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f7_cases__c04_sugs",
+  "shot": "c04_sugs",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases__c04_sugs",
+  "budget": 10702,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases\\c04_sugs.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f7_cases__c05_sug",
+  "shot": "c05_sug",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases__c05_sug",
+  "budget": 12565,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases\\c05_sug.png",
+  "unmappable": [],
+  "steps": 5
+ },
+ {
+  "case": "f7_cases__c06_punish",
+  "shot": "c06_punish",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases__c06_punish",
+  "budget": 14410,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases\\c06_punish.png",
+  "unmappable": [],
+  "steps": 6
+ },
+ {
+  "case": "f7_cases__c07_logs",
+  "shot": "c07_logs",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases__c07_logs",
+  "budget": 16264,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases\\c07_logs.png",
+  "unmappable": [],
+  "steps": 7
+ },
+ {
+  "case": "f7_cases__c08_mine",
+  "shot": "c08_mine",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases__c08_mine",
+  "budget": 18094,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases\\c08_mine.png",
+  "unmappable": [],
+  "steps": 8
+ },
+ {
+  "case": "f7_cases__c09_mine_new",
+  "shot": "c09_mine_new",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases__c09_mine_new",
+  "budget": 19953,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases\\c09_mine_new.png",
+  "unmappable": [],
+  "steps": 9
+ },
+ {
+  "case": "f7_cases__c10_psug",
+  "shot": "c10_psug",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases__c10_psug",
+  "budget": 21804,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases\\c10_psug.png",
+  "unmappable": [],
+  "steps": 10
+ },
+ {
+  "case": "f7_cases__c11_prep",
+  "shot": "c11_prep",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases__c11_prep",
+  "budget": 23659,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases\\c11_prep.png",
+  "unmappable": [],
+  "steps": 11
+ }
+]

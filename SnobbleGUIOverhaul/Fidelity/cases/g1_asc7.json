@@ -1,0 +1,22 @@
+[
+ {
+  "case": "g1_asc7__h01_hud",
+  "shot": "h01_hud",
+  "page": "ascensionlib_hud",
+  "url": "/ascensionlib/hud.html?refcase=g1_asc7__h01_hud",
+  "budget": 5780,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g1_asc7\\h01_hud.png",
+  "unmappable": [],
+  "steps": 5
+ },
+ {
+  "case": "g1_asc7__h02_after_flash",
+  "shot": "h02_after_flash",
+  "page": "ascensionlib_hud",
+  "url": "/ascensionlib/hud.html?refcase=g1_asc7__h02_after_flash",
+  "budget": 7280,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g1_asc7\\h02_after_flash.png",
+  "unmappable": [],
+  "steps": 5
+ }
+]

@@ -1,0 +1,22 @@
+[
+ {
+  "case": "g1_asc5__r01_early",
+  "shot": "r01_early",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=g1_asc5__r01_early",
+  "budget": 4888,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g1_asc5\\r01_early.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "g1_asc5__r02_card",
+  "shot": "r02_card",
+  "page": "ascensionlib_capture",
+  "url": "/ascensionlib/capture.html?refcase=g1_asc5__r02_card",
+  "budget": 6045,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g1_asc5\\r02_card.png",
+  "unmappable": [],
+  "steps": 2
+ }
+]

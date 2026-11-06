@@ -1,0 +1,42 @@
+[
+ {
+  "case": "f7_runshot__u01_run_loading",
+  "shot": "u01_run_loading",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_runshot__u01_run_loading",
+  "budget": 6688,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_runshot\\u01_run_loading.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f7_runshot__u02_run_list",
+  "shot": "u02_run_list",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_runshot__u02_run_list",
+  "budget": 7883,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_runshot\\u02_run_list.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f7_runshot__u03_run_entry",
+  "shot": "u03_run_entry",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_runshot__u03_run_entry",
+  "budget": 9582,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_runshot\\u03_run_entry.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f7_runshot__u04_run_confirm",
+  "shot": "u04_run_confirm",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_runshot__u04_run_confirm",
+  "budget": 10787,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_runshot\\u04_run_confirm.png",
+  "unmappable": [],
+  "steps": 5
+ }
+]

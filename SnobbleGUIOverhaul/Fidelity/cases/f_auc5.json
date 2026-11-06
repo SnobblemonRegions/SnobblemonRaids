@@ -1,0 +1,52 @@
+[
+ {
+  "case": "f_auc5__a01_browse",
+  "shot": "a01_browse",
+  "page": "auction",
+  "url": "/auction/index.html?refcase=f_auc5__a01_browse",
+  "budget": 4485,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_auc5\\a01_browse.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_auc5__a02_detail",
+  "shot": "a02_detail",
+  "page": "auction",
+  "url": "/auction/index.html?refcase=f_auc5__a02_detail",
+  "budget": 6326,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_auc5\\a02_detail.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_auc5__a03_confirm",
+  "shot": "a03_confirm",
+  "page": "auction",
+  "url": "/auction/index.html?refcase=f_auc5__a03_confirm",
+  "budget": 8179,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_auc5\\a03_confirm.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f_auc5__a04_mine",
+  "shot": "a04_mine",
+  "page": "auction",
+  "url": "/auction/index.html?refcase=f_auc5__a04_mine",
+  "budget": 10924,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_auc5\\a04_mine.png",
+  "unmappable": [],
+  "steps": 6
+ },
+ {
+  "case": "f_auc5__a05_sell",
+  "shot": "a05_sell",
+  "page": "auction",
+  "url": "/auction/index.html?refcase=f_auc5__a05_sell",
+  "budget": 13089,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_auc5\\a05_sell.png",
+  "unmappable": [],
+  "steps": 8
+ }
+]

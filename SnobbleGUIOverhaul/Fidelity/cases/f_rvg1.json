@@ -1,0 +1,82 @@
+[
+ {
+  "case": "f_rvg1__r01_first_page",
+  "shot": "r01_first_page",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f_rvg1__r01_first_page",
+  "budget": 4999,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_rvg1\\r01_first_page.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_rvg1__r02_conduct",
+  "shot": "r02_conduct",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f_rvg1__r02_conduct",
+  "budget": 6855,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_rvg1\\r02_conduct.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f_rvg1__r03_bottom",
+  "shot": "r03_bottom",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f_rvg1__r03_bottom",
+  "budget": 8450,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_rvg1\\r03_bottom.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f_rvg1__r04_enforcement",
+  "shot": "r04_enforcement",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f_rvg1__r04_enforcement",
+  "budget": 9560,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_rvg1\\r04_enforcement.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f_rvg1__r05_enforcement_mid",
+  "shot": "r05_enforcement_mid",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f_rvg1__r05_enforcement_mid",
+  "budget": 11144,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_rvg1\\r05_enforcement_mid.png",
+  "unmappable": [],
+  "steps": 5
+ },
+ {
+  "case": "f_rvg1__r06_all_read",
+  "shot": "r06_all_read",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f_rvg1__r06_all_read",
+  "budget": 12255,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_rvg1\\r06_all_read.png",
+  "unmappable": [],
+  "steps": 6
+ },
+ {
+  "case": "f_rvg1__r07_done",
+  "shot": "r07_done",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f_rvg1__r07_done",
+  "budget": 13845,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_rvg1\\r07_done.png",
+  "unmappable": [],
+  "steps": 7
+ },
+ {
+  "case": "f_rvg1__v01_accepted",
+  "shot": "v01_accepted",
+  "page": "verify",
+  "url": "/snobblerules/verify.html?refcase=f_rvg1__v01_accepted",
+  "budget": 4490,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_rvg1\\v01_accepted.png",
+  "unmappable": [],
+  "steps": 1
+ }
+]

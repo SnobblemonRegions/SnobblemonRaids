@@ -1,0 +1,82 @@
+[
+ {
+  "case": "f7_qd__q01_tutorial",
+  "shot": "q01_tutorial",
+  "page": "questdex",
+  "url": "/questdex/index.html?refcase=f7_qd__q01_tutorial",
+  "budget": 4858,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_qd\\q01_tutorial.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_qd__q02_selected",
+  "shot": "q02_selected",
+  "page": "questdex",
+  "url": "/questdex/index.html?refcase=f7_qd__q02_selected",
+  "budget": 6116,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_qd\\q02_selected.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_qd__q03_rootvale",
+  "shot": "q03_rootvale",
+  "page": "questdex",
+  "url": "/questdex/index.html?refcase=f7_qd__q03_rootvale",
+  "budget": 7358,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_qd\\q03_rootvale.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f7_qd__q04_rootvale_sel",
+  "shot": "q04_rootvale_sel",
+  "page": "questdex",
+  "url": "/questdex/index.html?refcase=f7_qd__q04_rootvale_sel",
+  "budget": 7839,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_qd\\q04_rootvale_sel.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f7_qd__q04b_after_track",
+  "shot": "q04b_after_track",
+  "page": "questdex",
+  "url": "/questdex/index.html?refcase=f7_qd__q04b_after_track",
+  "budget": 8858,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_qd\\q04b_after_track.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f7_qd__q05_active",
+  "shot": "q05_active",
+  "page": "questdex",
+  "url": "/questdex/index.html?refcase=f7_qd__q05_active",
+  "budget": 9858,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_qd\\q05_active.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f7_qd__q06_completed",
+  "shot": "q06_completed",
+  "page": "questdex",
+  "url": "/questdex/index.html?refcase=f7_qd__q06_completed",
+  "budget": 11433,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_qd\\q06_completed.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f7_qd__q07_rules_locked",
+  "shot": "q07_rules_locked",
+  "page": "questdex",
+  "url": "/questdex/index.html?refcase=f7_qd__q07_rules_locked",
+  "budget": 13043,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_qd\\q07_rules_locked.png",
+  "unmappable": [],
+  "steps": 5
+ }
+]

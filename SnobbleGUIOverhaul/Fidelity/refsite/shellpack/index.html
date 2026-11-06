@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head><script src="/_inject.js"></script>
+<meta charset="utf-8">
+<title>Shellpack</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+  <div id="backdrop"></div>
+
+  <div id="gui">
+    <div id="tabs"></div>
+    <div id="tabpanel"></div>
+
+    <div class="panel" id="main">
+      <div class="title">
+        <h4><img id="ticon" alt=""><span id="ttext">Shellpack</span></h4>
+        <button class="tbtn sp" id="bSort" title="Sort the shellpack">&#8645;</button>
+        <button class="tbtn" id="bMode" title="Sort by: name">N</button>
+        <button class="tbtn" id="bClose" title="Close">&#10005;</button>
+      </div>
+      <div class="grid" id="sg"></div>
+      <div class="meter">
+        <div class="track"><div class="line"></div><div class="trail" id="trail"></div><div class="snail" id="snail"></div></div>
+        <div class="lbl" id="meterLbl"></div>
+      </div>
+    </div>
+
+    <div id="invwrap">
+      <div class="panel" id="inv">
+        <div class="hd">
+          <span>Inventory</span>
+          <button class="tbtn sp" id="bUp" title="Stow: move items you carry that the shellpack already holds into it">&#8679;</button>
+          <button class="tbtn" id="bDn" title="Take out: move items the shellpack holds that you also carry into your inventory">&#8681;</button>
+        </div>
+        <div class="grid" id="ig"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="hint">Press <b>`</b> to use your mouse on the shellpack &middot; press it again to go back to the game</div>
+  <div id="toast"></div>
+  <div id="tip"></div>
+  <div id="cur"></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

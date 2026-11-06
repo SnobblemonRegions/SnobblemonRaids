@@ -1,0 +1,22 @@
+[
+ {
+  "case": "f7_routeshot__r01_route",
+  "shot": "r01_route",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_routeshot__r01_route",
+  "budget": 5141,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_routeshot\\r01_route.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_routeshot__r02_route_pick",
+  "shot": "r02_route_pick",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_routeshot__r02_route_pick",
+  "budget": 7351,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_routeshot\\r02_route_pick.png",
+  "unmappable": [],
+  "steps": 2
+ }
+]

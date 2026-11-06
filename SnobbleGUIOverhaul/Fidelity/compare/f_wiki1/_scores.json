@@ -1,0 +1,36 @@
+[
+ [
+  "w01_home",
+  "wiki",
+  85.6,
+  []
+ ],
+ [
+  "w02_mod",
+  "wiki",
+  85.2,
+  []
+ ],
+ [
+  "w03_page",
+  "wiki",
+  85.3,
+  [
+   "clickbox m_card"
+  ]
+ ],
+ [
+  "w04_next",
+  "wiki",
+  83.8,
+  [
+   "clickbox m_card"
+  ]
+ ],
+ [
+  "w05_reopen",
+  "wiki",
+  85.6,
+  []
+ ]
+]

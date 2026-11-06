@@ -1,0 +1,12 @@
+[
+ {
+  "case": "f7_lobby__l01_lobby",
+  "shot": "l01_lobby",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_lobby__l01_lobby",
+  "budget": 5791,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_lobby\\l01_lobby.png",
+  "unmappable": [],
+  "steps": 1
+ }
+]

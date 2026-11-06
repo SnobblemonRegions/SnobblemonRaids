@@ -1,0 +1,32 @@
+[
+ {
+  "case": "f10_asc6__k01_start",
+  "shot": "k01_start",
+  "page": "ascensionlib_completion",
+  "url": "/ascensionlib/completion.html?refcase=f10_asc6__k01_start",
+  "budget": 4849,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_asc6\\k01_start.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f10_asc6__k02_mid",
+  "shot": "k02_mid",
+  "page": "ascensionlib_completion",
+  "url": "/ascensionlib/completion.html?refcase=f10_asc6__k02_mid",
+  "budget": 6270,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_asc6\\k02_mid.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f10_asc6__k03_end",
+  "shot": "k03_end",
+  "page": "ascensionlib_completion",
+  "url": "/ascensionlib/completion.html?refcase=f10_asc6__k03_end",
+  "budget": 6349,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_asc6\\k03_end.png",
+  "unmappable": [],
+  "steps": 1
+ }
+]

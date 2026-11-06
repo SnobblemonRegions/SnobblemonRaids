@@ -1,0 +1,7 @@
+#tiles { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2.4cqw; padding: 1.6cqw 3cqw 3cqw; height: calc(100% - 7.4cqw); }
+.tile.panel { display: flex; flex-direction: column; justify-content: flex-end; gap: 0.4cqw; padding: 2cqw 2.4cqw; min-width: 0; }
+.tile svg { position: absolute; left: 2.4cqw; top: 2cqw; width: 4.4cqw; height: 4.4cqw; padding: 0.8cqw; color: var(--hi); border: 1px solid var(--ln); }
+.tile .key { position: absolute; right: 2cqw; top: 1.4cqw; color: var(--mu); font-weight: 600; font-size: var(--fs-s); }
+.tile b { font: 700 max(15px, 2.5cqw) var(--pix); }
+.tile p { margin: 0; color: var(--mu); font-size: var(--fs); }
+.tile u { text-decoration: none; margin-top: 0.8cqw; color: var(--hi); font-weight: 600; font-size: var(--fs-l); }

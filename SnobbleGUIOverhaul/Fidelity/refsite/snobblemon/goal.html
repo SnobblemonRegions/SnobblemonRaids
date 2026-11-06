@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head><script src="/_inject.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Community Goal</title>
+<style>
+  :root {
+    --ink: #eaf3ff; --dim: #9db4d4; --card: #13263f; --card2: #1a3357; --line: #2c5080; --gold: #ffd36b;
+    --pink: #ff9ccf; --mint: #8cf5c4; --sky: #8fd0ff; --lav: #c9a8ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; font-family: "Trebuchet MS", "Segoe UI", Verdana, sans-serif; color: var(--ink); user-select: none; }
+  /* static backdrop: the game draws pages opaque, so the page paints its own sea (no animation, no blend modes: they cost repaints) */
+  body { background: radial-gradient(900px 520px at 18% 12%, #2d5aa6 0%, rgba(45,90,166,0) 60%), radial-gradient(800px 500px at 85% 90%, #6b3fa8 0%, rgba(107,63,168,0) 60%), linear-gradient(180deg, #0c1d38 0%, #0a1628 100%); }
+  .root { position: absolute; left: 0; top: 0; display: flex; align-items: center; justify-content: center; }
+  .panel { width: 1000px; height: 640px; background: linear-gradient(180deg, #17304f, #10223b); border: 3px solid var(--line); border-radius: 22px; box-shadow: 0 10px 40px rgba(0,0,0,.55); display: flex; flex-direction: column; overflow: hidden; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px 10px; }
+  h1 { margin: 0; font-size: 30px; letter-spacing: .5px; }
+  /* animated pastel rainbow, the same colours as the chat. The gradient is twice as wide as the element and slides one full period;
+     steps() keeps it to about 10 repaints a second, and only these small areas repaint */
+  .rainbow { background: linear-gradient(90deg, #ff9ab8, #ffc58a, #fff39a, #a6f5b0, #9ad7ff, #c8aaff, #ff9ab8, #ffc58a, #fff39a, #a6f5b0, #9ad7ff, #c8aaff, #ff9ab8); background-size: 200% 100%; animation: chroma 6s steps(60) infinite; -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 900; }
+  @keyframes chroma { from { background-position: 0 0; } to { background-position: -200% 0; } }
+  .sub { color: var(--dim); font-size: 14px; margin-top: 2px; }
+  .btn { font: inherit; font-weight: 800; font-size: 16px; color: #fff; background: linear-gradient(180deg, #e0526b, #b9334e); border: 2px solid #ff93a5; border-radius: 12px; padding: 8px 18px; cursor: pointer; }
+  .btn:hover { background: linear-gradient(180deg, #f0657d, #cf405b); }
+  nav { display: flex; gap: 8px; padding: 6px 24px 12px; border-bottom: 2px solid var(--line); }
+  .tab { font: inherit; font-weight: 800; font-size: 15px; color: var(--dim); background: var(--card); border: 2px solid var(--line); border-radius: 12px; padding: 8px 14px; cursor: pointer; }
+  .tab:hover { color: #fff; border-color: var(--sky); }
+  .tab.on { color: #0b1a30; background: linear-gradient(90deg, #ffb3d1, #ffd9a0, #c4f5b4, #a8dcff, #d2b8ff); border-color: #fff; }
+  main { flex: 1; padding: 20px 28px; overflow: hidden; }
+  .big { font-size: 64px; font-weight: 900; line-height: 1; }
+  .bar { height: 46px; border-radius: 23px; background: #0a162a; border: 3px solid var(--line); overflow: hidden; margin: 14px 0 10px; }
+  .fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #ff8fb4, #ffc58a, #fff08a, #9af0b0, #8fd0ff, #c3a2ff, #ff8fb4, #ffc58a, #fff08a, #9af0b0, #8fd0ff, #c3a2ff, #ff8fb4); background-size: 200% 100%; animation: chroma 6s steps(60) infinite; }
+  .row { display: flex; gap: 18px; }
+  .box { background: var(--card); border: 2px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .box h3 { margin: 0 0 8px; font-size: 17px; color: var(--gold); }
+  .grow { flex: 1; }
+  .stat { font-size: 26px; font-weight: 900; }
+  .lbl { color: var(--dim); font-size: 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { display: flex; align-items: center; gap: 8px; background: var(--card2); border: 2px solid var(--line); border-radius: 999px; padding: 5px 14px 5px 6px; font-weight: 700; }
+  .av { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: #0b1a30; }
+  .list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; }
+  .li { display: flex; align-items: center; gap: 10px; background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 8px 12px; }
+  .rk { width: 34px; font-weight: 900; font-size: 18px; text-align: center; }
+  .nm { font-weight: 800; flex: 1; }
+  .val { font-weight: 900; color: var(--mint); }
+  .small { color: var(--dim); font-size: 13px; }
+  .cards { display: flex; gap: 18px; }
+  .rc { flex: 1; text-align: center; padding: 18px 12px; }
+  .rc .t { font-size: 24px; font-weight: 900; margin-bottom: 8px; }
+  .ms { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 8px 0 16px; }
+  .m { text-align: center; padding: 12px 6px; border-radius: 14px; border: 2px solid var(--line); background: var(--card); font-weight: 800; }
+  .m.hit { background: #17503a; border-color: var(--mint); }
+  .seg { display: inline-flex; gap: 6px; margin-bottom: 10px; }
+  .seg .tab { padding: 5px 12px; font-size: 13px; }
+  .empty { text-align: center; color: var(--dim); font-size: 18px; padding: 50px 0; }
+  .done { color: var(--mint); }
+  .inp { font: inherit; font-size: 16px; font-weight: 700; color: #fff; background: #0a162a; border: 2px solid var(--line); border-radius: 12px; padding: 8px 14px; user-select: text; outline: none; }
+  .inp:focus { border-color: var(--sky); }
+  .plist { display: flex; flex-direction: column; gap: 4px; max-height: 390px; overflow: hidden; }
+  .pill { background: var(--card2); border: 2px solid var(--line); border-radius: 999px; padding: 3px 12px; font-size: 14px; white-space: nowrap; }
+  .pill b { color: var(--gold); }
+  footer { padding: 8px 24px 12px; color: var(--dim); font-size: 13px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="root" id="root">
+  <div class="panel">
+    <header>
+      <div>
+        <h1 class="rainbow" id="title">Community Goal</h1>
+        <div class="sub" id="sub">Loading...</div>
+      </div>
+      <button class="btn" id="btnClose">✕ Close</button>
+    </header>
+    <nav id="nav"></nav>
+    <main id="main"></main>
+    <footer id="foot"></footer>
+  </div>
+</div>
+<script>
+(function () {
+'use strict';
+window.webgui = window.webgui || {};
+var W = window.webgui;
+var inMod = typeof window.cefQuery === 'function' || typeof W.assetsBase === 'string' || typeof W.isHud === 'boolean';
+if (!inMod) { // plain browser: a mock so the page can be previewed
+  W.postToGame = W.postToGame || function () {};
+  W.closeGui = W.closeGui || function () { console.log('[mock] closeGui'); };
+  W.on = W.on || function (n, f) { window.addEventListener('webgui:' + n, function (e) { f(e.detail); }); };
+}
+var $ = function (id) { return document.getElementById(id); };
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+// scale the fixed 1000x640 panel to the window
+function fit() {
+  var vw = window.innerWidth, vh = window.innerHeight, z = Math.min(vw * .94 / 1000, vh * .9 / 640), r = $('root');
+  r.style.width = vw / z + 'px'; r.style.height = vh / z + 'px'; r.style.zoom = z;
+}
+window.addEventListener('resize', fit); fit();
+
+var TABS = [['goal', 'Monthly Goal'], ['points', 'Points'], ['milestones', 'Milestones'], ['me', 'My Stats']];
+var S = { tab: 'goal', st: null, lk: null, lkq: '' };
+var lastHtml = {};
+function put(id, html) { if (lastHtml[id] === html) return; lastHtml[id] = html; $(id).innerHTML = html; }
+
+var COLORS = { green: '#7ee8a2', dark_green: '#4fbf7e', aqua: '#8ff0ee', dark_aqua: '#4fc4c8', red: '#ff8f8f', dark_red: '#d95a5a', gold: '#ffd36b', yellow: '#fff08a',
+  blue: '#8aa8ff', dark_blue: '#6c7fe0', light_purple: '#e3a8ff', dark_purple: '#b58bff', white: '#ffffff', gray: '#cfd6e0', dark_gray: '#9aa6b8' };
+function rcol(c) { return COLORS[c] || '#cfe0ff'; }
+var AV = ['#ffb3d1', '#ffd9a0', '#c4f5b4', '#a8dcff', '#d2b8ff', '#fff0a0'];
+function av(name) { var h = 0; for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0; return '<span class="av" style="background:' + AV[h % AV.length] + '">' + esc((name[0] || '?').toUpperCase()) + '</span>'; }
+function medal(i) { return ['🥇', '🥈', '🥉'][i] || '#' + (i + 1); }
+
+function render() {
+  var s = S.st; if (!s) return;
+  document.title = s.title;
+  put('title', esc(s.title));
+  put('sub', esc(s.server) + (s.reached ? ' · goal reached, thank you!' : ' · every donation moves the bar'));
+  var tabs = TABS.concat(s.admin ? [['players', 'Players 🔎']] : []);
+  if (S.tab === 'players' && !s.admin) S.tab = 'goal';
+  put('nav', tabs.map(function (t) { return '<button class="tab' + (S.tab === t[0] ? ' on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '</button>'; }).join(''));
+  var h = '';
+  if (S.tab === 'goal') h = goal(s);
+  else if (S.tab === 'points') h = points(s);
+  else if (S.tab === 'players') h = players(s);
+  else if (S.tab === 'milestones') h = milestones(s);
+  else h = me(s);
+  put('main', h);
+  put('foot', 'Say <b class="rainbow">W</b> in chat when a donation lands for +' + s.pointsPerW + ' ' + esc(s.pointsName) + (s.storeUrl ? ' · Store: ' + esc(s.storeUrl) : ''));
+}
+
+function goal(s) {
+  var pct = Math.max(0, Math.min(100, s.percent));
+  var h = '<div class="row" style="align-items:flex-end;justify-content:space-between"><div><div class="lbl">Progress this month</div><div class="big rainbow">' + Math.floor(s.percent) + '%</div></div>';
+  if (s.showAmounts) h += '<div style="text-align:right"><div class="stat">' + esc(s.symbol) + esc(s.raised) + ' <span class="lbl">of ' + esc(s.symbol) + esc(s.target) + '</span></div>' +
+    '<div class="lbl' + (s.reached ? ' done' : '') + '">' + (s.reached ? '✔ Goal reached! Thank you!' : 'Still needed: ' + esc(s.symbol) + esc(s.left)) + '</div></div>';
+  else h += '<div style="text-align:right"><div class="stat' + (s.reached ? ' done' : '') + '">' + (s.reached ? '✔ Goal reached! Thank you!' : Math.max(0, 100 - Math.floor(s.percent)) + '% to go') + '</div><div class="lbl">Thank you for supporting the server ❤</div></div>';
+  h += '</div><div class="bar"><div class="fill" style="width:' + pct + '%"></div></div>';
+  return h;
+}
+function points(s) {
+  var tot = 0; s.regions.forEach(function (r) { tot += r.points; });
+  return '<div class="lbl" style="margin-bottom:12px">Regional ' + esc(s.pointsName) + ' &middot; every W and welcome earns points for your region.</div><div class="cards">' + s.regions.map(function (r) {
+    return '<div class="box rc"><div class="t" style="color:' + rcol(r.color) + '">' + esc(r.name) + '</div>' +
+      '<div class="stat" style="color:var(--pink);font-size:34px">' + r.points + '</div><div class="lbl">' + esc(s.pointsName) + '</div>' +
+      '<div class="stat" style="margin-top:10px">' + r.ws + '</div><div class="lbl">Ws said</div>' +
+      '<div class="stat" style="margin-top:10px">' + r.wins + '</div><div class="lbl">wave wins</div>' +
+      '<div class="lbl" style="margin-top:10px">' + r.online + ' online</div></div>';
+  }).join('') + '</div>';
+}
+function ago(ms) { if (!ms) return '?'; var d = Math.floor((Date.now() - ms) / 86400000); return d < 1 ? 'today' : d + ' day' + (d > 1 ? 's' : '') + ' ago'; }
+function players(s) {
+  var h = '<div class="row" style="margin-bottom:10px"><input id="lkq" class="inp grow" maxlength="32" placeholder="Search a player name (online or offline)..." value="' + esc(S.lkq) + '"><button class="btn" style="background:linear-gradient(180deg,#4f8fe0,#2f63b0);border-color:#9cc4ff" data-search="1">Search</button></div>';
+  var l = S.lk;
+  if (!l) return h + '<div class="empty">Loading players...</div>';
+  if (!l.results.length) return h + '<div class="empty">No player found for "' + esc(l.q) + '".</div>';
+  h += '<div class="small" style="margin-bottom:6px">' + (l.total > l.results.length ? 'Showing ' + l.results.length + ' of ' + l.total + ' &middot; type more of the name to narrow it down' : l.total + ' found') + '</div><div class="plist">';
+  h += l.results.map(function (r) {
+    return '<div class="li">' + av(r.name) + '<span class="nm">' + esc(r.name) + ' <span class="small">&middot; <span style="color:' + (r.online ? 'var(--mint)' : '#8a97ab') + '">' + (r.online ? 'online' : 'offline') + '</span>' + (r.region ? ' &middot; ' + esc(r.region) : '') + '</span></span>' +
+      '<span class="pill"><b>' + r.ws + '</b> Ws</span><span class="pill"><b>' + r.greets + '</b> welcomes</span><span class="pill"><b>' + r.quizWins + '</b> quiz wins</span><span class="pill"><b>' + r.points + '</b> pts</span></div>' +
+      '<div class="small" style="margin:-2px 0 4px 56px">Ws by kind: quiz ' + r.wQuiz + ' · shiny ' + r.wShiny + ' · legendary ' + r.wLegendary + ' · donation ' + r.wDonation + '</div>';
+  }).join('') + '</div>';
+  return h;
+}
+function milestones(s) {
+  var h = '<div class="lbl">Server milestones</div><div class="ms">' + s.milestones.map(function (m) {
+    return '<div class="m' + (m.hit ? ' hit' : '') + '">' + (m.hit ? '✔ ' : '') + esc(m.amount != null ? s.symbol + m.amount : m.label) + '<div class="small">' + (m.hit ? 'Reached!' : (m.togo != null ? esc(s.symbol) + esc(m.togo) + ' to go' : 'Coming up')) + '</div></div>';
+  }).join('') + '</div><div class="lbl">Your supporter ranks</div><div class="ms">' + s.donorMilestones.map(function (m) {
+    return '<div class="m' + (m.hit ? ' hit' : '') + '">' + (m.hit ? '✔ ' : '') + esc(m.amount != null ? s.symbol + m.amount : m.label) + '<div class="small">' + (m.hit ? 'Unlocked!' : (m.togo != null ? esc(s.symbol) + esc(m.togo) + ' to go' : 'Not yet')) + '</div></div>';
+  }).join('') + '</div>';
+  return h;
+}
+function me(s) {
+  var m = s.me;
+  return '<div class="box" style="display:flex;align-items:center;gap:22px;padding:22px"><span class="av" style="width:84px;height:84px;font-size:42px;background:' + AV[(m.name.length) % AV.length] + '">' + esc((m.name[0] || '?').toUpperCase()) + '</span>' +
+    '<div><div class="big rainbow" style="font-size:42px">' + esc(m.name) + '</div><div class="lbl">' + (m.region ? esc(m.region) : 'No region yet') + '</div></div></div>' +
+    '<div class="row" style="margin-top:16px">' +
+    '<div class="box grow"><div class="lbl">Donations</div><div class="stat">' + (m.donated != null ? esc(s.symbol) + esc(m.donated) : m.donations) + '</div>' + (m.donated != null ? '<div class="small">' + m.donations + ' donation(s)</div>' : '') + '</div>' +
+    '<div class="box grow"><div class="lbl">' + esc(s.pointsName) + '</div><div class="stat" style="color:var(--pink)">' + m.points + '</div></div>' +
+    '<div class="box grow"><div class="lbl">Ws said</div><div class="stat">' + m.ws + '</div></div>' +
+    '<div class="box grow"><div class="lbl">Players welcomed</div><div class="stat">' + m.greets + '</div></div></div>';
+}
+
+document.addEventListener('click', function (e) {
+  var t = e.target.closest ? e.target.closest('[data-tab]') : null;
+  if (t) { S.tab = t.getAttribute('data-tab'); if (S.tab === 'players' && !S.lk) search(''); render(); return; }
+  var q = e.target.closest ? e.target.closest('[data-search]') : null;
+  if (q) doSearch();
+});
+$('btnClose').onclick = function () { send({ kind: 'bye' }); W.closeGui(); };
+function search(q) { S.lkq = q; try { W.postToGame({ channel: 'snobblemoncompanion', kind: 'lookup', q: q }); } catch (e) {} }
+function doSearch() { var i = $('lkq'); search(i ? i.value : ''); }
+W.on('player_lookup', function (d) { try { S.lk = typeof d === 'string' ? JSON.parse(d) : d; if (S.tab === 'players') { var i = $('lkq'), keep = i && document.activeElement === i; render(); if (keep) { i = $('lkq'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); } } } catch (e) {} });
+document.addEventListener('input', function (e) { if (e.target && e.target.id === 'lkq') S.lkq = e.target.value; });
+document.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target && e.target.id === 'lkq') { doSearch(); return; } if (e.key === 'Escape') { send({ kind: 'bye' }); W.closeGui(); } });
+
+function send(o) { try { W.postToGame({ channel: 'snobblemoncompanion', kind: o.kind }); } catch (e) {} }
+function take(d) { try { S.st = typeof d === 'string' ? JSON.parse(d) : d; render(); } catch (e) {} }
+W.on('goal_state', take);
+
+if (!inMod) { // browser preview data
+  take({ title: 'Monthly Goal', server: 'Snobblemon Regions', symbol: '$', showAmounts: false, pointsName: 'Community Points', pointsPerW: 5, storeUrl: '', percent: 75, reached: false,
+   
+    admin: true, regions: [{ id: 'rootvale', name: 'Rootvale', color: 'green', ws: 12, wins: 2, online: 3, points: 340 }, { id: 'tideforge', name: 'Tideforge', color: 'aqua', ws: 9, wins: 1, online: 2, points: 210 }, { id: 'duskvale', name: 'Duskvale', color: 'light_purple', ws: 6, wins: 0, online: 1, points: 95 }],
+    milestones: [{ hit: true, label: 'Milestone 1' }, { hit: false, label: 'Milestone 2' }, { hit: false, label: 'Milestone 3' }], donorMilestones: [{ hit: true, label: 'Supporter' }, { hit: false, label: 'Champion' }, { hit: false, label: 'Legend' }],
+    me: { name: 'Snobbler', region: 'Rootvale', donations: 2, points: 195, ws: 4, greets: 2 } });
+  if (location.hash.length > 1) { S.tab = location.hash.slice(1); render(); }
+} else {
+  // tell the server this page is open (it answers with the full state), keep telling it, and say goodbye on the way out
+  send({ kind: 'hello' });
+  setInterval(function () { send({ kind: S.st ? 'ping' : 'hello' }); }, 4000);
+  window.addEventListener('pagehide', function () { send({ kind: 'bye' }); });
+}
+})();
+</script>
+</body>
+</html>

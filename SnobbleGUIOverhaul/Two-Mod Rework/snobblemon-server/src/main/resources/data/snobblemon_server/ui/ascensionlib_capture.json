@@ -1,0 +1,2558 @@
+{
+ "v": 2,
+ "id": "ascensionlib_capture",
+ "channel": "ascension_capture_ready",
+ "hello": "ready",
+ "bye": false,
+ "title": "Capture",
+ "width": 440,
+ "height": 640,
+ "fit": [
+  1920,
+  1080
+ ],
+ "nodim": true,
+ "state": {
+  "hov": 0
+ },
+ "root": {
+  "type": "column",
+  "w": "fill",
+  "h": "fill",
+  "hover_set": {
+   "hov": "0"
+  },
+  "children": [
+   {
+    "type": "column",
+    "w": "fill",
+    "h": "fill",
+    "align": "center",
+    "cross": "center",
+    "if": "vm.name",
+    "children": [
+     {
+      "type": "capfx",
+      "x": 0,
+      "y": 0,
+      "w": 440,
+      "h": 640,
+      "text": "{vm.fxText}",
+      "hint": "{vm.fxCols}",
+      "fill": "{vm.revealKey}"
+     },
+     {
+      "type": "column",
+      "if": "vm.hv == 1",
+      "w": 440,
+      "h": 577,
+      "hover_set": {
+       "hov": "1"
+      },
+      "children": [
+       {
+        "type": "column",
+        "x": 0,
+        "y": 0,
+        "w": 440,
+        "h": 577,
+        "bg": "#07131C",
+        "anim": "capa",
+        "anim_key": "vm.revealKey",
+        "children": [
+         {
+          "type": "column",
+          "x": 16,
+          "y": 16,
+          "w": 408,
+          "h": 545,
+          "bg": "tex:ascensionlib/cap_back_1.png",
+          "children": [
+           {
+            "type": "column",
+            "x": 120,
+            "y": 141,
+            "w": 168,
+            "h": 168,
+            "bg": "tex:ascensionlib/cap_crest.png",
+            "children": []
+           },
+           {
+            "type": "label",
+            "text": "ASCENSION",
+            "font": "monocraft",
+            "size": 25,
+            "lh": 35.0,
+            "shadow": false,
+            "color": "#BDF1FF",
+            "x": 0,
+            "y": 307,
+            "w": 408,
+            "text_align": "center",
+            "ls": 3
+           },
+           {
+            "type": "label",
+            "text": "A NEW BOND AWAITS",
+            "font": "monocraft",
+            "size": 11,
+            "lh": 15.4,
+            "shadow": false,
+            "color": "#5DA6BD",
+            "x": 0,
+            "y": 354,
+            "w": 408,
+            "text_align": "center",
+            "ls": 2
+           }
+          ]
+         },
+         {
+          "type": "column",
+          "x": 0,
+          "y": 0,
+          "w": 440,
+          "h": 577,
+          "bg": "{vm.bezel}",
+          "children": []
+         }
+        ]
+       },
+       {
+        "type": "column",
+        "x": 0,
+        "y": 0,
+        "w": 440,
+        "h": 577,
+        "bg": "#07131C",
+        "anim": "capb",
+        "anim_key": "vm.revealKey",
+        "children": [
+         {
+          "type": "column",
+          "x": 16,
+          "y": 16,
+          "w": 408,
+          "h": 545,
+          "children": [
+           {
+            "type": "column",
+            "w": "fill",
+            "children": [
+             {
+              "type": "row",
+              "w": "fill",
+              "bg": "#0A1B27",
+              "bsides": "b",
+              "border": "#1F6B86",
+              "bw": 2,
+              "pad": [
+               11,
+               86,
+               11,
+               14
+              ],
+              "gap": 10,
+              "cross": "center",
+              "children": [
+               {
+                "type": "row",
+                "gap": 5,
+                "cross": "center",
+                "children": [
+                 {
+                  "type": "column",
+                  "w": 11,
+                  "h": 11,
+                  "bg": "#4AD8F6",
+                  "children": [
+                   {
+                    "type": "column",
+                    "x": -3,
+                    "y": -3,
+                    "w": 17,
+                    "h": 17,
+                    "bg": "#1b120d",
+                    "pad": [
+                     1,
+                     1,
+                     1,
+                     1
+                    ],
+                    "children": [
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "h": "fill",
+                      "bg": "#eef2f7",
+                      "pad": [
+                       1,
+                       1,
+                       1,
+                       1
+                      ],
+                      "children": [
+                       {
+                        "type": "column",
+                        "w": "fill",
+                        "h": "fill",
+                        "bg": "#1b120d",
+                        "pad": [
+                         1,
+                         1,
+                         1,
+                         1
+                        ],
+                        "children": [
+                         {
+                          "type": "column",
+                          "w": "fill",
+                          "h": "fill",
+                          "bg": "#4AD8F6",
+                          "children": []
+                         }
+                        ]
+                       }
+                      ]
+                     }
+                    ]
+                   }
+                  ]
+                 },
+                 {
+                  "type": "spacer",
+                  "w": 5
+                 },
+                 {
+                  "type": "column",
+                  "w": 5,
+                  "h": 5,
+                  "bg": "#e0434e",
+                  "children": [
+                   {
+                    "type": "column",
+                    "x": -1,
+                    "y": -1,
+                    "w": 7,
+                    "h": 7,
+                    "bg": "#1b120d",
+                    "pad": [
+                     1,
+                     1,
+                     1,
+                     1
+                    ],
+                    "children": [
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "h": "fill",
+                      "bg": "#e0434e",
+                      "children": []
+                     }
+                    ]
+                   }
+                  ]
+                 },
+                 {
+                  "type": "column",
+                  "w": 5,
+                  "h": 5,
+                  "bg": "#F2CF3A",
+                  "children": [
+                   {
+                    "type": "column",
+                    "x": -1,
+                    "y": -1,
+                    "w": 7,
+                    "h": 7,
+                    "bg": "#1b120d",
+                    "pad": [
+                     1,
+                     1,
+                     1,
+                     1
+                    ],
+                    "children": [
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "h": "fill",
+                      "bg": "#F2CF3A",
+                      "children": []
+                     }
+                    ]
+                   }
+                  ]
+                 },
+                 {
+                  "type": "column",
+                  "w": 5,
+                  "h": 5,
+                  "bg": "#52c24a",
+                  "children": [
+                   {
+                    "type": "column",
+                    "x": -1,
+                    "y": -1,
+                    "w": 7,
+                    "h": 7,
+                    "bg": "#1b120d",
+                    "pad": [
+                     1,
+                     1,
+                     1,
+                     1
+                    ],
+                    "children": [
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "h": "fill",
+                      "bg": "#52c24a",
+                      "children": []
+                     }
+                    ]
+                   }
+                  ]
+                 }
+                ]
+               },
+               {
+                "type": "spacer",
+                "w": "fill"
+               },
+               {
+                "type": "label",
+                "text": "CAPTURE REGISTERED",
+                "font": "monocraft",
+                "size": 11,
+                "lh": 15.4,
+                "shadow": false,
+                "color": "#4AD8F6",
+                "ls": 1
+               }
+              ]
+             },
+             {
+              "type": "column",
+              "w": "fill",
+              "pad": [
+               10,
+               18,
+               9,
+               18
+              ],
+              "children": [
+               {
+                "type": "label",
+                "text": "{vm.name}",
+                "font": "monocraft",
+                "size": 23,
+                "lh": 29.9,
+                "shadow": false,
+                "color": "#BDF1FF",
+                "w": "fill",
+                "wrap": true
+               }
+              ]
+             },
+             {
+              "type": "row",
+              "w": "fill",
+              "pad": [
+               0,
+               12,
+               0,
+               12
+              ],
+              "children": [
+               {
+                "type": "column",
+                "w": 384,
+                "h": 164,
+                "bg": "{vm.portrait}",
+                "children": [
+                 {
+                  "type": "label",
+                  "text": "NEW PARTNER",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#5DA6BD",
+                  "x": 27,
+                  "y": 12
+                 },
+                 {
+                  "type": "image",
+                  "pokemon": "{vm.sprite}",
+                  "x": 72,
+                  "y": -8,
+                  "w": 240,
+                  "h": 180
+                 },
+                 {
+                  "type": "row",
+                  "x": 0,
+                  "y": 151,
+                  "w": 384,
+                  "align": "center",
+                  "children": [
+                   {
+                    "type": "column",
+                    "bg": "#07131C",
+                    "pad": [
+                     2,
+                     2,
+                     2,
+                     2
+                    ],
+                    "children": [
+                     {
+                      "type": "label",
+                      "text": "{vm.rarity}",
+                      "font": "monocraft",
+                      "size": 12,
+                      "lh": 16.8,
+                      "shadow": false,
+                      "color": "{vm.color}",
+                      "ls": 2,
+                      "bg": "{vm.bg}",
+                      "border": "{vm.color}",
+                      "bw": 2,
+                      "pad": [
+                       3,
+                       17,
+                       3,
+                       17
+                      ],
+                      "text_align": "center"
+                     }
+                    ]
+                   }
+                  ]
+                 }
+                ]
+               }
+              ]
+             },
+             {
+              "type": "column",
+              "w": "fill",
+              "h": 13.8,
+              "children": []
+             },
+             {
+              "type": "column",
+              "w": "fill",
+              "pad": [
+               14,
+               16,
+               12,
+               16
+              ],
+              "children": [
+               {
+                "type": "row",
+                "w": "fill",
+                "cross": "center",
+                "pad": [
+                 0,
+                 0,
+                 6,
+                 0
+                ],
+                "children": [
+                 {
+                  "type": "label",
+                  "text": "{vm.traitsLabel}",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#5DA6BD",
+                  "ls": 0.5
+                 },
+                 {
+                  "type": "spacer",
+                  "w": "fill"
+                 },
+                 {
+                  "type": "label",
+                  "text": "SCROLL \u2193",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#4AD8F6",
+                  "if": "vm.nTraits > 2"
+                 }
+                ]
+               },
+               {
+                "type": "column",
+                "w": "fill",
+                "h": 54,
+                "bg": "#0D2230",
+                "border": "#1F6B86",
+                "bw": 2,
+                "pad": [
+                 0,
+                 0,
+                 0,
+                 0
+                ],
+                "children": [
+                 {
+                  "type": "column",
+                  "w": "fill",
+                  "gap": 1,
+                  "bg": "#1F6B86",
+                  "children": [
+                   {
+                    "type": "row",
+                    "w": "fill",
+                    "gap": 10,
+                    "cross": "center",
+                    "bg": "#0D2230",
+                    "pad": [
+                     10,
+                     10,
+                     10,
+                     10
+                    ],
+                    "repeat": {
+                     "for": "vm.traits",
+                     "as": "tr",
+                     "limit": 24
+                    },
+                    "children": [
+                     {
+                      "type": "image",
+                      "pokemon": "{tr.icon}",
+                      "w": 30,
+                      "h": 30
+                     },
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "gap": 3,
+                      "children": [
+                       {
+                        "type": "label",
+                        "text": "{tr.name}",
+                        "font": "monocraft",
+                        "size": 13,
+                        "lh": 18.2,
+                        "shadow": false,
+                        "color": "#BDF1FF",
+                        "wrap": true,
+                        "w": "fill"
+                       },
+                       {
+                        "type": "label",
+                        "text": "{tr.sub}",
+                        "font": "monocraft",
+                        "size": 11,
+                        "lh": 15.4,
+                        "shadow": false,
+                        "color": "#5DA6BD",
+                        "w": "fill"
+                       }
+                      ]
+                     },
+                     {
+                      "type": "label",
+                      "text": "{tr.value}",
+                      "font": "monocraft",
+                      "size": 22,
+                      "lh": 30.8,
+                      "shadow": false,
+                      "color": "#BDF1FF"
+                     }
+                    ]
+                   }
+                  ]
+                 }
+                ]
+               },
+               {
+                "type": "column",
+                "w": "fill",
+                "pad": [
+                 10,
+                 0,
+                 10,
+                 0
+                ],
+                "cross": "center",
+                "children": [
+                 {
+                  "type": "row",
+                  "w": "fill",
+                  "align": "center",
+                  "children": [
+                   {
+                    "type": "label",
+                    "text": "Every great partner starts with ",
+                    "font": "monocraft",
+                    "size": 12,
+                    "lh": 20.4,
+                    "shadow": false,
+                    "color": "#BDF1FF"
+                   },
+                   {
+                    "type": "label",
+                    "text": "potential.",
+                    "font": "monocraft",
+                    "size": 12,
+                    "lh": 20.4,
+                    "shadow": false,
+                    "color": "#F2CF3A"
+                   }
+                  ]
+                 },
+                 {
+                  "type": "label",
+                  "text": "{vm.sub}",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 17.6,
+                  "shadow": false,
+                  "color": "#5DA6BD",
+                  "w": "fill",
+                  "text_align": "center",
+                  "pad": [
+                   4,
+                   0,
+                   0,
+                   0
+                  ]
+                 }
+                ]
+               },
+               {
+                "type": "row",
+                "w": "fill",
+                "gap": 5,
+                "pad": [
+                 0,
+                 20,
+                 0,
+                 20
+                ],
+                "children": [
+                 {
+                  "type": "column",
+                  "w": "fill",
+                  "h": 5,
+                  "bg": "{pp.c}",
+                  "repeat": {
+                   "for": "vm.pips",
+                   "as": "pp",
+                   "limit": 6
+                  },
+                  "children": []
+                 }
+                ]
+               },
+               {
+                "type": "row",
+                "w": "fill",
+                "pad": [
+                 5,
+                 20,
+                 10,
+                 20
+                ],
+                "children": [
+                 {
+                  "type": "label",
+                  "text": "COMMON",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#5DA6BD"
+                 },
+                 {
+                  "type": "spacer",
+                  "w": "fill"
+                 },
+                 {
+                  "type": "label",
+                  "text": "MYTHIC",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#ff5a6c"
+                 }
+                ]
+               },
+               {
+                "type": "row",
+                "w": "fill",
+                "gap": 8,
+                "children": [
+                 {
+                  "type": "button",
+                  "id": "explore1",
+                  "text": "Explore Ascension >",
+                  "font": "monocraft",
+                  "size": 12,
+                  "lh": 16.8,
+                  "shadow": false,
+                  "color": "#ffffff",
+                  "hover_color": "#ffffff",
+                  "bg": "#8e1426",
+                  "hover": "#a51a30",
+                  "border": "#eef2f7",
+                  "hover_border": "#eef2f7",
+                  "bw": 2,
+                  "w": 231,
+                  "h": 44,
+                  "align": "center",
+                  "cross": "center",
+                  "pad": [
+                   9,
+                   12,
+                   9,
+                   12
+                  ],
+                  "msg": {
+                   "channel": "snobble_view",
+                   "action": "explore"
+                  },
+                  "args": {}
+                 },
+                 {
+                  "type": "button",
+                  "id": "continue1",
+                  "text": "Continue",
+                  "font": "monocraft",
+                  "size": 12,
+                  "lh": 16.8,
+                  "shadow": false,
+                  "color": "#BDF1FF",
+                  "hover_color": "#ffffff",
+                  "bg": "#0f3347",
+                  "hover": "#0f3347",
+                  "border": "#1F6B86",
+                  "hover_border": "#4AD8F6",
+                  "bw": 2,
+                  "w": "fill",
+                  "h": 44,
+                  "align": "center",
+                  "cross": "center",
+                  "pad": [
+                   9,
+                   12,
+                   9,
+                   12
+                  ],
+                  "msg": {
+                   "channel": "snobble_view",
+                   "action": "continue"
+                  },
+                  "args": {}
+                 }
+                ]
+               }
+              ]
+             },
+             {
+              "type": "row",
+              "w": "fill",
+              "bg": "#0A1B27",
+              "bsides": "t",
+              "border": "#1F6B86",
+              "bw": 2,
+              "pad": [
+               8,
+               12,
+               8,
+               12
+              ],
+              "cross": "center",
+              "children": [
+               {
+                "type": "row",
+                "gap": 7,
+                "cross": "center",
+                "children": [
+                 {
+                  "type": "column",
+                  "w": 18,
+                  "h": 18,
+                  "bg": "tex:ascensionlib/ascension_dex.png",
+                  "children": []
+                 },
+                 {
+                  "type": "label",
+                  "text": "ASCENSION DEX",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#5DA6BD"
+                 }
+                ]
+               },
+               {
+                "type": "spacer",
+                "w": "fill"
+               },
+               {
+                "type": "label",
+                "text": "PROFILE SAVED",
+                "font": "monocraft",
+                "size": 11,
+                "lh": 15.4,
+                "shadow": false,
+                "color": "#5DA6BD"
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "type": "column",
+          "x": 0,
+          "y": 0,
+          "w": 440,
+          "h": 577,
+          "bg": "{vm.bezel}",
+          "children": []
+         },
+         {
+          "type": "button",
+          "id": "disable1",
+          "text": "Disable",
+          "font": "monocraft",
+          "size": 11,
+          "lh": 15.4,
+          "shadow": false,
+          "color": "#BDF1FF",
+          "hover_color": "#ffffff",
+          "bg": "#0f3347",
+          "hover": "#0f3347",
+          "border": "#1F6B86",
+          "hover_border": "#4AD8F6",
+          "bw": 2,
+          "x": 354,
+          "y": 21,
+          "w": 64,
+          "h": 30,
+          "align": "center",
+          "cross": "center",
+          "pad": [
+           3,
+           3,
+           3,
+           3
+          ],
+          "msg": {
+           "channel": "snobble_view",
+           "action": "disable"
+          },
+          "args": {}
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "type": "column",
+      "if": "vm.hv == 2",
+      "w": 440,
+      "h": 628,
+      "hover_set": {
+       "hov": "1"
+      },
+      "children": [
+       {
+        "type": "column",
+        "x": 0,
+        "y": 0,
+        "w": 440,
+        "h": 628,
+        "bg": "#07131C",
+        "anim": "capa",
+        "anim_key": "vm.revealKey",
+        "children": [
+         {
+          "type": "column",
+          "x": 16,
+          "y": 16,
+          "w": 408,
+          "h": 596,
+          "bg": "tex:ascensionlib/cap_back_2.png",
+          "children": [
+           {
+            "type": "column",
+            "x": 120,
+            "y": 167,
+            "w": 168,
+            "h": 168,
+            "bg": "tex:ascensionlib/cap_crest.png",
+            "children": []
+           },
+           {
+            "type": "label",
+            "text": "ASCENSION",
+            "font": "monocraft",
+            "size": 25,
+            "lh": 35.0,
+            "shadow": false,
+            "color": "#BDF1FF",
+            "x": 0,
+            "y": 333,
+            "w": 408,
+            "text_align": "center",
+            "ls": 3
+           },
+           {
+            "type": "label",
+            "text": "A NEW BOND AWAITS",
+            "font": "monocraft",
+            "size": 11,
+            "lh": 15.4,
+            "shadow": false,
+            "color": "#5DA6BD",
+            "x": 0,
+            "y": 380,
+            "w": 408,
+            "text_align": "center",
+            "ls": 2
+           }
+          ]
+         },
+         {
+          "type": "column",
+          "x": 0,
+          "y": 0,
+          "w": 440,
+          "h": 628,
+          "bg": "{vm.bezel}",
+          "children": []
+         }
+        ]
+       },
+       {
+        "type": "column",
+        "x": 0,
+        "y": 0,
+        "w": 440,
+        "h": 628,
+        "bg": "#07131C",
+        "anim": "capb",
+        "anim_key": "vm.revealKey",
+        "children": [
+         {
+          "type": "column",
+          "x": 16,
+          "y": 16,
+          "w": 408,
+          "h": 596,
+          "children": [
+           {
+            "type": "column",
+            "w": "fill",
+            "children": [
+             {
+              "type": "row",
+              "w": "fill",
+              "bg": "#0A1B27",
+              "bsides": "b",
+              "border": "#1F6B86",
+              "bw": 2,
+              "pad": [
+               11,
+               86,
+               11,
+               14
+              ],
+              "gap": 10,
+              "cross": "center",
+              "children": [
+               {
+                "type": "row",
+                "gap": 5,
+                "cross": "center",
+                "children": [
+                 {
+                  "type": "column",
+                  "w": 11,
+                  "h": 11,
+                  "bg": "#4AD8F6",
+                  "children": [
+                   {
+                    "type": "column",
+                    "x": -3,
+                    "y": -3,
+                    "w": 17,
+                    "h": 17,
+                    "bg": "#1b120d",
+                    "pad": [
+                     1,
+                     1,
+                     1,
+                     1
+                    ],
+                    "children": [
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "h": "fill",
+                      "bg": "#eef2f7",
+                      "pad": [
+                       1,
+                       1,
+                       1,
+                       1
+                      ],
+                      "children": [
+                       {
+                        "type": "column",
+                        "w": "fill",
+                        "h": "fill",
+                        "bg": "#1b120d",
+                        "pad": [
+                         1,
+                         1,
+                         1,
+                         1
+                        ],
+                        "children": [
+                         {
+                          "type": "column",
+                          "w": "fill",
+                          "h": "fill",
+                          "bg": "#4AD8F6",
+                          "children": []
+                         }
+                        ]
+                       }
+                      ]
+                     }
+                    ]
+                   }
+                  ]
+                 },
+                 {
+                  "type": "spacer",
+                  "w": 5
+                 },
+                 {
+                  "type": "column",
+                  "w": 5,
+                  "h": 5,
+                  "bg": "#e0434e",
+                  "children": [
+                   {
+                    "type": "column",
+                    "x": -1,
+                    "y": -1,
+                    "w": 7,
+                    "h": 7,
+                    "bg": "#1b120d",
+                    "pad": [
+                     1,
+                     1,
+                     1,
+                     1
+                    ],
+                    "children": [
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "h": "fill",
+                      "bg": "#e0434e",
+                      "children": []
+                     }
+                    ]
+                   }
+                  ]
+                 },
+                 {
+                  "type": "column",
+                  "w": 5,
+                  "h": 5,
+                  "bg": "#F2CF3A",
+                  "children": [
+                   {
+                    "type": "column",
+                    "x": -1,
+                    "y": -1,
+                    "w": 7,
+                    "h": 7,
+                    "bg": "#1b120d",
+                    "pad": [
+                     1,
+                     1,
+                     1,
+                     1
+                    ],
+                    "children": [
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "h": "fill",
+                      "bg": "#F2CF3A",
+                      "children": []
+                     }
+                    ]
+                   }
+                  ]
+                 },
+                 {
+                  "type": "column",
+                  "w": 5,
+                  "h": 5,
+                  "bg": "#52c24a",
+                  "children": [
+                   {
+                    "type": "column",
+                    "x": -1,
+                    "y": -1,
+                    "w": 7,
+                    "h": 7,
+                    "bg": "#1b120d",
+                    "pad": [
+                     1,
+                     1,
+                     1,
+                     1
+                    ],
+                    "children": [
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "h": "fill",
+                      "bg": "#52c24a",
+                      "children": []
+                     }
+                    ]
+                   }
+                  ]
+                 }
+                ]
+               },
+               {
+                "type": "spacer",
+                "w": "fill"
+               },
+               {
+                "type": "label",
+                "text": "CAPTURE REGISTERED",
+                "font": "monocraft",
+                "size": 11,
+                "lh": 15.4,
+                "shadow": false,
+                "color": "#4AD8F6",
+                "ls": 1
+               }
+              ]
+             },
+             {
+              "type": "column",
+              "w": "fill",
+              "pad": [
+               10,
+               18,
+               9,
+               18
+              ],
+              "children": [
+               {
+                "type": "label",
+                "text": "{vm.name}",
+                "font": "monocraft",
+                "size": 23,
+                "lh": 29.9,
+                "shadow": false,
+                "color": "#BDF1FF",
+                "w": "fill",
+                "wrap": true
+               }
+              ]
+             },
+             {
+              "type": "row",
+              "w": "fill",
+              "pad": [
+               0,
+               12,
+               0,
+               12
+              ],
+              "children": [
+               {
+                "type": "column",
+                "w": 384,
+                "h": 164,
+                "bg": "{vm.portrait}",
+                "children": [
+                 {
+                  "type": "label",
+                  "text": "NEW PARTNER",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#5DA6BD",
+                  "x": 27,
+                  "y": 12
+                 },
+                 {
+                  "type": "image",
+                  "pokemon": "{vm.sprite}",
+                  "x": 72,
+                  "y": -8,
+                  "w": 240,
+                  "h": 180
+                 },
+                 {
+                  "type": "row",
+                  "x": 0,
+                  "y": 151,
+                  "w": 384,
+                  "align": "center",
+                  "children": [
+                   {
+                    "type": "column",
+                    "bg": "#07131C",
+                    "pad": [
+                     2,
+                     2,
+                     2,
+                     2
+                    ],
+                    "children": [
+                     {
+                      "type": "label",
+                      "text": "{vm.rarity}",
+                      "font": "monocraft",
+                      "size": 12,
+                      "lh": 16.8,
+                      "shadow": false,
+                      "color": "{vm.color}",
+                      "ls": 2,
+                      "bg": "{vm.bg}",
+                      "border": "{vm.color}",
+                      "bw": 2,
+                      "pad": [
+                       3,
+                       17,
+                       3,
+                       17
+                      ],
+                      "text_align": "center"
+                     }
+                    ]
+                   }
+                  ]
+                 }
+                ]
+               }
+              ]
+             },
+             {
+              "type": "column",
+              "w": "fill",
+              "h": 13.8,
+              "children": []
+             },
+             {
+              "type": "column",
+              "w": "fill",
+              "pad": [
+               14,
+               16,
+               12,
+               16
+              ],
+              "children": [
+               {
+                "type": "row",
+                "w": "fill",
+                "cross": "center",
+                "pad": [
+                 0,
+                 0,
+                 6,
+                 0
+                ],
+                "children": [
+                 {
+                  "type": "label",
+                  "text": "{vm.traitsLabel}",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#5DA6BD",
+                  "ls": 0.5
+                 },
+                 {
+                  "type": "spacer",
+                  "w": "fill"
+                 },
+                 {
+                  "type": "label",
+                  "text": "SCROLL \u2193",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#4AD8F6",
+                  "if": "vm.nTraits > 2"
+                 }
+                ]
+               },
+               {
+                "type": "column",
+                "w": "fill",
+                "h": 105,
+                "bg": "#0D2230",
+                "border": "#1F6B86",
+                "bw": 2,
+                "pad": [
+                 0,
+                 0,
+                 0,
+                 0
+                ],
+                "children": [
+                 {
+                  "type": "column",
+                  "w": "fill",
+                  "gap": 1,
+                  "bg": "#1F6B86",
+                  "children": [
+                   {
+                    "type": "row",
+                    "w": "fill",
+                    "gap": 10,
+                    "cross": "center",
+                    "bg": "#0D2230",
+                    "pad": [
+                     10,
+                     10,
+                     10,
+                     10
+                    ],
+                    "repeat": {
+                     "for": "vm.traits",
+                     "as": "tr",
+                     "limit": 24
+                    },
+                    "children": [
+                     {
+                      "type": "image",
+                      "pokemon": "{tr.icon}",
+                      "w": 30,
+                      "h": 30
+                     },
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "gap": 3,
+                      "children": [
+                       {
+                        "type": "label",
+                        "text": "{tr.name}",
+                        "font": "monocraft",
+                        "size": 13,
+                        "lh": 18.2,
+                        "shadow": false,
+                        "color": "#BDF1FF",
+                        "wrap": true,
+                        "w": "fill"
+                       },
+                       {
+                        "type": "label",
+                        "text": "{tr.sub}",
+                        "font": "monocraft",
+                        "size": 11,
+                        "lh": 15.4,
+                        "shadow": false,
+                        "color": "#5DA6BD",
+                        "w": "fill"
+                       }
+                      ]
+                     },
+                     {
+                      "type": "label",
+                      "text": "{tr.value}",
+                      "font": "monocraft",
+                      "size": 22,
+                      "lh": 30.8,
+                      "shadow": false,
+                      "color": "#BDF1FF"
+                     }
+                    ]
+                   }
+                  ]
+                 }
+                ]
+               },
+               {
+                "type": "column",
+                "w": "fill",
+                "pad": [
+                 10,
+                 0,
+                 10,
+                 0
+                ],
+                "cross": "center",
+                "children": [
+                 {
+                  "type": "row",
+                  "w": "fill",
+                  "align": "center",
+                  "children": [
+                   {
+                    "type": "label",
+                    "text": "Every great partner starts with ",
+                    "font": "monocraft",
+                    "size": 12,
+                    "lh": 20.4,
+                    "shadow": false,
+                    "color": "#BDF1FF"
+                   },
+                   {
+                    "type": "label",
+                    "text": "potential.",
+                    "font": "monocraft",
+                    "size": 12,
+                    "lh": 20.4,
+                    "shadow": false,
+                    "color": "#F2CF3A"
+                   }
+                  ]
+                 },
+                 {
+                  "type": "label",
+                  "text": "{vm.sub}",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 17.6,
+                  "shadow": false,
+                  "color": "#5DA6BD",
+                  "w": "fill",
+                  "text_align": "center",
+                  "pad": [
+                   4,
+                   0,
+                   0,
+                   0
+                  ]
+                 }
+                ]
+               },
+               {
+                "type": "row",
+                "w": "fill",
+                "gap": 5,
+                "pad": [
+                 0,
+                 20,
+                 0,
+                 20
+                ],
+                "children": [
+                 {
+                  "type": "column",
+                  "w": "fill",
+                  "h": 5,
+                  "bg": "{pp.c}",
+                  "repeat": {
+                   "for": "vm.pips",
+                   "as": "pp",
+                   "limit": 6
+                  },
+                  "children": []
+                 }
+                ]
+               },
+               {
+                "type": "row",
+                "w": "fill",
+                "pad": [
+                 5,
+                 20,
+                 10,
+                 20
+                ],
+                "children": [
+                 {
+                  "type": "label",
+                  "text": "COMMON",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#5DA6BD"
+                 },
+                 {
+                  "type": "spacer",
+                  "w": "fill"
+                 },
+                 {
+                  "type": "label",
+                  "text": "MYTHIC",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#ff5a6c"
+                 }
+                ]
+               },
+               {
+                "type": "row",
+                "w": "fill",
+                "gap": 8,
+                "children": [
+                 {
+                  "type": "button",
+                  "id": "explore2",
+                  "text": "Explore Ascension >",
+                  "font": "monocraft",
+                  "size": 12,
+                  "lh": 16.8,
+                  "shadow": false,
+                  "color": "#ffffff",
+                  "hover_color": "#ffffff",
+                  "bg": "#8e1426",
+                  "hover": "#a51a30",
+                  "border": "#eef2f7",
+                  "hover_border": "#eef2f7",
+                  "bw": 2,
+                  "w": 231,
+                  "h": 44,
+                  "align": "center",
+                  "cross": "center",
+                  "pad": [
+                   9,
+                   12,
+                   9,
+                   12
+                  ],
+                  "msg": {
+                   "channel": "snobble_view",
+                   "action": "explore"
+                  },
+                  "args": {}
+                 },
+                 {
+                  "type": "button",
+                  "id": "continue2",
+                  "text": "Continue",
+                  "font": "monocraft",
+                  "size": 12,
+                  "lh": 16.8,
+                  "shadow": false,
+                  "color": "#BDF1FF",
+                  "hover_color": "#ffffff",
+                  "bg": "#0f3347",
+                  "hover": "#0f3347",
+                  "border": "#1F6B86",
+                  "hover_border": "#4AD8F6",
+                  "bw": 2,
+                  "w": "fill",
+                  "h": 44,
+                  "align": "center",
+                  "cross": "center",
+                  "pad": [
+                   9,
+                   12,
+                   9,
+                   12
+                  ],
+                  "msg": {
+                   "channel": "snobble_view",
+                   "action": "continue"
+                  },
+                  "args": {}
+                 }
+                ]
+               }
+              ]
+             },
+             {
+              "type": "row",
+              "w": "fill",
+              "bg": "#0A1B27",
+              "bsides": "t",
+              "border": "#1F6B86",
+              "bw": 2,
+              "pad": [
+               8,
+               12,
+               8,
+               12
+              ],
+              "cross": "center",
+              "children": [
+               {
+                "type": "row",
+                "gap": 7,
+                "cross": "center",
+                "children": [
+                 {
+                  "type": "column",
+                  "w": 18,
+                  "h": 18,
+                  "bg": "tex:ascensionlib/ascension_dex.png",
+                  "children": []
+                 },
+                 {
+                  "type": "label",
+                  "text": "ASCENSION DEX",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#5DA6BD"
+                 }
+                ]
+               },
+               {
+                "type": "spacer",
+                "w": "fill"
+               },
+               {
+                "type": "label",
+                "text": "PROFILE SAVED",
+                "font": "monocraft",
+                "size": 11,
+                "lh": 15.4,
+                "shadow": false,
+                "color": "#5DA6BD"
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "type": "column",
+          "x": 0,
+          "y": 0,
+          "w": 440,
+          "h": 628,
+          "bg": "{vm.bezel}",
+          "children": []
+         },
+         {
+          "type": "button",
+          "id": "disable2",
+          "text": "Disable",
+          "font": "monocraft",
+          "size": 11,
+          "lh": 15.4,
+          "shadow": false,
+          "color": "#BDF1FF",
+          "hover_color": "#ffffff",
+          "bg": "#0f3347",
+          "hover": "#0f3347",
+          "border": "#1F6B86",
+          "hover_border": "#4AD8F6",
+          "bw": 2,
+          "x": 354,
+          "y": 21,
+          "w": 64,
+          "h": 30,
+          "align": "center",
+          "cross": "center",
+          "pad": [
+           3,
+           3,
+           3,
+           3
+          ],
+          "msg": {
+           "channel": "snobble_view",
+           "action": "disable"
+          },
+          "args": {}
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "type": "column",
+      "if": "vm.hv == 3",
+      "w": 440,
+      "h": 647,
+      "hover_set": {
+       "hov": "1"
+      },
+      "children": [
+       {
+        "type": "column",
+        "x": 0,
+        "y": 0,
+        "w": 440,
+        "h": 647,
+        "bg": "#07131C",
+        "anim": "capa",
+        "anim_key": "vm.revealKey",
+        "children": [
+         {
+          "type": "column",
+          "x": 16,
+          "y": 16,
+          "w": 408,
+          "h": 615,
+          "bg": "tex:ascensionlib/cap_back_3.png",
+          "children": [
+           {
+            "type": "column",
+            "x": 120,
+            "y": 176,
+            "w": 168,
+            "h": 168,
+            "bg": "tex:ascensionlib/cap_crest.png",
+            "children": []
+           },
+           {
+            "type": "label",
+            "text": "ASCENSION",
+            "font": "monocraft",
+            "size": 25,
+            "lh": 35.0,
+            "shadow": false,
+            "color": "#BDF1FF",
+            "x": 0,
+            "y": 342,
+            "w": 408,
+            "text_align": "center",
+            "ls": 3
+           },
+           {
+            "type": "label",
+            "text": "A NEW BOND AWAITS",
+            "font": "monocraft",
+            "size": 11,
+            "lh": 15.4,
+            "shadow": false,
+            "color": "#5DA6BD",
+            "x": 0,
+            "y": 389,
+            "w": 408,
+            "text_align": "center",
+            "ls": 2
+           }
+          ]
+         },
+         {
+          "type": "column",
+          "x": 0,
+          "y": 0,
+          "w": 440,
+          "h": 647,
+          "bg": "{vm.bezel}",
+          "children": []
+         }
+        ]
+       },
+       {
+        "type": "column",
+        "x": 0,
+        "y": 0,
+        "w": 440,
+        "h": 647,
+        "bg": "#07131C",
+        "anim": "capb",
+        "anim_key": "vm.revealKey",
+        "children": [
+         {
+          "type": "column",
+          "x": 16,
+          "y": 16,
+          "w": 408,
+          "h": 615,
+          "children": [
+           {
+            "type": "column",
+            "w": "fill",
+            "children": [
+             {
+              "type": "row",
+              "w": "fill",
+              "bg": "#0A1B27",
+              "bsides": "b",
+              "border": "#1F6B86",
+              "bw": 2,
+              "pad": [
+               11,
+               86,
+               11,
+               14
+              ],
+              "gap": 10,
+              "cross": "center",
+              "children": [
+               {
+                "type": "row",
+                "gap": 5,
+                "cross": "center",
+                "children": [
+                 {
+                  "type": "column",
+                  "w": 11,
+                  "h": 11,
+                  "bg": "#4AD8F6",
+                  "children": [
+                   {
+                    "type": "column",
+                    "x": -3,
+                    "y": -3,
+                    "w": 17,
+                    "h": 17,
+                    "bg": "#1b120d",
+                    "pad": [
+                     1,
+                     1,
+                     1,
+                     1
+                    ],
+                    "children": [
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "h": "fill",
+                      "bg": "#eef2f7",
+                      "pad": [
+                       1,
+                       1,
+                       1,
+                       1
+                      ],
+                      "children": [
+                       {
+                        "type": "column",
+                        "w": "fill",
+                        "h": "fill",
+                        "bg": "#1b120d",
+                        "pad": [
+                         1,
+                         1,
+                         1,
+                         1
+                        ],
+                        "children": [
+                         {
+                          "type": "column",
+                          "w": "fill",
+                          "h": "fill",
+                          "bg": "#4AD8F6",
+                          "children": []
+                         }
+                        ]
+                       }
+                      ]
+                     }
+                    ]
+                   }
+                  ]
+                 },
+                 {
+                  "type": "spacer",
+                  "w": 5
+                 },
+                 {
+                  "type": "column",
+                  "w": 5,
+                  "h": 5,
+                  "bg": "#e0434e",
+                  "children": [
+                   {
+                    "type": "column",
+                    "x": -1,
+                    "y": -1,
+                    "w": 7,
+                    "h": 7,
+                    "bg": "#1b120d",
+                    "pad": [
+                     1,
+                     1,
+                     1,
+                     1
+                    ],
+                    "children": [
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "h": "fill",
+                      "bg": "#e0434e",
+                      "children": []
+                     }
+                    ]
+                   }
+                  ]
+                 },
+                 {
+                  "type": "column",
+                  "w": 5,
+                  "h": 5,
+                  "bg": "#F2CF3A",
+                  "children": [
+                   {
+                    "type": "column",
+                    "x": -1,
+                    "y": -1,
+                    "w": 7,
+                    "h": 7,
+                    "bg": "#1b120d",
+                    "pad": [
+                     1,
+                     1,
+                     1,
+                     1
+                    ],
+                    "children": [
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "h": "fill",
+                      "bg": "#F2CF3A",
+                      "children": []
+                     }
+                    ]
+                   }
+                  ]
+                 },
+                 {
+                  "type": "column",
+                  "w": 5,
+                  "h": 5,
+                  "bg": "#52c24a",
+                  "children": [
+                   {
+                    "type": "column",
+                    "x": -1,
+                    "y": -1,
+                    "w": 7,
+                    "h": 7,
+                    "bg": "#1b120d",
+                    "pad": [
+                     1,
+                     1,
+                     1,
+                     1
+                    ],
+                    "children": [
+                     {
+                      "type": "column",
+                      "w": "fill",
+                      "h": "fill",
+                      "bg": "#52c24a",
+                      "children": []
+                     }
+                    ]
+                   }
+                  ]
+                 }
+                ]
+               },
+               {
+                "type": "spacer",
+                "w": "fill"
+               },
+               {
+                "type": "label",
+                "text": "CAPTURE REGISTERED",
+                "font": "monocraft",
+                "size": 11,
+                "lh": 15.4,
+                "shadow": false,
+                "color": "#4AD8F6",
+                "ls": 1
+               }
+              ]
+             },
+             {
+              "type": "column",
+              "w": "fill",
+              "pad": [
+               10,
+               18,
+               9,
+               18
+              ],
+              "children": [
+               {
+                "type": "label",
+                "text": "{vm.name}",
+                "font": "monocraft",
+                "size": 23,
+                "lh": 29.9,
+                "shadow": false,
+                "color": "#BDF1FF",
+                "w": "fill",
+                "wrap": true
+               }
+              ]
+             },
+             {
+              "type": "row",
+              "w": "fill",
+              "pad": [
+               0,
+               12,
+               0,
+               12
+              ],
+              "children": [
+               {
+                "type": "column",
+                "w": 384,
+                "h": 164,
+                "bg": "{vm.portrait}",
+                "children": [
+                 {
+                  "type": "label",
+                  "text": "NEW PARTNER",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#5DA6BD",
+                  "x": 27,
+                  "y": 12
+                 },
+                 {
+                  "type": "image",
+                  "pokemon": "{vm.sprite}",
+                  "x": 72,
+                  "y": -8,
+                  "w": 240,
+                  "h": 180
+                 },
+                 {
+                  "type": "row",
+                  "x": 0,
+                  "y": 151,
+                  "w": 384,
+                  "align": "center",
+                  "children": [
+                   {
+                    "type": "column",
+                    "bg": "#07131C",
+                    "pad": [
+                     2,
+                     2,
+                     2,
+                     2
+                    ],
+                    "children": [
+                     {
+                      "type": "label",
+                      "text": "{vm.rarity}",
+                      "font": "monocraft",
+                      "size": 12,
+                      "lh": 16.8,
+                      "shadow": false,
+                      "color": "{vm.color}",
+                      "ls": 2,
+                      "bg": "{vm.bg}",
+                      "border": "{vm.color}",
+                      "bw": 2,
+                      "pad": [
+                       3,
+                       17,
+                       3,
+                       17
+                      ],
+                      "text_align": "center"
+                     }
+                    ]
+                   }
+                  ]
+                 }
+                ]
+               }
+              ]
+             },
+             {
+              "type": "column",
+              "w": "fill",
+              "h": 13.8,
+              "children": []
+             },
+             {
+              "type": "column",
+              "w": "fill",
+              "pad": [
+               14,
+               16,
+               12,
+               16
+              ],
+              "children": [
+               {
+                "type": "row",
+                "w": "fill",
+                "cross": "center",
+                "pad": [
+                 0,
+                 0,
+                 6,
+                 0
+                ],
+                "children": [
+                 {
+                  "type": "label",
+                  "text": "{vm.traitsLabel}",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#5DA6BD",
+                  "ls": 0.5
+                 },
+                 {
+                  "type": "spacer",
+                  "w": "fill"
+                 },
+                 {
+                  "type": "label",
+                  "text": "SCROLL \u2193",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#4AD8F6",
+                  "if": "vm.nTraits > 2"
+                 }
+                ]
+               },
+               {
+                "type": "column",
+                "w": "fill",
+                "h": 124,
+                "bg": "#0D2230",
+                "border": "#1F6B86",
+                "bw": 2,
+                "pad": [
+                 0,
+                 0,
+                 0,
+                 0
+                ],
+                "children": [
+                 {
+                  "type": "scroll",
+                  "id": "traits3",
+                  "w": "fill",
+                  "h": 120,
+                  "thumb": "#1f6b86",
+                  "children": [
+                   {
+                    "type": "column",
+                    "w": "fill",
+                    "gap": 1,
+                    "bg": "#1F6B86",
+                    "children": [
+                     {
+                      "type": "row",
+                      "w": "fill",
+                      "gap": 10,
+                      "cross": "center",
+                      "bg": "#0D2230",
+                      "pad": [
+                       10,
+                       10,
+                       10,
+                       10
+                      ],
+                      "repeat": {
+                       "for": "vm.traits",
+                       "as": "tr",
+                       "limit": 24
+                      },
+                      "children": [
+                       {
+                        "type": "image",
+                        "pokemon": "{tr.icon}",
+                        "w": 30,
+                        "h": 30
+                       },
+                       {
+                        "type": "column",
+                        "w": "fill",
+                        "gap": 3,
+                        "children": [
+                         {
+                          "type": "label",
+                          "text": "{tr.name}",
+                          "font": "monocraft",
+                          "size": 13,
+                          "lh": 18.2,
+                          "shadow": false,
+                          "color": "#BDF1FF",
+                          "wrap": true,
+                          "w": "fill"
+                         },
+                         {
+                          "type": "label",
+                          "text": "{tr.sub}",
+                          "font": "monocraft",
+                          "size": 11,
+                          "lh": 15.4,
+                          "shadow": false,
+                          "color": "#5DA6BD",
+                          "w": "fill"
+                         }
+                        ]
+                       },
+                       {
+                        "type": "label",
+                        "text": "{tr.value}",
+                        "font": "monocraft",
+                        "size": 22,
+                        "lh": 30.8,
+                        "shadow": false,
+                        "color": "#BDF1FF"
+                       }
+                      ]
+                     }
+                    ]
+                   }
+                  ]
+                 }
+                ]
+               },
+               {
+                "type": "column",
+                "w": "fill",
+                "pad": [
+                 10,
+                 0,
+                 10,
+                 0
+                ],
+                "cross": "center",
+                "children": [
+                 {
+                  "type": "row",
+                  "w": "fill",
+                  "align": "center",
+                  "children": [
+                   {
+                    "type": "label",
+                    "text": "Every great partner starts with ",
+                    "font": "monocraft",
+                    "size": 12,
+                    "lh": 20.4,
+                    "shadow": false,
+                    "color": "#BDF1FF"
+                   },
+                   {
+                    "type": "label",
+                    "text": "potential.",
+                    "font": "monocraft",
+                    "size": 12,
+                    "lh": 20.4,
+                    "shadow": false,
+                    "color": "#F2CF3A"
+                   }
+                  ]
+                 },
+                 {
+                  "type": "label",
+                  "text": "{vm.sub}",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 17.6,
+                  "shadow": false,
+                  "color": "#5DA6BD",
+                  "w": "fill",
+                  "text_align": "center",
+                  "pad": [
+                   4,
+                   0,
+                   0,
+                   0
+                  ]
+                 }
+                ]
+               },
+               {
+                "type": "row",
+                "w": "fill",
+                "gap": 5,
+                "pad": [
+                 0,
+                 20,
+                 0,
+                 20
+                ],
+                "children": [
+                 {
+                  "type": "column",
+                  "w": "fill",
+                  "h": 5,
+                  "bg": "{pp.c}",
+                  "repeat": {
+                   "for": "vm.pips",
+                   "as": "pp",
+                   "limit": 6
+                  },
+                  "children": []
+                 }
+                ]
+               },
+               {
+                "type": "row",
+                "w": "fill",
+                "pad": [
+                 5,
+                 20,
+                 10,
+                 20
+                ],
+                "children": [
+                 {
+                  "type": "label",
+                  "text": "COMMON",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#5DA6BD"
+                 },
+                 {
+                  "type": "spacer",
+                  "w": "fill"
+                 },
+                 {
+                  "type": "label",
+                  "text": "MYTHIC",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#ff5a6c"
+                 }
+                ]
+               },
+               {
+                "type": "row",
+                "w": "fill",
+                "gap": 8,
+                "children": [
+                 {
+                  "type": "button",
+                  "id": "explore3",
+                  "text": "Explore Ascension >",
+                  "font": "monocraft",
+                  "size": 12,
+                  "lh": 16.8,
+                  "shadow": false,
+                  "color": "#ffffff",
+                  "hover_color": "#ffffff",
+                  "bg": "#8e1426",
+                  "hover": "#a51a30",
+                  "border": "#eef2f7",
+                  "hover_border": "#eef2f7",
+                  "bw": 2,
+                  "w": 231,
+                  "h": 44,
+                  "align": "center",
+                  "cross": "center",
+                  "pad": [
+                   9,
+                   12,
+                   9,
+                   12
+                  ],
+                  "msg": {
+                   "channel": "snobble_view",
+                   "action": "explore"
+                  },
+                  "args": {}
+                 },
+                 {
+                  "type": "button",
+                  "id": "continue3",
+                  "text": "Continue",
+                  "font": "monocraft",
+                  "size": 12,
+                  "lh": 16.8,
+                  "shadow": false,
+                  "color": "#BDF1FF",
+                  "hover_color": "#ffffff",
+                  "bg": "#0f3347",
+                  "hover": "#0f3347",
+                  "border": "#1F6B86",
+                  "hover_border": "#4AD8F6",
+                  "bw": 2,
+                  "w": "fill",
+                  "h": 44,
+                  "align": "center",
+                  "cross": "center",
+                  "pad": [
+                   9,
+                   12,
+                   9,
+                   12
+                  ],
+                  "msg": {
+                   "channel": "snobble_view",
+                   "action": "continue"
+                  },
+                  "args": {}
+                 }
+                ]
+               }
+              ]
+             },
+             {
+              "type": "row",
+              "w": "fill",
+              "bg": "#0A1B27",
+              "bsides": "t",
+              "border": "#1F6B86",
+              "bw": 2,
+              "pad": [
+               8,
+               12,
+               8,
+               12
+              ],
+              "cross": "center",
+              "children": [
+               {
+                "type": "row",
+                "gap": 7,
+                "cross": "center",
+                "children": [
+                 {
+                  "type": "column",
+                  "w": 18,
+                  "h": 18,
+                  "bg": "tex:ascensionlib/ascension_dex.png",
+                  "children": []
+                 },
+                 {
+                  "type": "label",
+                  "text": "ASCENSION DEX",
+                  "font": "monocraft",
+                  "size": 11,
+                  "lh": 15.4,
+                  "shadow": false,
+                  "color": "#5DA6BD"
+                 }
+                ]
+               },
+               {
+                "type": "spacer",
+                "w": "fill"
+               },
+               {
+                "type": "label",
+                "text": "PROFILE SAVED",
+                "font": "monocraft",
+                "size": 11,
+                "lh": 15.4,
+                "shadow": false,
+                "color": "#5DA6BD"
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "type": "column",
+          "x": 0,
+          "y": 0,
+          "w": 440,
+          "h": 647,
+          "bg": "{vm.bezel}",
+          "children": []
+         },
+         {
+          "type": "button",
+          "id": "disable3",
+          "text": "Disable",
+          "font": "monocraft",
+          "size": 11,
+          "lh": 15.4,
+          "shadow": false,
+          "color": "#BDF1FF",
+          "hover_color": "#ffffff",
+          "bg": "#0f3347",
+          "hover": "#0f3347",
+          "border": "#1F6B86",
+          "hover_border": "#4AD8F6",
+          "bw": 2,
+          "x": 354,
+          "y": 21,
+          "w": 64,
+          "h": 30,
+          "align": "center",
+          "cross": "center",
+          "pad": [
+           3,
+           3,
+           3,
+           3
+          ],
+          "msg": {
+           "channel": "snobble_view",
+           "action": "disable"
+          },
+          "args": {}
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "type": "spacer",
+    "id": "tick",
+    "w": 0,
+    "h": 0,
+    "every_ms": 1000,
+    "args": {
+     "hov": "int:0:1"
+    },
+    "argv": {
+     "hov": "$hov"
+    },
+    "msg": {
+     "channel": "snobble_view",
+     "action": "tick",
+     "hov": "{hov}"
+    }
+   },
+   {
+    "type": "spacer",
+    "id": "beat",
+    "w": 0,
+    "h": 0,
+    "every_ms": 2000,
+    "args": {},
+    "msg": {
+     "channel": "ascension_gui_beat"
+    }
+   }
+  ]
+ }
+}

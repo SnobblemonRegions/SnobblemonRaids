@@ -1,0 +1,22 @@
+[
+ {
+  "case": "f10_verify2__v01_accepted",
+  "shot": "v01_accepted",
+  "page": "verify",
+  "url": "/snobblerules/verify.html?refcase=f10_verify2__v01_accepted",
+  "budget": 4501,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_verify2\\v01_accepted.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f10_verify2__v02_not_finished",
+  "shot": "v02_not_finished",
+  "page": "verify",
+  "url": "/snobblerules/verify.html?refcase=f10_verify2__v02_not_finished",
+  "budget": 7412,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_verify2\\v02_not_finished.png",
+  "unmappable": [],
+  "steps": 3
+ }
+]

@@ -1,0 +1,19 @@
+{
+  "id": "demo",
+  "title": "Demo menu",
+  "width": 220,
+  "height": 150,
+  "fade_ms": 150,
+  "background": "panel",
+  "widgets": [
+    {"type": "label", "id": "title", "text": "Demo menu", "x": 110, "y": 10, "align": "center", "color": "#FFFFFF"},
+    {"type": "label", "id": "hello", "text": "Hello, {player}", "x": 14, "y": 30, "color": "#D4DEE6"},
+    {"type": "label", "id": "art", "text": "Art version: {art}", "x": 14, "y": 42, "color": "#5FD8EA"},
+    {"type": "image", "id": "gem", "texture": "textures/gui/icons/gem.png", "x": 14, "y": 56, "w": 16, "h": 16},
+    {"type": "item", "id": "dia", "item": "minecraft:diamond", "x": 36, "y": 56, "w": 16, "h": 16, "tooltip": ["A diamond", "(item widget)"]},
+    {"type": "label", "id": "count", "text": "Pressed {count} times", "x": 60, "y": 60, "color": "#E3B455"},
+    {"type": "button", "id": "btn_count", "text": "Press me", "x": 14, "y": 84, "w": 92, "h": 20, "sprite": "btn_primary", "hover_sprite": "btn_primary_hover", "action": "demo.count", "tooltip": ["Asks the server to count"]},
+    {"type": "button", "id": "btn_admin", "text": "Admin only", "x": 114, "y": 84, "w": 92, "h": 20, "sprite": "btn_gold", "hover_sprite": "btn_gold_hover", "action": "demo.admin", "permission": "snobblemon.demo.admin", "tooltip": ["Needs a permission the server checks"]},
+    {"type": "button", "id": "btn_close", "text": "Close", "x": 14, "y": 112, "w": 92, "h": 20, "sprite": "btn_danger", "hover_sprite": "btn_danger_hover", "action": "demo.close"}
+  ]
+}

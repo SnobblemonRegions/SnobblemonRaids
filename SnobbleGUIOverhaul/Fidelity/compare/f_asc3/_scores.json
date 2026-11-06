@@ -1,0 +1,32 @@
+[
+ [
+  "a01_party",
+  "ascensionlib_party",
+  96.9,
+  []
+ ],
+ [
+  "a02_wallet_tab",
+  "ascensionlib_party",
+  96.2,
+  []
+ ],
+ [
+  "a03_guide_tab",
+  "ascensionlib_party",
+  94.5,
+  []
+ ],
+ [
+  "a04_wallet",
+  "ascensionlib_wallet",
+  96.1,
+  []
+ ],
+ [
+  "a05_wallet_256",
+  "ascensionlib_wallet",
+  95.9,
+  []
+ ]
+]

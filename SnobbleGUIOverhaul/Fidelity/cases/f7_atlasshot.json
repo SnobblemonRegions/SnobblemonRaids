@@ -1,0 +1,22 @@
+[
+ {
+  "case": "f7_atlasshot__a01_atlas",
+  "shot": "a01_atlas",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_atlasshot__a01_atlas",
+  "budget": 5137,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_atlasshot\\a01_atlas.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_atlasshot__a02_atlas_pick",
+  "shot": "a02_atlas_pick",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_atlasshot__a02_atlas_pick",
+  "budget": 7339,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_atlasshot\\a02_atlas_pick.png",
+  "unmappable": [],
+  "steps": 2
+ }
+]

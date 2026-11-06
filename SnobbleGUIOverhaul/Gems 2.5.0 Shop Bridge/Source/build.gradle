@@ -1,0 +1,63 @@
+plugins {
+    id 'fabric-loom' version '1.13.6'
+}
+
+version = '2.5.0'
+group = 'com.snobblemon.gems'
+
+base {
+    archivesName = 'SnobbleGemCurrency'
+}
+
+repositories {
+    maven { url = 'https://maven.fabricmc.net/' }
+    maven { url = 'https://maven.nucleoid.xyz/' }
+    maven { url = 'https://maven.impactdev.net/repository/development/' }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft 'com.mojang:minecraft:1.21.1'
+    mappings loom.officialMojangMappings()
+
+    modImplementation 'net.fabricmc:fabric-loader:0.17.2'
+    modImplementation 'net.fabricmc.fabric-api:fabric-api:0.116.6+1.21.1'
+
+    // Server-side chest GUIs. Not on the Snobblemon server yet, so it travels inside our jar.
+    modImplementation 'eu.pb4:sgui:1.6.1+1.21.1'
+    include 'eu.pb4:sgui:1.6.1+1.21.1'
+
+    // Persistent storage (ledger, balances, tickets). Bundled so no extra install is needed.
+    implementation 'org.xerial:sqlite-jdbc:3.46.1.3'
+    include 'org.xerial:sqlite-jdbc:3.46.1.3'
+
+    // Both already run on the server; we only touch them when present.
+    modCompileOnly 'eu.pb4:placeholder-api:2.4.2+1.21'
+    modCompileOnly 'me.lucko:fabric-permissions-api:0.3.1'
+
+    // Legendary Boost Ticket hooks Cobblemon's shiny-chance event (Cobblemon is on the server; Kotlin comes with it).
+    modCompileOnly 'com.cobblemon:fabric:1.8.2+1.21.1'
+    compileOnly 'org.jetbrains.kotlin:kotlin-stdlib:2.2.20'
+
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    testLogging { events 'failed', 'passed'; exceptionFormat = 'full' }
+}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(21) }
+    withSourcesJar()
+}
+
+processResources {
+    def modVersion = project.version
+    inputs.property 'version', modVersion
+    filesMatching('fabric.mod.json') { expand version: modVersion }
+}

@@ -1,0 +1,72 @@
+[
+ {
+  "case": "f10_partyscout__p01_party",
+  "shot": "p01_party",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_partyscout__p01_party",
+  "budget": 5142,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_partyscout\\p01_party.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f10_partyscout__p02_party_picked",
+  "shot": "p02_party_picked",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_partyscout__p02_party_picked",
+  "budget": 6837,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_partyscout\\p02_party_picked.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f10_partyscout__p03_scout",
+  "shot": "p03_scout",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_partyscout__p03_scout",
+  "budget": 7943,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_partyscout\\p03_scout.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f10_partyscout__p04_scout_lead",
+  "shot": "p04_scout_lead",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_partyscout__p04_scout_lead",
+  "budget": 9649,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_partyscout\\p04_scout_lead.png",
+  "unmappable": [],
+  "steps": 5
+ },
+ {
+  "case": "f10_partyscout__p05_scout_boss",
+  "shot": "p05_scout_boss",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_partyscout__p05_scout_boss",
+  "budget": 10602,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_partyscout\\p05_scout_boss.png",
+  "unmappable": [],
+  "steps": 6
+ },
+ {
+  "case": "f10_partyscout__p06_scout_types",
+  "shot": "p06_scout_types",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_partyscout__p06_scout_types",
+  "budget": 11552,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_partyscout\\p06_scout_types.png",
+  "unmappable": [],
+  "steps": 7
+ },
+ {
+  "case": "f10_partyscout__p07_spec",
+  "shot": "p07_spec",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f10_partyscout__p07_spec",
+  "budget": 12517,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_partyscout\\p07_spec.png",
+  "unmappable": [],
+  "steps": 8
+ }
+]

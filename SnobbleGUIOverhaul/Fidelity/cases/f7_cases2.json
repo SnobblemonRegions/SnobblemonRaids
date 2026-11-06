@@ -1,0 +1,42 @@
+[
+ {
+  "case": "f7_cases2__x01_empty_reply_toast",
+  "shot": "x01_empty_reply_toast",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases2__x01_empty_reply_toast",
+  "budget": 6402,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases2\\x01_empty_reply_toast.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f7_cases2__x02_typed_reply",
+  "shot": "x02_typed_reply",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases2__x02_typed_reply",
+  "budget": 7790,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases2\\x02_typed_reply.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f7_cases2__x03_new_ticket_typed",
+  "shot": "x03_new_ticket_typed",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases2__x03_new_ticket_typed",
+  "budget": 12699,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases2\\x03_new_ticket_typed.png",
+  "unmappable": [],
+  "steps": 11
+ },
+ {
+  "case": "f7_cases2__x04_search",
+  "shot": "x04_search",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=f7_cases2__x04_search",
+  "budget": 17991,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_cases2\\x04_search.png",
+  "unmappable": [],
+  "steps": 16
+ }
+]

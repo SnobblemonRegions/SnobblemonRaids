@@ -1,0 +1,54 @@
+plugins {
+    id 'fabric-loom' version '1.16.3'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    maven { url = 'https://maven.nucleoid.xyz' }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // Menus (container GUIs) and the resource pack the menu artwork ships in. Bundled, same versions as Snobble Cosmetics.
+    modImplementation(include("eu.pb4:polymer-core:${project.polymer_version}")) { exclude group: 'net.fabricmc.fabric-api' }
+    modImplementation(include("eu.pb4:polymer-resource-pack:${project.polymer_version}")) { exclude group: 'net.fabricmc.fabric-api' }
+    modImplementation(include("eu.pb4:sgui:${project.sgui_version}")) { exclude group: 'net.fabricmc.fabric-api' }
+    // LuckPerms-compatible permission checks (rank, region, command permissions)
+    modImplementation(include("me.lucko:fabric-permissions-api:0.3.1")) { exclude group: 'net.fabricmc.fabric-api' }
+
+    // Provided by the server, never bundled
+    modCompileOnly files('libs/placeholder-api.jar')
+    modCompileOnly files('libs/snobble-cosmetics-api.jar')
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": inputs.properties.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+    it.options.encoding = "UTF-8"
+}
+
+sourceSets { main { java { srcDir '../shared' } } }
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}

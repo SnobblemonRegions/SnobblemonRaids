@@ -1,0 +1,33 @@
+#grid { display: grid; gap: 1.2cqw; padding: 1.4cqw 3cqw 0; height: calc(100% - 7.4cqw - 6.6cqw); align-content: start; overflow-y: auto; }
+#grid.items { grid-template-columns: repeat(8, 1fr); grid-auto-rows: 8.4cqw; gap: 0.9cqw; }
+#grid.pokemon { grid-template-columns: repeat(4, 1fr); grid-auto-rows: 8.9cqw; }
+
+.cell { position: relative; min-width: 0; --cut: 0.9cqw; cursor: pointer; overflow: hidden; }
+.cell::after { width: 1cqw; height: 1cqw; }
+.cell .art { position: absolute; background-repeat: no-repeat; background-position: center; background-size: 100% 100%; image-rendering: pixelated; }
+.cell .tag { position: absolute; color: var(--mu); font-size: var(--fs-s); }
+.cell.dim .art, .cell.dim .name, .cell.dim .meta { opacity: 0.45; }
+.cell.soldout .price { color: var(--bad); }
+
+/* Item cells: a centred icon, the price underneath. */
+.items .cell .art { left: 50%; top: 0.9cqw; width: 4.4cqw; height: 4.4cqw; transform: translateX(-50%); }
+.items .cell .price { position: absolute; left: 0; right: 0; bottom: 0.7cqw; text-align: center; color: var(--hi); font-weight: 600; font-size: var(--fs-s); }
+.items .cell .tag { right: 0.7cqw; top: 0.4cqw; }
+.items .cell .count { position: absolute; left: 0.7cqw; top: 0.4cqw; font-weight: 600; font-size: var(--fs-s); }
+
+/* Pokemon cells: sprite on the left, details on the right. */
+.pokemon .cell .art { left: 0.6cqw; top: 50%; width: 9.6cqw; height: 6.4cqw; transform: translateY(-50%); }
+.pokemon .cell .body { position: absolute; left: 10.6cqw; right: 0.8cqw; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; gap: 0.15cqw; min-width: 0; }
+.pokemon .cell .name { font-weight: 600; font-size: var(--fs-l); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pokemon .cell .meta { color: var(--mu); font-size: var(--fs-s); white-space: nowrap; }
+.pokemon .cell .price { color: var(--hi); font-weight: 600; font-size: var(--fs); }
+.pokemon .cell .tag { right: 0.8cqw; top: 0.4cqw; }
+.shiny { color: #ffe066; }
+.pokemon .cell .pricerow { display: flex; align-items: center; justify-content: space-between; gap: 0.6cqw; min-width: 0; }
+.pokemon .cell .pricerow .price { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reroll { flex: none; padding: 0.15cqw 0.6cqw; border: 1px solid #ffd84a; color: #ffd84a; font: 700 var(--fs-s) var(--pix); background: rgba(40, 32, 6, 0.9); cursor: pointer; }
+.reroll:hover { background: #ffd84a; color: #221a02; }
+
+#pager { position: absolute; left: 3cqw; right: 3cqw; bottom: 2.2cqw; display: flex; align-items: center; justify-content: space-between; }
+#where { color: var(--mu); letter-spacing: 0.14em; font-size: var(--fs-s); }
+.stage.single #pager button { visibility: hidden; }

@@ -1,0 +1,82 @@
+[
+ {
+  "case": "f7_asc3__c01_upgrade",
+  "shot": "c01_upgrade",
+  "page": "ascensionlib_craft",
+  "url": "/ascensionlib/craft.html?refcase=f7_asc3__c01_upgrade",
+  "budget": 5488,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_asc3\\c01_upgrade.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_asc3__c02_refine",
+  "shot": "c02_refine",
+  "page": "ascensionlib_craft",
+  "url": "/ascensionlib/craft.html?refcase=f7_asc3__c02_refine",
+  "budget": 7899,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_asc3\\c02_refine.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f7_asc3__c03_review",
+  "shot": "c03_review",
+  "page": "ascensionlib_craft",
+  "url": "/ascensionlib/craft.html?refcase=f7_asc3__c03_review",
+  "budget": 9759,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_asc3\\c03_review.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f7_asc3__c04_unique",
+  "shot": "c04_unique",
+  "page": "ascensionlib_craft",
+  "url": "/ascensionlib/craft.html?refcase=f7_asc3__c04_unique",
+  "budget": 12410,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_asc3\\c04_unique.png",
+  "unmappable": [],
+  "steps": 6
+ },
+ {
+  "case": "f7_asc3__c05_respec",
+  "shot": "c05_respec",
+  "page": "ascensionlib_craft",
+  "url": "/ascensionlib/craft.html?refcase=f7_asc3__c05_respec",
+  "budget": 14254,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_asc3\\c05_respec.png",
+  "unmappable": [],
+  "steps": 7
+ },
+ {
+  "case": "f7_asc3__c06_overreach",
+  "shot": "c06_overreach",
+  "page": "ascensionlib_craft",
+  "url": "/ascensionlib/craft.html?refcase=f7_asc3__c06_overreach",
+  "budget": 16101,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_asc3\\c06_overreach.png",
+  "unmappable": [],
+  "steps": 8
+ },
+ {
+  "case": "f7_asc3__c07_done",
+  "shot": "c07_done",
+  "page": "ascensionlib_craft",
+  "url": "/ascensionlib/craft.html?refcase=f7_asc3__c07_done",
+  "budget": 17952,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_asc3\\c07_done.png",
+  "unmappable": [],
+  "steps": 9
+ },
+ {
+  "case": "f7_asc3__c08_real_reply",
+  "shot": "c08_real_reply",
+  "page": "ascensionlib_craft",
+  "url": "/ascensionlib/craft.html?refcase=f7_asc3__c08_real_reply",
+  "budget": 21735,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_asc3\\c08_real_reply.png",
+  "unmappable": [],
+  "steps": 14
+ }
+]

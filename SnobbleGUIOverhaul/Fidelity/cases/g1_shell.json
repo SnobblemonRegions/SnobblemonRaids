@@ -1,0 +1,62 @@
+[
+ {
+  "case": "g1_shell__s01_main",
+  "shot": "s01_main",
+  "page": "shellpack",
+  "url": "/shellpack/index.html?refcase=g1_shell__s01_main",
+  "budget": 4851,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g1_shell\\s01_main.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "g1_shell__s02_picked",
+  "shot": "s02_picked",
+  "page": "shellpack",
+  "url": "/shellpack/index.html?refcase=g1_shell__s02_picked",
+  "budget": 6072,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g1_shell\\s02_picked.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "g1_shell__s02b_right",
+  "shot": "s02b_right",
+  "page": "shellpack",
+  "url": "/shellpack/index.html?refcase=g1_shell__s02b_right",
+  "budget": 6351,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g1_shell\\s02b_right.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "g1_shell__s03_info",
+  "shot": "s03_info",
+  "page": "shellpack",
+  "url": "/shellpack/index.html?refcase=g1_shell__s03_info",
+  "budget": 6351,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g1_shell\\s03_info.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "g1_shell__s04_upgrade",
+  "shot": "s04_upgrade",
+  "page": "shellpack",
+  "url": "/shellpack/index.html?refcase=g1_shell__s04_upgrade",
+  "budget": 6351,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g1_shell\\s04_upgrade.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "g1_shell__s05_options",
+  "shot": "s05_options",
+  "page": "shellpack",
+  "url": "/shellpack/index.html?refcase=g1_shell__s05_options",
+  "budget": 6351,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g1_shell\\s05_options.png",
+  "unmappable": [],
+  "steps": 1
+ }
+]

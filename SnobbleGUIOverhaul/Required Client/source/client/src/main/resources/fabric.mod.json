@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "snobblehubclient",
+  "version": "${version}",
+  "name": "SnobbleHelper",
+  "description": "owo-ui screens for the Snobble Trainer Hub: Cosmetics wardrobe and Trainer Card with a live 3D player. Needs the Snobble Hub server mod; without it nothing changes.",
+  "authors": ["Snobblemon"],
+  "license": "All Rights Reserved",
+  "environment": "client",
+  "entrypoints": {
+    "main": ["net.snobblemon.hubclient.HubClientMain"],
+    "client": ["net.snobblemon.hubclient.HubClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*",
+    "owo-lib": ">=0.12.15"
+  }
+}

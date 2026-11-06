@@ -1,0 +1,72 @@
+[
+ {
+  "case": "f10_rules2__r01_first_page",
+  "shot": "r01_first_page",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f10_rules2__r01_first_page",
+  "budget": 5010,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_rules2\\r01_first_page.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f10_rules2__r02_conduct",
+  "shot": "r02_conduct",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f10_rules2__r02_conduct",
+  "budget": 6854,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_rules2\\r02_conduct.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f10_rules2__r03_bottom",
+  "shot": "r03_bottom",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f10_rules2__r03_bottom",
+  "budget": 8455,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_rules2\\r03_bottom.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f10_rules2__r04_enforcement",
+  "shot": "r04_enforcement",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f10_rules2__r04_enforcement",
+  "budget": 9563,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_rules2\\r04_enforcement.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f10_rules2__r05_enforcement_mid",
+  "shot": "r05_enforcement_mid",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f10_rules2__r05_enforcement_mid",
+  "budget": 11157,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_rules2\\r05_enforcement_mid.png",
+  "unmappable": [],
+  "steps": 5
+ },
+ {
+  "case": "f10_rules2__r06_all_read",
+  "shot": "r06_all_read",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f10_rules2__r06_all_read",
+  "budget": 12263,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_rules2\\r06_all_read.png",
+  "unmappable": [],
+  "steps": 6
+ },
+ {
+  "case": "f10_rules2__r07_done",
+  "shot": "r07_done",
+  "page": "rules",
+  "url": "/snobblerules/rules.html?refcase=f10_rules2__r07_done",
+  "budget": 13865,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f10_rules2\\r07_done.png",
+  "unmappable": [],
+  "steps": 7
+ }
+]

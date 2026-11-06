@@ -1,0 +1,52 @@
+[
+ {
+  "case": "f7_goal2__g01_goal",
+  "shot": "g01_goal",
+  "page": "goal",
+  "url": "/snobblemon/goal.html?refcase=f7_goal2__g01_goal",
+  "budget": 4480,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_goal2\\g01_goal.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f7_goal2__g02_points",
+  "shot": "g02_points",
+  "page": "goal",
+  "url": "/snobblemon/goal.html?refcase=f7_goal2__g02_points",
+  "budget": 6846,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_goal2\\g02_points.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f7_goal2__g03_milestones",
+  "shot": "g03_milestones",
+  "page": "goal",
+  "url": "/snobblemon/goal.html?refcase=f7_goal2__g03_milestones",
+  "budget": 8695,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_goal2\\g03_milestones.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "f7_goal2__g04_my_stats",
+  "shot": "g04_my_stats",
+  "page": "goal",
+  "url": "/snobblemon/goal.html?refcase=f7_goal2__g04_my_stats",
+  "budget": 10546,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_goal2\\g04_my_stats.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "f7_goal2__g05_players",
+  "shot": "g05_players",
+  "page": "goal",
+  "url": "/snobblemon/goal.html?refcase=f7_goal2__g05_players",
+  "budget": 12944,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_goal2\\g05_players.png",
+  "unmappable": [],
+  "steps": 6
+ }
+]

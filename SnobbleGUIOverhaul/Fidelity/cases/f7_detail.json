@@ -1,0 +1,22 @@
+[
+ {
+  "case": "f7_detail__d01_tower",
+  "shot": "d01_tower",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_detail__d01_tower",
+  "budget": 6700,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_detail\\d01_tower.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "f7_detail__d02_brief",
+  "shot": "d02_brief",
+  "page": "cobbletowers",
+  "url": "/cobbletowers/index.html?refcase=f7_detail__d02_brief",
+  "budget": 10747,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f7_detail\\d02_brief.png",
+  "unmappable": [],
+  "steps": 4
+ }
+]

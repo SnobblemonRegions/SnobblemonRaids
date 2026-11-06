@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head><script src="/_inject.js"></script>
+<meta charset="utf-8">
+<title>Gem Shop</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* Gem Shop for Snobblemon Regions - WebGUI page. Static look on purpose: no infinite animations, no blend modes, no hover movement
+   (WebGUI paints off-screen; constant repaints made earlier pages lag). The stage is designed at 2000x1125 and scaled to the window. */
+/* Prismatic palette = the Gem's colours: pink -> magenta -> violet -> blue -> cyan. */
+:root {
+  --pink: #ff9af0; --mag: #d65aea; --purp: #8a44f5; --blue: #4c7cff; --cy: #3ddcff; --cyl: #b4f7ff;
+  --prism: linear-gradient(115deg, #ff9af0 0%, #d65aea 20%, #8a44f5 42%, #4c7cff 62%, #3ddcff 82%, #b4f7ff 100%);
+  --acc: #e08cf5; --acc-d: #8a44f5; --acc-l: #f6d2ff;
+  --edge: #4a2a99; --edge-hi: #8a44f5;
+  --fill-a: #1d1050; --fill-b: #100834;
+  --txt: #d4c8ee; --dim: #8f82b8; --white: #fbf6ff;
+  --gold: #ffd24a; --green: #3ee06b; --red: #ff5a6a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #07041a; color: var(--txt);
+  font-family: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, 'Liberation Mono', Menlo, monospace; user-select: none; -webkit-user-select: none; }
+/* the page paints its own backdrop: WebGUI draws black behind transparent pages */
+#bg { position: fixed; inset: 0;
+  background:
+    linear-gradient(rgba(138,68,245,.10) 1px, transparent 1px) 0 0 / 48px 48px,
+    linear-gradient(90deg, rgba(138,68,245,.10) 1px, transparent 1px) 0 0 / 48px 48px,
+    radial-gradient(ellipse at 22% 20%, rgba(255,154,240,.16) 0%, rgba(255,154,240,0) 45%),
+    radial-gradient(ellipse at 80% 78%, rgba(61,220,255,.14) 0%, rgba(61,220,255,0) 45%),
+    radial-gradient(ellipse at 50% 35%, #2a1366 0%, #170a3c 45%, #07041a 100%); }
+#stage { position: absolute; left: 0; top: 0; width: 2000px; height: 1125px; transform-origin: 0 0; }
+.abs { position: absolute; }
+.pxt svg { display: block; }
+
+/* cut-corner panels: outer = border colour, inner (::before) = fill, both clipped */
+.cut { position: absolute; --c: 26px; background: linear-gradient(125deg, #b04aa8 0%, #6a3cc4 38%, #3a6fd8 72%, #2aa6c4 100%);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%); }
+.cut::before { content: ''; position: absolute; inset: 1px; background: linear-gradient(180deg, var(--fill-a), var(--fill-b));
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--c) - 1px), calc(100% - var(--c) - 1px) 100%, 0 100%); }
+.cut > * { position: absolute; }
+.tick1 { left: 24px; top: 0; width: 14px; height: 2px; background: var(--acc-d); }
+.tick2 { left: 0; top: 24px; width: 2px; height: 9px; background: var(--acc-d); }
+
+#frame { left: 60px; top: 45px; width: 1882px; height: 1060px; border: 1px solid #3a2380; background: linear-gradient(180deg, rgba(26,10,70,.55), rgba(12,5,36,.55)); }
+#title { left: 120px; top: 108px; }
+#sub { left: 520px; top: 122px; font-size: 20px; letter-spacing: 5px; color: #a698d0; white-space: nowrap; }
+#subline { left: 800px; top: 133px; width: 700px; height: 2px; background: var(--prism); background-size: 300% 100%; opacity: .85; }
+#chip { left: 1490px; top: 104px; width: 395px; height: 62px; --c: 20px; }
+#chip .gemimg { left: 22px; top: 11px; width: 40px; height: 40px; image-rendering: pixelated; }
+#chip .num { left: 76px; top: 16px; }
+#chip .unit { right: 34px; top: 24px; }
+
+#left { left: 118px; top: 219px; width: 450px; height: 827px; }
+.h2 { position: absolute; left: 34px; }
+.row { position: absolute; left: 34px; width: 383px; height: 56px; border-bottom: 1px dashed #3a2380; display: flex; align-items: center; justify-content: space-between; font-size: 23px; color: var(--txt); }
+.row .v { color: var(--white); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.cat { position: absolute; left: 24px; width: 402px; height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px 0 14px;
+  font-size: 23px; color: var(--txt); border: 1px solid transparent; cursor: pointer; transition: background .12s, border-color .12s, color .12s; }
+.cat:hover { border-color: #6a3cc4; background: rgba(224,140,245,.05); color: var(--white); }
+.cat.on { border-color: var(--acc-d); background: rgba(224,140,245,.10); color: var(--acc-l); }
+.cat .n { font-size: 20px; color: var(--dim); }
+.cat.on .n { color: var(--acc); }
+.cat .dot { display: inline-block; width: 9px; height: 9px; margin-right: 12px; background: #4a2a99; }
+.cat.on .dot { background: var(--acc); }
+
+#tip { left: 34px; top: 748px; width: 380px; font-size: 17px; line-height: 24px; color: #8f82b8; }
+#right { left: 625px; top: 219px; width: 1260px; height: 666px; }
+#beam { left: 520px; top: 1px; width: 220px; height: 560px; pointer-events: none;
+  background: radial-gradient(ellipse 50% 100% at 50% 0%, rgba(224,140,245,.16), rgba(224,140,245,0) 75%); }
+#floor { left: 330px; top: 520px; width: 600px; height: 70px; pointer-events: none;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(224,140,245,.18), rgba(224,140,245,0) 75%); }
+#catname { left: 36px; top: 26px; }
+#catdesc { left: 36px; top: 64px; font-size: 18px; color: var(--dim); white-space: nowrap; }
+#pager { right: 32px; top: 24px; display: flex; align-items: center; gap: 14px; }
+.pgb { width: 44px; height: 40px; display: flex; align-items: center; justify-content: center; border: 1px solid #6a3cc4; color: var(--acc); font-size: 24px; cursor: pointer; background: rgba(224,140,245,.04); transition: background .12s, border-color .12s; }
+.pgb:hover { background: rgba(224,140,245,.14); border-color: var(--acc); }
+.pgb.off { opacity: .3; cursor: default; pointer-events: none; }
+#pgtxt { min-width: 80px; display: flex; justify-content: center; }
+
+#grid { left: 91px; top: 108px; width: 1078px; height: 418px; }
+.card { position: absolute; width: 198px; height: 198px; --c: 18px; cursor: pointer; }
+.card::before { background: linear-gradient(180deg, #261263, #140a3a); transition: background .12s; }
+.card.hover, .card:hover { background: var(--prism); }
+.card:hover::before { background: linear-gradient(180deg, #341b80, #1c0e4c); }
+.card.sel { background: var(--prism); background-size: 300% 300%; }
+.card.sel::before { background: linear-gradient(180deg, #2c1a58, #160d3c); }
+.card .tk { left: 18px; top: 0; width: 12px; height: 2px; background: var(--acc); }
+.card.sel .tk { background: #fff; }
+.card .qty { right: 14px; top: 10px; font-size: 22px; font-weight: 700; color: var(--white); }
+.card .ico { left: 67px; top: 36px; width: 64px; height: 64px; image-rendering: pixelated; }
+.card .tile { left: 67px; top: 36px; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; background: #2a1670; border: 1px solid #6a3cc4; color: var(--acc-l); font-size: 28px; }
+.card .nm { left: 8px; right: 8px; top: 112px; height: 46px; text-align: center; font-size: 17px; line-height: 21px; color: #d4c8ee; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card .pr { left: 0; right: 0; top: 160px; height: 26px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.card .pr img { width: 22px; height: 22px; image-rendering: pixelated; }
+.card.no { opacity: .5; }
+.card.no .pr { opacity: .9; }
+.card .why { left: 8px; right: 8px; top: 8px; font-size: 14px; color: var(--red); text-align: left; max-width: 110px; line-height: 16px; }
+.card .star { left: 14px; top: 40px; font-size: 20px; color: var(--gold); }
+
+#detail { left: 36px; top: 544px; width: 1188px; height: 100px; }
+#detail > * { position: absolute; }
+#dname { left: 0; top: 6px; font-size: 28px; font-weight: 700; letter-spacing: 1px; white-space: nowrap; color: var(--white); }
+#ddesc { left: 0; top: 52px; width: 800px; font-size: 18px; line-height: 24px; color: var(--txt); }
+#dprice { right: 280px; top: 14px; display: flex; align-items: center; gap: 12px; }
+#dprice img { width: 34px; height: 34px; image-rendering: pixelated; }
+#dlim { right: 280px; top: 62px; font-size: 17px; color: var(--dim); text-align: right; }
+#hint { left: 0; top: 36px; }
+#dtm { right: 280px; top: 86px; font-size: 16px; font-weight: 700; color: #f6d2ff; text-align: right; display: none; }
+.btn { position: absolute; display: flex; align-items: center; justify-content: center; cursor: pointer; background: var(--prism); background-size: 300% 100%;
+  clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px); transition: background .12s; }
+.btn:hover { filter: brightness(1.16); }
+.btn.off { background: #2a1c5c; cursor: default; pointer-events: none; }
+.btn.ghost { background: #4a2a99; }
+.btn.ghost:hover { background: #6a3cc4; }
+#buy { right: 0; top: 14px; width: 250px; height: 72px; }
+#close { left: 973px; top: 927px; width: 564px; height: 120px; }
+
+#empty { left: 0; right: 0; top: 170px; text-align: center; font-size: 22px; letter-spacing: 4px; color: var(--dim); }
+
+/* modal */
+#veil { position: absolute; left: 0; top: 0; width: 2000px; height: 1125px; background: rgba(8,3,26,.84); display: none; }
+#veil.on { display: block; }
+#modal { left: 620px; top: 250px; width: 760px; height: 560px; --c: 30px; }
+#mt { left: 40px; top: 34px; }
+#mico { left: 48px; top: 100px; width: 110px; height: 110px; display: flex; align-items: center; justify-content: center; border: 1px solid #6a3cc4; background: #190c46; }
+#mico img { width: 80px; height: 80px; image-rendering: pixelated; }
+#mname { left: 184px; top: 112px; font-size: 28px; font-weight: 700; letter-spacing: 1px; color: var(--white); width: 540px; }
+#mdesc { left: 184px; top: 156px; width: 540px; font-size: 17px; line-height: 22px; color: var(--dim); height: 70px; overflow: hidden; }
+.mrow { position: absolute; left: 40px; width: 680px; height: 52px; border-bottom: 1px dashed #3a2380; display: flex; align-items: center; justify-content: space-between; font-size: 22px; }
+.mrow .v img { width: 40px; height: 40px; image-rendering: pixelated; }
+.mrow .v { display: flex; align-items: center; gap: 8px; color: var(--white); font-weight: 700; }
+#mok { left: 40px; top: 462px; width: 320px; height: 70px; }
+#mcancel { left: 400px; top: 462px; width: 320px; height: 70px; }
+#mexp { left: 40px; top: 408px; font-size: 15px; color: var(--dim); }
+
+/* toast */
+#toast { left: 600px; top: 52px; width: 800px; height: 56px; display: none; align-items: center; justify-content: center; font-size: 21px; letter-spacing: 1px; --c: 14px; }
+#toast.on { display: flex; }
+#toast .tx { position: relative; z-index: 2; left: 0; }
+#toast.ok { background: var(--green); }
+#toast.ok::before { background: #0b3a27; }
+#toast.ok .tx { color: #b5ffcc; }
+#toast.bad { background: var(--red); }
+#toast.bad::before { background: #3d1620; }
+#toast.bad .tx { color: #ffc2c9; }
+#live { left: 1884px; top: 130px; width: 12px; height: 12px; background: #3a5566; }
+#live.on { background: var(--green); }
+
+/* ---- offer timer pill (only when the server has timers switched on) */
+.card .tm { left: 8px; top: 8px; height: 22px; padding: 0 8px; display: flex; align-items: center; font-size: 14px; font-weight: 700; letter-spacing: .5px;
+  color: #1a0a40; background: linear-gradient(90deg, #ff9af0, #b4f7ff); clip-path: polygon(0 0, 100% 0, 100% 100%, 6px 100%, 0 calc(100% - 6px)); }
+.card .tm.low { background: linear-gradient(90deg, #ffb36b, #ff5a6a); }
+.card .tm.gone { background: #3b2a66; color: #a698d0; }
+
+/* ---- animations. Everything is one-shot except the optional idle shimmer (config gui.animations = FULL); body.fx-off switches all of it off. */
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes popin { 0% { opacity: 0; transform: scale(.86); } 70% { opacity: 1; transform: scale(1.03); } 100% { opacity: 1; transform: none; } }
+@keyframes shimmer { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+@keyframes twinkle { 0% { opacity: 0; transform: scale(.4); } 50% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.4); } }
+@keyframes bannerPop { 0% { opacity: 0; transform: scale(.5); } 14% { opacity: 1; transform: scale(1.12); } 24% { transform: scale(1); } 78% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: translateY(-26px) scale(1.04); } }
+@keyframes chipflash { 0% { filter: brightness(1); } 25% { filter: brightness(1.9) saturate(1.4); } 100% { filter: brightness(1); } }
+@keyframes toastin { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: none; } }
+body:not(.fx-off) #left { animation: rise .55s both; }
+body:not(.fx-off) #right { animation: rise .55s .09s both; }
+body:not(.fx-off) #chip { animation: rise .55s .05s both; }
+body:not(.fx-off) #close { animation: rise .55s .18s both; }
+body:not(.fx-off) #grid.pop { animation: rise .4s both; }
+body:not(.fx-off) #modal { animation: popin .26s both; }
+body:not(.fx-off) #toast.on { animation: toastin .25s both; }
+body:not(.fx-off) #chip.flash { animation: chipflash .9s; }
+body.fx-full #subline, body.fx-full .card.sel, body.fx-full #buy:not(.off), body.fx-full #close { animation-name: shimmer; animation-duration: 9s; animation-iteration-count: infinite; animation-timing-function: steps(24); animation-direction: alternate; }
+body.fx-full #close { animation-name: shimmer !important; }
+.sp { position: absolute; width: 22px; height: 22px; background: #fff; opacity: 0; pointer-events: none;
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
+body.fx-full .sp { animation: twinkle 3.6s steps(6) infinite; }
+#fx { position: absolute; left: 0; top: 0; width: 2000px; height: 1125px; pointer-events: none; }
+#banner { left: 400px; top: 380px; width: 1200px; height: 260px; background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(10,4,34,.88), rgba(10,4,34,0) 100%); display: none; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; gap: 14px; }
+#banner.on { display: flex; animation: bannerPop 1.9s both; }
+#banner .bn { font-size: 26px; font-weight: 700; letter-spacing: 2px; color: var(--white); text-shadow: 0 0 12px rgba(214,90,234,.9); }
+#mockbar { position: fixed; left: 8px; bottom: 6px; font-size: 12px; color: #6a8; display: none; }
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="stage">
+  <div id="frame" class="abs"></div>
+  <div class="sp" style="left:440px;top:100px;animation-delay:.2s;background:#ff9af0"></div><div class="sp" style="left:1440px;top:96px;animation-delay:1.4s;background:#3ddcff"></div><div class="sp" style="left:1010px;top:214px;width:16px;height:16px;animation-delay:2.2s;background:#d65aea"></div><div class="sp" style="left:1880px;top:200px;width:18px;height:18px;animation-delay:.9s;background:#b4f7ff"></div>
+  <div id="title" class="abs pxt"></div>
+  <div id="sub" class="abs">/ SNOBBLEMON REGIONS</div>
+  <div id="subline" class="abs"></div>
+  <div id="chip" class="cut"><div class="tick1"></div><div class="tick2"></div>
+    <img class="gemimg" id="chipgem" alt=""><div class="num" id="chipnum"></div><div class="unit pxt" id="chipunit"></div></div>
+
+  <div id="left" class="cut"><div class="tick1"></div><div class="tick2"></div>
+    <div class="h2 pxt" id="hyour" style="top:38px"></div>
+    <div id="lrows"></div>
+    <div class="h2 pxt" id="cathead" style="top:318px"></div>
+    <div id="cats"></div>
+    <div id="tip"></div>
+  </div>
+
+  <div id="right" class="cut"><div class="tick1"></div><div class="tick2"></div>
+    <div id="beam"></div><div id="floor"></div>
+    <div id="catname" class="pxt"></div><div id="catdesc"></div>
+    <div id="pager"><div class="pgb" id="pgprev">&#9664;</div><div id="pgtxt" class="pxt"></div><div class="pgb" id="pgnext">&#9654;</div></div>
+    <div id="grid"></div>
+    <div id="empty"></div>
+    <div id="detail">
+      <div id="hint" class="pxt"></div>
+      <div id="dname"></div><div id="ddesc"></div>
+      <div id="dprice"></div><div id="dlim"></div><div id="dtm"></div>
+      <div id="buy" class="btn pxt"></div>
+    </div>
+  </div>
+
+  <div id="close" class="btn pxt"></div>
+  <canvas id="fx" width="1000" height="563"></canvas>
+  <div id="banner" class="abs"><div id="bnt" class="pxt"></div><div class="bn" id="bnn"></div></div>
+  <div id="toast" class="cut"><div class="tx" id="toasttx"></div></div>
+
+  <div id="veil"><div id="modal" class="cut"><div class="tick1"></div><div class="tick2"></div>
+    <div id="mt" class="pxt"></div>
+    <div id="mico"></div><div id="mname"></div><div id="mdesc"></div>
+    <div id="mrows"></div><div id="mexp"></div>
+    <div id="mok" class="btn pxt"></div><div id="mcancel" class="btn ghost pxt"></div>
+  </div></div>
+</div>
+<div id="mockbar">MOCK DATA (plain browser preview) - not connected to a server</div>
+
+<script>
+(function () {
+'use strict';
+var ART = { gem: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAUDElEQVR4nN1bC3hU5Zl+z5w5TMKEkCEREYwJcrNykcBiEbW4CPo8sgqopWXd7uoSWrHLLlZLLVUulrKKVfuUXXEFtVtFtxaXArI+akpFEfHGJSDKTUODiJCQEBIyk5kzs8/7nfOf+edkQsMl7Lbv8wxDzsyc+b/7+33/Pwb+DxDBiJT6fxy2d70Rm41zvZbgufqiCEbwSQTPM/tgzCUPYfQQEz99f7O8nqh6EbDldaMRzrW/CAVEMMKzMgUn5k9+BOMmFOKCSSaO2Tdg/9QoVvG9VS+i0d6XimCEEUUCzdjS0ctDh7tcHobBgimWXz35Dxj23ThSg0LIiZjy+pupgDxvXh7HwQobq95fhyP75su1RuQYwMY/TwVE3Din1a+1ZuOnv+qLorIErNKQvF5nOIJvS6Y/c+RTJzUcWtmIXz7/Nur3LVDe02FhYXRUrCvBvzEpIu4euQZidSW4wvOJ9P8HB9KKqP4ogSUL3/DyQ529mynCONthEewIwVWcX35hIboOh8Q64Ree1q+Mpf+uBDAkBPQAcMd3LBRVDEMlCrz8wPvX2cZZ9QjjzG8xChHEPeGZ3csHFqH05oBY3TyWAJpSsAbmePF+WSDt+sub03f6uNlZTn51ClNDTjhc9WkCb6yqReM7Jh63PhBvaLT3MTTOihKMs5DgPOFp9e9MtNBS6MT50ZoQjn3kvPeSBaanAB1+BXy2l9ZOwdgYRfkIE9Yfo5hUmCOvN1YDP1+8F7+PLxQlcP3MEWeiiCDODGKmCTlPY96ivjjv0hgSxSYCTSl8tcFC9QbHzJESR/BrjGRWJejC6/j1anqWCQyN4tav5WDA+Q1Y+mhvbFq/DE+v/gyrolNTDnU4fUMaZ5rh3378Gbl2/vUJ2F2DqHsTYvW6/en0TgX0vj6G0NWdvVygh4BfeOUBCp2+TGJs5wB6jjUxoyyOmt2W9x1/+3K5JMjTZZLBUxScTylanNldCU4kq23UvBb0rK4LTxzZGcL53aKSCxS2J7Nbvq7UQAQ5GUqoOJHE2ApgMSxMCQMDSm2gFJhvPoK3VtZJWJwOkzTaK3gcdipi9kewdAp+PfxajBydQuKKJBA2ULMlmNXqecVO3Cpw0fyM3dNCczdLvODb77e9BHoC0bI/hS4fppPF399kYXITJOQ67QpiV5WJ9w/UCq1WJbO9ijBOtbx9+toSBLoFRHC4sR7aaKO22Cl1FFrB7A5U/bejlL6BFIqudq4nxqa8cJlzvYXq3cDWWOul3DjYUQBf3/N6phIYEsQ9E5zv7VFrw6420e+Rf5S/21spjD8heEaGnzKvq/c6Xd6sCKGuKi080afcKXvBPc3Y9HKed33ExQGYxbYIrzyG2H5bEGMvNTCryRG0oTi9pIXdUl6ovFhvoP7BZi8n+JVQ1D8u34maMJ7bUI+5L/3QU4IopA1FBE8ivHz7nLmv4btXGwgUmx6NTcy10VDF+zpNjsRjUZOUP7trCGaT8IIM2GNjOFITQtUDXHxSeAIJ0jXvBTDruRYsHg9suszC8uaUxwf8KJiTi7qKFFrc3FDhKoJMqaS/jWnT82HsiGGMXYjLL3xGwuKfX5wgcrDBqsMHre5pZPuiPAyTeN+4/BmPwkbrbCE1xrOOzmjNmreBokmO4AwLJrjY2yfQqTYmlti03kDxVQFc+D0TR/6hBdXbjqPz3xSIlyhl9njPlFgf/2pULMnvW5pvCUO8LRcZHqBAorR/V+vcQI9Y8Lgp6z3wH7bkHyqB3sC8kK1KGD7BxfILL3oFeVfamPx4ode1pX5XB3tLvmdNdnShl220DEh4OYFCpZa1SCyq9/G17bc1ofiyLqKs2Oj8DHZIBRDh9UkR5gedG6R3yLnZkj5BUWW/V9x9OIk5lYZUChUSSgksl3eNh+QYssj1lTbeim7DoX3zYMLIyAtBf9vKeL/p3gKcf1UcVsRE/OOoF1sKzLyJ4gTs6iAwIN3N8L1GtQWzrAGJfrnotCeGLTOSYvWC8gSM0gjMqpjkD4WL+yKjDHKxlbBR8kkUM2aH8WZuQLjCwFxviCS4sUcCcyotxHrRk2KeElS5vL8C+PqPQphS1hXjtgSx4pOr8diCAaixd6VyUeY1VQF1Q5fSSgfH8qLXayU83V4sW21KKFBQvSJQUYmZzkdo9S3zkiibF0DpPRDvYBjxfQwRCROkBetUYqDlAmc5dZW12LqiAffe3oKR9XEJBTZJfBDX7U+JF02Lx9E0OoDUKG2trhIUGnvnSq7pMSlPSrgfgWyzuYZlQXF5LpiKMMo7OTXfhWTzmRB3FuGJsCF/H59pi+B0+bJ/6oLE0M5eGHHRyaOZRIlCDXUbHz+oiO9fexjb//U4pjXEvXaZrTLL6A2fuu8rNRC7xWGZBBX5k//MwTe/5ty3LfpNZH2FyYpWpzBMJvGqmJAXxjuF57MSigvhI7j1BHb+db18lsJHSk3xFF7XoRKkapjag20PH8D9d9syJ6D1SYL4/eQcs/a0eEqg4CRJ7/wyR0jWYjuQMW/IhqA/BDwUNeG3G5MYuQ04vATiysbECOLdogiEnapAmAfjqF8UwM5tSbE4P4cahklm+FCJdP8MRcCxGmt/XQwI78+ulFSffPGG5odNjLmiUPITmyQ+T95gAXta8PogC1PvDOG8S9KcgijuDwzOdbzmpAqIw/aUQAsCTRlvpFtjXi0u/UOBaN9yK0PNSkfAwcvDSCCJ4B5HeWaRIzy9wFzWAoxFRjKlB4S0ssaCxDzwUd8Ihu+t8743MqRQsjr5P8mO3ROwIk7MMzyLetqYcTCOGeEE3inJxUPbsluabfVJFWAjJUJJU4Gl3hs2NQEj0wUAofUNiPfLFQrc42A+8sudkohjLm8vDHkJThQB98Oa9bOBeWC//9qt+Vh7Qw528I8djrV7nd8ATHQaMYLE56udIbwUBhZ9lVkq9dyyf7fljN7bygE5ri5+2OsxiV8Vo5sP17TW2p5mHF5Sjxf218rQQzyilCwwKFWBJdCLcYYEuZ8v+bGUMoyY2OimRMmANL0d+IPuwI+6eK/RxSnkrg/zxfMIPn/+miP8JzfTfJnQ+4uS/nGpcISp0Z+A/0O09pGhcMqbiyc+b62EHUNtqdmPrrKxeGGTcAAqgslSVQZdCRRYgQxSkaVsoPDWFMurElQC8wSFZO+gwojKWHbAyUWqRPrBXEAmqcMdomRXQFtgKPjBnR1qlu7140cCogiWOmGEgxx6nAGNTBFUmL6463bEJd6V8ArkAWuLnApA9vdvh+OSVElzmRyLhwc9UsWHHz12tx1+gWwXz9vqPJMO39W7CFNvurjNG8QvyhElEFTEhw8EhA5LWAzMER6gh0I20HoUntCFZ3j8nes4U7YA962BUN8lX1nCJumBanCqOIJSRIY8l2TmBj0EgtkWxBa3IGygnx3BkAlOGxvann3xzM4r3Bgje8PAInHxSLWN1GRmbQvWxIjTJLGy1IQlxzis0pSFKy9QwvMaJ8fEs8/FsdSypPEJfZGeoa8uCuOjvoGMipFBl/tmTpponHZ5wBNavHPqE5xvChMcMqFArqmy1xb2mHXYmzTwwWdJ4QdVjzo9AueB4g2sDC6l1l2UbkzBlfAVO1MY9V/Avx8MivA65t8Zkt0jHUphOmX2Y32vz/90Dvh9fKEIwIzOdpa9P126clW99x4/ixt3Iser2TpeNeolSX34kCn3IUimyCT1kKCLcihCIcj26O4zGgKtBGfjQ+FJcTkl1q2vhJ9hJr2wYZvNtplgrjhpGYzDlgdLRWh7g2dNCk6XViDVlbrvg1JCNrxspiSs6ucaokx6A/sGlkG6v9oooeBPxwyvfJEY6Q/5fpfR2YfT9+9WlA4NTpzJBOn+VCDnDGyoiGzNUFD/w0+HmWQam0yAvYEGJrhj/cPel9vFIRk+DEG95I1soFdxLijKfLsFBfNTQo7uPNY2gyO/19FtYxQHdwJfhoF179Zi+PFO+KhLS0a1GV+TfZpE7xy9sjd+47seyPpul2EpIqSXQIcmazfoFkAv05bGpC3h9dzABJhf7gj9u0CuzAev3N+M+y5L1/u2ytkNxxwlc8iR7bv0fUZCTYvYr7SFgP/CsO5FMsDwg4KT71OAbKASsoEL5oMewzng8QctPDUqT4Yc0tYehswWrtjQiMWxOKYUtK7ZShmq3HLTlUNWRdGFfGmVgL2FGqkT3EhptwI2H66RHV0/GPtZb6TmAUVN4uI6lJUo/J0TTOyaaEl86pbi6FzNIDhiu7O6WabBFCSbJ1B4DmFVJaFrq9ZckSY1L1TguYR2K4D4cn464yswDFbOqpdk1gruRJjjcSpBVwTne4N/3AV39e6csRHqhzc/qDBw5c4TWBR2rKlqOxVB0qUjNtiZUerCT38JrTgDcw2rwClvjQ0/3gnozr62bbBcJt2ySMvYpttS9wSKJjsT3rVuglONDctVhhcUO5sacj8qgZOCo41YPCiETQUWtodS8n5yhbwm15pSRvMkvADXjVxQeH1QejIE/BXAaYczQ8LfEaphSMaNmIldkkMGyGHFE2uBtS6DVBseFJ5kpy2yooRjS83WmwmSdf1k71fr4TabnzsQTLbEquhUPhlZu8G4OxNULSOhzwF0yFjb7QN0sA2O3WJi8RZLHgQPOtDydGUlPGu/UowSmIrjkJUPHRypdX6rUQgOyRJzxqFCs1VjRR7B/l+3viJKqhfgpi676JMywWGuy9OijDH1t0K2KsBdI2ZiCj1sno1lHzgPHUp4gu6s9+qKWfKZdJnPOtukN5BJ5u04IRsnivionWdutPpbXgVVOfwstU0FKOilRVcCLbV0XKMwvxlXOZ6weENQprc80MBarUAlsNSxjVXCqy3xVihqchTpDlW8qZILYZKLAgj+wlE4p9SsVhc920Mapq0jvhBv84/ICcUE250Ei12yw2yuzmSVjcwXjU+7x2mxNi+uwTcOROQQkx9Uwv90TSth/vCg0F1OaNUWl5Q3zg+18KHwraZHNeEMKk5FRJ4Nylg+0hMyMl/yvPOGt27Zhumzx+Fg50DG3oAfJ50IEWRqqrZScD7I5Hg+RwcPJjALc0+P8zu9OaESVCyyj2d3R+iljaA70+LK45hfPOv7hFchmLojgTWHgih73cLTWzNDUh2tmzrU9tyesnCXSEHPAUa2gxC35vwK987oK8daOHNb95v6rLNBPUQmLSoQwvHkC4mM/puewC6u33WG0F2GAHMAw+DWV1vw/ZK0AkhZZXLsQm+9hSe4e5KsLmyTCSa9+BvrWq0pPOga/GR+riRAnkKlYrg3SJn1s4YB/UOqElAgEfopK+PUx8lA8rRvWRDTpudIq8rRlucJJYawMzY8eglkXVfC62yOUBuxqnfgXIJDkIFLg57wBL2MwvrB4SrzjzqC264cYCMlu6dz/zghVdDnfoxe3VtGYt8c1UWO7GbzApUgu08vkEnxzleAC+YWyO7smuEhWQSnvYoLzD7qHHyo9G12ZhOegicGmVhzKIz7FiG9h5il1uuYcPkYMQCTctOON+Wae/64VfYN6H/QNbh1TE9QwwNSYHZxVIJ/NkjhyRX4Gg9LqakRKfNLd9diYm5UTnyqQ48KpMQesQkbraxPLkAyxbkB3X3uk05OYBht/LajBB1KSIJJkMLrVqcsNC7l8x+1DWTTIA8S8ECBYoVbNjVIM8SqwNygl0UKXTArKZNgZmZ6gkqQ0y+rQtOTcdnKZvz7EyCvq8yfQaZG5wunuPRfWqSKMIdQaCoykkriwSHpe6gdZYYBhSdoeVUFKHyNvYuCG6d8SCoPw+SbmBSVtUmOWA45kubxVYLX2SqzTv924/GMUGEIsazSnVOK27tphRQ392jcO4FCMLv/bG6zWNUaN8YTXoFb4swBqtlRZwjVeJ6CsxqpAxH+pHeqCgARMfun1K6REpiK4PGX1T93OkeGAYVXUEpQCiAYSpwJ8PQHqSu5AS2qtrBnfuuE58606PG/cjj8Qzc691ShoAQnXrnWwsraqAjPjo+C6+eJ+Z6TnRQz0A74j8rpimAIPPVC6/ZZKYF5g8MLEhilIO438MSZOif02PO2V78J3fJMeJN2xrySqp8Qm3mFiV+8a3ut7rpP75PnUzlab7RHAfr5IXaNblPh5QISJZUrlGLUGI3CcojBcqpeV+BRHFqPP47IJjyh9/bK3csvNOV+yz52vIxWV5leVbL2nhYNtlcB7g1lVSuit4sicNhRxObVNaIMKoKJUg5YaIPV9ZXOCLd8ZJGnBHqHXZuTsWGhhNehhCefKBlqY9wJSzgKh6HGPudeh6IS620mug46Lj8KeYiKIoQzfNFbripFEEpYLpbg7wj06/YdOV7iYjb3JzyCY20mODZfTLxUKAXnJoey+OkIflZ+LxBJ/yKsVWhQCYx97hApgYVQAV4uGPOtAsy81ZJjsASFV6SJzJEZn8dheACb91BW52DDPdAh6892APKcKMDfQ6iSqYO8gWDMUiEElcLmisddyr/uKIDCR8Ya3uCE22Xc9Hzg9r1yREbFumJ0VPiZCH7WfzQVcb1B/USOFYM7MQwNr1nied53AzL322tD+nkell6z3ZBpzvjBTq/A7bH3Ho5lK2uyZsXq/l/+aiwPwyQucxD0yiahfinK8setbf5+gOOtFTdZMiNgf8DBxdIlUWlxj73yPe+zFD6KhKz1bP9qzEAHIRdlfEpx+EB3VT+jU2HRZ0pc+gDuEJEQcaqj/0zOFdpbZ0f9itRAB0MpgmeQlEfQGxY84IyyN1ziVOLZt7zqNWDk7mp9Hf3zWQPnCEoR/KdHn3m4Oz5CSBJHamR4zUuneYI3I7fDfzKrYJyTb/EhF2VZG/ozqeeni/8F/VfwX0UVP2YAAAAASUVORK5CYII=', ticket: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAADHklEQVR4nO2aS0iUURTHz3f9FE1dWEYmphFFlmSbJqKCXGQPS4iCoCGMaVMgLktooRO06AlZG1totJkiIaKMSQ1sE4VEYZA6EdZE+ehJURoZTeD/fIsrk9M034zBub/Nn/PN3Mfcc+65j/mIDAaDwWAwSMVakF0VIcEoEo4i4SgSjnVq75jJAZJRJBxFwrE+DUXiygEP7oY1e01FSUIdKC/xT6qdDftRH+xUoUg4dqobXFnYqNktkaOT6v0Fe54HEbD8MezuN8mNCEXCseLNAYl6vnMLPO5wNQht6NO/n3cemtuMcr1Dejm3UCQcK1kRsHEZ5m4u1968dvq5XHpGt9PboWmL+YEP5cssmHf63ckNioRjx1sg1j7AmevhOp6zz/mDfT8nZaRWbzJtj16/bzP0Jjfz+TR04j48PnpI3z88CScWCYqEYyer4pEAtMBLUT3vPKdF0cvvSsPG4FUEPgryKvGtGGqXu9NPRcKx8wotzqsg1qoQa+8/m6vzf4AH/QGM8fEN+PzsbuQCGuaI6IRksme72LPfwyj39RpXXMr9q4MWl/3b4jX19yoSju12hR85gNZlYWwLVuP5lx5oaExvcin748hOaAN7Op2zf84L1h3Q9wPu9leRcOx4C/ztfcC9ceSAyh6Mcb1n+nqvPNPtie3QplXQbt4ZXuwgV1EkHDvZDTg5oIDtECfv9begHnbB0yro3HZ9rlfOgtZ06GcEt1AkHDve02C8d4AHg8gFP4ow1td5blMtJMjrOm2CvGvjfcIlBGfIo58RLjdRQkz9vYqEY6eqoYzXiIS+Nox58WE8z+d1n96ynkSXMir08jkL+fst7vZLkXCsZP0v4NwLbKVGbWfo7A/8c2CvYM9nVkNH+cwwFWdHOB7A+X94wNwI/d85oJdvcZ1ICI6TFhFdY/q5v/VE9Nk4v17/H2HQ5dthRcKxgoGXKX0/4IC3VbOPZcGjNQ9hq2rM7aJBdOtCYH9S+6NIOFaqI+BPETGcj4uBG+d8KW1fkXCsbUtum3eEJKNIOIqEY5l3hYWjSDhqpjtgMBgMBoPBQDPEb7Sn1pUSTVYDAAAAAElFTkSuQmCC', skin: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACQUlEQVR4nO2bv2tTURzFzztJscUGA1EcSktdbFH/BP8BdRL/AQcduijiqIODCi5K/wTF0cVBJzcHV4c6KIhQlUQTsYipT0MS5/MV7uPxmgQ5/Wzn/nj3vgfn3HvfSzJUZPng2TFmyMf+86xKf8IcwhzCnKyq529dfyb13Za27wU9WC3QS6rXwvjrQW8snhO9ffWB6OzuWvIeCXMIcwhz6mU9//iyer7T1/b5vOrXH0aif3zSZz74nM6E9lHVnQUkPY87x0WO8XacygTCHMIcwpys0PNnHkl9O9fYaP9W/bVRE91taX2vpfX5sk5hcCydCSsN1eshE27cf6ftN68lzw6EOYQ5hDlZ9PzLiw+lwc63cdLz/2TCSD3eCxnQDRnw/UgtfTYImVBbSmdA1KsHVG8c1rMDYQ5hDmFOPRYsLIZ1+ZdmwKGh7u1354aqc+2f97X9k6fnkxM6dVvPGqOw7g+C7oQ7aNbSOkKYQ5hDmFOPBfMNfSZ/cq1v5iEDhur53Tmtv/fiQqkJbd3UdfrEZjoTvjQKMqDgjQdhDmEOYU427W972z/V05GV8J5/0hDmEOYQ5hDmEOYQ5hDmZHEf8GYnvU6X5WSz2rpeNJ9XW+9LXe/S6SuiCXMIcwhz6pMeIHq4KBP22vNFEOYQ5hDm1Kc9YNl9xl57PkKYQ5hDmJPFgkmfDabt+bj33/+NUIAwhzAnK2ow6UyYtucjhDmEOYQ5WdkOVTNh1p6PEOYQ5hDmZFUvsP/f4f8cwhzOegKz5i8viKom8cqofgAAAABJRU5ErkJggg==' };
+var MOCKICONS = {"cobblemon:ability_capsule": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAMFBMVEUAAADX1/et6O3awvLHx/fDqeN/xffRi+uYmL5nld+GfeWhatF3d5dPcqpeT3E7VH8u/j4AAAAAAXRSTlMAQObYZgAAAEtJREFUeNpjIArw3gUCEOOaWlqOyAWgwCTNmbMafS8w8M6cOXPW8UhdJqAkoyKDghMDf+es3buPx39gYHgaGhpj/AAowfcOCIizCQAcFRmUBjiyPAAAAABJRU5ErkJggg==", "cobblemon:ability_patch": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAP1BMVEUAAABmo62y6vWMzthwvMx71+ltytuR4/LY+f/lzjn/7n/23kHM9/9io7Rys7+tra309PTGxsaZmZl/f39dkZkjUrHQAAAAAXRSTlMAQObYZgAAAG1JREFUeNqNTEMCxFAMjadGfu9/ydnU1rYfwRN8PriffeB3RXqAbTQmmXZEDn5Juq3pcNmZfqqJqlADsKnqUmZVvNIFfMbsP9gs03yCoapq1/hyHEhduagJ8QVAKGvPCzoEFxJK5+Labyg08PGsjyAN4E8fyMIAAAAASUVORK5CYII=", "cobblemon:master_ball": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAS1BMVEUAAABTTVJrZGqak5mxqrAoKCgzMzNxMMuVRePp5unPy8/EK5HjRa7/suWlIXdaIaXw8PDYsv8hISFEITkvIURPIY6MIWhAI2VlI04eiqu9AAAAAXRSTlMAQObYZgAAAG1JREFUeNqNisUVxEAUw0IfQsPUf6XrDV4jn6Tn7isVvNZaEVXJd2r7tjtVLaVdYVudn3XdVhOPkNZZsW03VyBRsOBg0hF6Fmax1pgczjDyvLC1maiHgoGWiYloGiDnBQLG64AyjNDh9CuB7iM/7KYElz9TEM8AAAAASUVORK5CYII=", "cobblemon:rare_candy": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAGFBMVEUAAACu2PaMtupmheBRbLw/VJouRIMmNmQgchVHAAAAAXRSTlMAQObYZgAAAFNJREFUeNpjQAVpUJpNOQHKEC6HSKSJGCeA+MbGwSYFQEayoospWCpJWNmcAcxwUnYHKw0OMgkHKQ1SNXYFKWV3FQ6HmFISXAAxthwoAWWBGAgAAOxuDxmzb++hAAAAAElFTkSuQmCC", "minecraft:cake": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAM1BMVEUAAAD//f7/+OL15sbVyKzwc1rHYSS4XSevWCPoNTWnUyCXSRrTIS2NQySwITJvMhg9HQvvivntAAAAAXRSTlMAQObYZgAAAHZJREFUeNptj0ESxCAIBIVhNRJd8//XZsBUTmkPVLfFgfKJPbwKTbCTQeQvYwiBhVN1/PrgjGIqomJ9GEdXy40e6xo/iKAqSaczLGgCGn2VdWKH7VdZ07Fd4TPC2ZrDm09MdwaW2uIdh/uks6xWKxOVnlwPn5ff7TkEkIU9dpsAAAAASUVORK5CYII=", "minecraft:diamond": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAIVBMVEUAAAD////V//ah++hK7dks4NggxbUaqqcckZoRcnoUXlN/hNeyAAAAAXRSTlMAQObYZgAAAF1JREFUeNpjwApmzoTQnIJCE8CMiS5GWWABEWNltwVghpCQC4gx0dHFuKwKxHByNm4DM8SMTdpBjEku5eVpXUAGl3taWtkCECM8La0YxGBY4WKcBTaZa9WqBUg2AwByXRcdUQ3W3QAAAABJRU5ErkJggg==", "minecraft:elytra": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAG1BMVEUAAACPj7OMjIx/f5hzc3Nwbo1paWlLS0s1NTXBGAVdAAAAAXRSTlMAQObYZgAAAGNJREFUeNptzbENgDAQA8DvnBY2ADaAMEEUMQAJE4BESUUoXYW1+VDnpbevs9QuPW/626VkVXAN0dhLMHZEO1DQT8TUK9xMrFZhPRGcYo9EXChyBxp/ikjeaI4Co5FZwPKV6Q9t5hZq0HxRVgAAAABJRU5ErkJggg==", "minecraft:firework_rocket": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAG1BMVEUAAAD09PSyzNHWKiq5KSmZKSmEGxttFxctFAkSwe/YAAAAAXRSTlMAQObYZgAAADhJREFUeNpjwA4coDSrOZQREl4AYbiEJkAYTGpQKUZXKIPFCcYQgjIYRbGo6YAwmjigQhwNSBYDAHlGBZsPpMoSAAAAAElFTkSuQmCC", "minecraft:golden_helmet": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAZUlEQVQ4y2NgGJ6gKVbsPzZMtOaXG0X/v3oXjoLvTBP+b6/H958ozX//l/0HARANMwAkTtAQkAEgxSCN6JphmCgDQBjZ7yBNINuJNgCmCR1TbABRYQCzhSwDYIZgUwQzhGEUYAAANYisw3NdQN0AAAAASUVORK5CYII=", "minecraft:leather_helmet": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAXklEQVQ4y2NgGJ4gODj4Pwjj4hPUPG3aNAzFxcXF/01NTf8Tpfn8+fMYCkHiBA0BGbB582acBoAwUQaAMLKfQZpAthNtALYAA2mk2ACiwgCXLUQZADMElwEENY9QAADYyG3b80w6vwAAAABJRU5ErkJggg==", "minecraft:name_tag": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAJFBMVEUAAADg7+/E1tbmx4ytvLzOrG2Nm59ahJl6cWJ6b2BqYVJcRBeILO9mAAAAAXRSTlMAQObYZgAAAFtJREFUeNpjQAWCLhCaUVDEAcIQSwMzuBQT2BNAjKVOG8AMrmCXaLYCIGOxZUp0OkjAuKM1GixgbGG6ASRgYWEcDdZi3AEWYFjcDBFgWGoBEWDgiohmgIDdEAEA4s8U0Gw0/8QAAAAASUVORK5CYII=", "minecraft:netherite_ingot": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAIVBMVEUAAABzcXNaV1pNSU1IRUhMQUM7OTs8MjIxKSonHB0RERGQLp7qAAAAAXRSTlMAQObYZgAAAGNJREFUeNpjwAFmQijOmaENYO4UZ9MIENfFSEnZpIFhUqipsZKSoAfDVCFl40BBjyyG6YVKgiIV7VkM09IE3Ts60oAiaW4dHWVVCxg4ytw7ylctYGBgaE/vWsUAAhxdC7DbCwDOnxpNtnrV5wAAAABJRU5ErkJggg=="};
+window.webgui = window.webgui || {};
+var W = window.webgui;
+var inMod = typeof window.cefQuery === 'function' || typeof W.assetsBase === 'string' || typeof W.isHud === 'boolean';
+var mock = !inMod;
+if (mock) {
+  W.postToGame = W.postToGame || function (p) { mockServer(p); };
+  W.closeGui = W.closeGui || function () { console.log('[mock] closeGui'); };
+  W.on = W.on || function (n, f) { window.addEventListener('webgui:' + n, function (e) { f(e.detail); }); };
+  document.getElementById('mockbar').style.display = 'block';
+}
+var $ = function (id) { return document.getElementById(id); };
+// Only a real change touches the DOM (writing identical markup would repaint and can swallow a click between mouse-down and mouse-up).
+['lrows', 'cats', 'grid', 'chipnum', 'dprice', 'mrows', 'mico'].forEach(function (id) {
+  var el = $(id), d = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML'), last = null;
+  Object.defineProperty(el, 'innerHTML', { configurable: true, get: function () { return d.get.call(el); }, set: function (v) { v = String(v); if (v === last) return; last = v; d.set.call(el, v); } });
+});
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+// Minecraft's dark colours (dark purple, dark blue ...) are unreadable on the dark panels: blend them toward white until they are legible
+function lift(c) {
+  if (!c || c.charAt(0) !== '#' || c.length !== 7) return '';
+  var r = parseInt(c.substr(1, 2), 16), g = parseInt(c.substr(3, 2), 16), b = parseInt(c.substr(5, 2), 16), l = .3 * r + .59 * g + .11 * b;
+  if (l >= 150) return c;
+  var t = (150 - l) / (255 - l); r = Math.round(r + (255 - r) * t); g = Math.round(g + (255 - g) * t); b = Math.round(b + (255 - b) * t);
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+function num(n) { return Number(n || 0).toLocaleString('en-US'); }
+
+// ---------------------------------------------------------------- scaling: the 2000x1125 stage fits any window size / GUI scale
+function fit() {
+  var vw = window.innerWidth, vh = window.innerHeight, s = Math.min(vw / 2000, vh / 1125);
+  $('stage').style.transform = 'translate(' + Math.round((vw - 2000 * s) / 2) + 'px,' + Math.round((vh - 1125 * s) / 2) + 'px) scale(' + s + ')';
+}
+window.addEventListener('resize', fit); fit();
+
+// ---------------------------------------------------------------- pixel digits (5x7), drawn as SVG so every pixel is crisp
+var PD = { '0': ['01110', '10001', '10011', '10101', '11001', '10001', '01110'], '1': ['00100', '01100', '00100', '00100', '00100', '00100', '01110'],
+  '2': ['01110', '10001', '00001', '00010', '00100', '01000', '11111'], '3': ['11110', '00001', '00001', '01110', '00001', '00001', '11110'],
+  '4': ['00010', '00110', '01010', '10010', '11111', '00010', '00010'], '5': ['11111', '10000', '11110', '00001', '00001', '10001', '01110'],
+  '6': ['00110', '01000', '10000', '11110', '10001', '10001', '01110'], '7': ['11111', '00001', '00010', '00100', '01000', '01000', '01000'],
+  '8': ['01110', '10001', '10001', '01110', '10001', '10001', '01110'], '9': ['01110', '10001', '10001', '01111', '00001', '00010', '01100'],
+  ',': ['00', '00', '00', '00', '00', '11', '01'], '.': ['0', '0', '0', '0', '0', '0', '1'], '+': ['00000', '00100', '00100', '11111', '00100', '00100', '00000'],
+  'x': ['00000', '10001', '01010', '00100', '01010', '10001', '00000'], '-': ['00000', '00000', '00000', '11111', '00000', '00000', '00000'], '/': ['00001', '00010', '00010', '00100', '01000', '01000', '10000'] };
+var PF = {"A":["01110","10001","10001","11111","10001","10001","10001"],"B":["11110","10001","10001","11110","10001","10001","11110"],"C":["01110","10001","10000","10000","10000","10001","01110"],"D":["11110","10001","10001","10001","10001","10001","11110"],"E":["11111","10000","10000","11110","10000","10000","11111"],"F":["11111","10000","10000","11110","10000","10000","10000"],"G":["01110","10001","10000","10111","10001","10001","01111"],"H":["10001","10001","10001","11111","10001","10001","10001"],"I":["11111","00100","00100","00100","00100","00100","11111"],"J":["00111","00010","00010","00010","00010","10010","01100"],"K":["10001","10010","10100","11000","10100","10010","10001"],"L":["10000","10000","10000","10000","10000","10000","11111"],"M":["10001","11011","10101","10101","10001","10001","10001"],"N":["10001","11001","10101","10011","10001","10001","10001"],"O":["01110","10001","10001","10001","10001","10001","01110"],"P":["11110","10001","10001","11110","10000","10000","10000"],"Q":["01110","10001","10001","10001","10101","10010","01101"],"R":["11110","10001","10001","11110","10100","10010","10001"],"S":["01111","10000","10000","01110","00001","00001","11110"],"T":["11111","00100","00100","00100","00100","00100","00100"],"U":["10001","10001","10001","10001","10001","10001","01110"],"V":["10001","10001","10001","10001","10001","01010","00100"],"W":["10001","10001","10001","10101","10101","11011","10001"],"X":["10001","10001","01010","00100","01010","10001","10001"],"Y":["10001","10001","01010","00100","00100","00100","00100"],"Z":["11111","00001","00010","00100","01000","10000","11111"],"0":["01110","10001","10011","10101","11001","10001","01110"],"1":["00100","01100","00100","00100","00100","00100","01110"],"2":["01110","10001","00001","00010","00100","01000","11111"],"3":["11110","00001","00001","01110","00001","00001","11110"],"4":["00010","00110","01010","10010","11111","00010","00010"],"5":["11111","10000","11110","00001","00001","10001","01110"],"6":["00110","01000","10000","11110","10001","10001","01110"],"7":["11111","00001","00010","00100","01000","01000","01000"],"8":["01110","10001","10001","01110","10001","10001","01110"],"9":["01110","10001","10001","01111","00001","00010","01100"],",":["00000","00000","00000","00000","00000","01100","01000"]};
+var PRISM = ['#ff9af0', '#d65aea', '#8a44f5', '#4c7cff', '#3ddcff', '#b4f7ff'];
+function hex2(c) { return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16), parseInt(c.substr(5, 2), 16)]; }
+function prismAt(t) {
+  t = Math.max(0, Math.min(1, t)) * (PRISM.length - 1); var i = Math.min(Math.floor(t), PRISM.length - 2), f = t - i, a = hex2(PRISM[i]), b = hex2(PRISM[i + 1]);
+  return 'rgb(' + Math.round(a[0] + (b[0] - a[0]) * f) + ',' + Math.round(a[1] + (b[1] - a[1]) * f) + ',' + Math.round(a[2] + (b[2] - a[2]) * f) + ')';
+}
+function pxt(text, px, color, gap, bold) {
+  var x = 0, rects = '', s = String(text).toUpperCase(), pr = color === 'prism', cells = []; gap = gap == null ? 1 : gap;
+  for (var i = 0; i < s.length; i++) {
+    var ch = s.charAt(i);
+    if (ch === ' ') { x += 3 + gap; continue; }
+    var g = PF[ch] || PD[ch]; if (!g) { x += 3; continue; }
+    for (var r = 0; r < g.length; r++) for (var c = 0; c < g[r].length; c++) if (g[r].charAt(c) === '1') cells.push([x + c, r]);
+    x += g[0].length + gap;
+  }
+  var w = Math.max(1, x - gap);
+  for (var q = 0; q < cells.length; q++) {
+    var col = pr ? prismAt(cells[q][0] / w) : '';
+    rects += '<rect x="' + cells[q][0] + '" y="' + cells[q][1] + '" width="1" height="1"' + (pr ? ' fill="' + col + '"' + (bold ? ' stroke="' + col + '"' : '') : '') + '/>';
+  }
+  var m = bold ? .21 : 0;
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + (-m) + ' ' + (-m) + ' ' + (w + 2 * m) + ' ' + (7 + 2 * m) + '" width="' + Math.round((w + 2 * m) * px) + '" height="' + Math.round((7 + 2 * m) * px) + '"' + (pr ? '' : ' fill="' + color + '"') +
+    (bold ? (pr ? ' stroke-width=".42"' : ' stroke="' + color + '" stroke-width=".42"') + ' stroke-linejoin="miter"' : '') + ' shape-rendering="crispEdges">' + rects + '</svg>';
+}
+function setPx(id, text, px, color, gap, bold) { var el = $(id), h = pxt(text, px, color, gap, bold); if (el.__px !== h) { el.__px = h; el.innerHTML = h; } }
+function pxnum(text, px, color) {
+  var x = 0, cells = [], s = String(text), pr = color === 'prism';
+  for (var i = 0; i < s.length; i++) {
+    var g = PD[s.charAt(i)]; if (!g) { x += 3; continue; }
+    for (var r = 0; r < g.length; r++) for (var c = 0; c < g[r].length; c++) if (g[r].charAt(c) === '1') cells.push([x + c, r]);
+    x += g[0].length + 1;
+  }
+  var w = Math.max(1, x - 1), rects = '';
+  for (var q = 0; q < cells.length; q++) rects += '<rect x="' + cells[q][0] + '" y="' + cells[q][1] + '" width="1" height="1"' + (pr ? ' fill="' + prismAt(cells[q][0] / w) + '"' : '') + '/>';
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' 7" width="' + (w * px) + '" height="' + (7 * px) + '"' + (pr ? '' : ' fill="' + color + '"') + ' shape-rendering="crispEdges" style="display:block">' + rects + '</svg>';
+}
+
+// ---------------------------------------------------------------- state
+var S = { balance: 0, currency: 'Gems', player: '', earned: 0, cats: [], products: [], icons: {}, cat: null, page: 0, sel: null, quote: null, parts: null, seq: -1, live: false, title: 'Gem Shop', rev: -1, skew: 0, anim: 'PURCHASE', shown: null, popKey: '' };
+function sb() { return S.shown != null ? S.shown : S.balance; }
+var PER = 10;
+function iconSrc(p) {
+  var k = p.icon || '';
+  if (k.indexOf('snobblegems:') === 0) return k.indexOf('ticket') >= 0 ? ART.ticket : k.indexOf('skin') >= 0 ? ART.skin : ART.gem;
+  return S.icons[k] || MOCKICONS[k] || '';
+}
+function curCat() { for (var i = 0; i < S.cats.length; i++) if (S.cats[i].id === S.cat) return S.cats[i]; return S.cats[0] || null; }
+function catProducts() { var c = curCat(); if (!c) return []; return S.products.filter(function (p) { return p.cats.indexOf(c.id) !== -1; }); }
+function product(id) { for (var i = 0; i < S.products.length; i++) if (S.products[i].id === id) return S.products[i]; return null; }
+function priceHtml(p, px, col) { return '<img src="' + ART.gem + '" alt="">' + pxnum(num(p), px, col); }
+
+// ---------------------------------------------------------------- render
+function staticText() {
+  setPx('title', S.title || 'Gem Shop', 4, 'prism', 3, true);
+  setPx('hyour', 'Your ' + S.currency, 3, 'prism', 2, true);
+  setPx('cathead', 'Categories', 3, 'prism', 2, true);
+  setPx('hint', 'Select an item', 3, '#8f82b8', 2);
+  setPx('close', 'Close', 4, '#1a0a40', 4, true);
+  setPx('mt', 'Confirm purchase', 4, 'prism', 3, true);
+  setPx('mok', 'Confirm', 4, '#1a0a40', 3, true);
+  setPx('mcancel', 'Cancel', 4, '#f6e9ff', 3, true);
+  setPx('chipunit', S.currency, 2, '#8f82b8', 2);
+  $('tip').textContent = 'Earn ' + S.currency + ' by helping the community: welcome new players, celebrate big catches, and support the server.';
+}
+function render() {
+  staticText();
+  $('chipgem').src = ART.gem;
+  $('chipnum').innerHTML = pxnum(num(sb()), 4, 'prism');
+  $('chipunit').textContent = S.currency;
+  // left panel
+  var rows = [['Balance', '<img src="' + ART.gem + '" width="26" height="26" style="image-rendering:pixelated" alt="">' + pxnum(num(sb()), 3, '#fbf6ff')],
+              ['Earned today', pxnum(num(S.earned), 3, '#fbf6ff')], ['Items for sale', pxnum(num(S.products.length), 3, '#fbf6ff')]];
+  $('lrows').innerHTML = rows.map(function (r, i) { return '<div class="row" style="top:' + (84 + i * 58) + 'px"><span>' + esc(r[0]) + '</span><span class="v">' + r[1] + '</span></div>'; }).join('');
+  var c = curCat(), cc = c ? c.id : null;
+  $('cats').innerHTML = S.cats.map(function (k, i) {
+    return '<div class="cat' + (k.id === cc ? ' on' : '') + '" data-cat="' + esc(k.id) + '" style="top:' + (372 + i * 52) + 'px"><span><span class="dot"></span>' + esc(k.name) + '</span><span class="n">' + k.count + '</span></div>';
+  }).join('');
+  // right panel
+  var list = catProducts(), pages = Math.max(1, Math.ceil(list.length / PER));
+  if (S.page >= pages) S.page = pages - 1;
+  setPx('catname', c ? '/ ' + c.name : ' ', 3, 'prism', 2, true);
+  $('catdesc').textContent = c ? c.desc.join('  ') : '';
+  setPx('pgtxt', pages > 1 ? (S.page + 1) + ' / ' + pages : ' ', 3, '#d4c8ee', 1);
+  $('pgprev').className = 'pgb' + (pages > 1 && S.page > 0 ? '' : ' off') + (pages > 1 ? '' : ' hid');
+  $('pgnext').className = 'pgb' + (pages > 1 && S.page < pages - 1 ? '' : ' off') + (pages > 1 ? '' : ' hid');
+  $('pgprev').style.visibility = $('pgnext').style.visibility = pages > 1 ? 'visible' : 'hidden';
+  var from = S.page * PER, html = '', pageList = list.slice(from, from + PER), shown = pageList.length;
+  pageList.forEach(function (p, i) {
+    var col = i % 5, row = Math.floor(i / 5), src = iconSrc(p), inRow = Math.min(5, shown - row * 5), off = Math.round((1078 - (inRow * 198 + (inRow - 1) * 22)) / 2);
+    html += '<div class="cut card' + (p.id === S.sel ? ' sel' : '') + (p.ok ? '' : ' no') + '" data-p="' + esc(p.id) + '" style="left:' + (off + col * 220) + 'px;top:' + (row * 220) + 'px"><div class="tk"></div>' +
+      (p.ends ? '<div class="tm" data-end="' + p.ends + '"></div>' : '') +
+      (p.featured ? '<div class="star">&#9733;</div>' : '') +
+      (p.count > 1 ? '<div class="qty">' + pxnum('x' + p.count, 3, '#fbf6ff') + '</div>' : '') +
+      (src ? '<img class="ico" src="' + src + '" alt="">' : '<div class="tile pix">' + esc(p.name.replace(/[^A-Za-z0-9]/g, '').slice(0, 2)) + '</div>') +
+      '<div class="nm"' + (p.color ? ' style="color:' + esc(lift(p.color)) + '"' : '') + '>' + esc(p.name) + '</div>' +
+      '<div class="pr">' + priceHtml(p.price, 3, p.ok ? 'prism' : '#ff9aa6') + '</div></div>';
+  });
+  $('grid').innerHTML = html;
+  var popKey = (cc || '') + '|' + S.page;
+  if (S.live && S.popKey !== popKey) { S.popKey = popKey; var gd = $('grid'); gd.classList.remove('pop'); void gd.offsetWidth; gd.classList.add('pop'); }
+  $('empty').textContent = !S.live ? 'Connecting to the shop...' : (list.length ? '' : 'Nothing for sale here right now');
+  // detail strip
+  var s = S.sel ? product(S.sel) : null;
+  if (s && catProducts().indexOf(s) === -1) { s = null; S.sel = null; }
+  $('hint').style.display = s ? 'none' : 'block';
+  if (!s) $('dtm').style.display = 'none';
+  $('dname').style.display = $('ddesc').style.display = $('dlim').style.display = s ? 'block' : 'none';
+  $('dprice').style.display = $('buy').style.display = s ? 'flex' : 'none';
+  if (s) {
+    $('dname').textContent = s.name;
+    $('dname').style.color = lift(s.color) || '#fbf6ff';
+    $('ddesc').textContent = s.desc.join(' ');
+    $('dprice').innerHTML = priceHtml(s.price, 4, s.ok ? 'prism' : '#ff9aa6');
+    $('dlim').textContent = s.ok ? (s.limit || '') : s.reason + (s.limit ? '  -  ' + s.limit : '');
+    $('dlim').style.color = s.ok ? '#8f82b8' : '#ff7a88';
+    $('dtm').style.display = s.ends ? 'block' : 'none';
+    $('buy').className = 'btn pxt' + (s.ok ? '' : ' off');
+    setPx('buy', 'Buy', 4, s.ok ? '#1a0a40' : '#6a5a9a', 4, true);
+  }
+  renderModal();
+  tickTimers();
+}
+function renderModal() {
+  var q = S.quote;
+  $('veil').className = q ? 'on' : '';
+  if (!q) return;
+  var p = product(q.product) || { name: q.name, icon: '', color: q.color, desc: [] };
+  var src = iconSrc(p);
+  $('mico').innerHTML = src ? '<img src="' + src + '" alt="">' : '';
+  $('mname').textContent = q.name; $('mname').style.color = lift(q.color) || '#fbf6ff';
+  $('mdesc').textContent = (p.desc || []).join(' ');
+  var rows = [['Price', priceHtml(q.price, 4, 'prism')], ['Your balance', priceHtml(q.balance, 4, '#fbf6ff')], ['Balance after', priceHtml(q.after, 4, 'prism')]];
+  $('mrows').innerHTML = rows.map(function (r, i) { return '<div class="mrow" style="top:' + (236 + i * 56) + 'px"><span>' + r[0] + '</span><span class="v">' + r[1] + '</span></div>'; }).join('');
+  var left = Math.max(0, Math.round((q.until - Date.now()) / 1000));
+  $('mexp').textContent = 'This offer is held for ' + left + ' seconds.';
+}
+
+// ---------------------------------------------------------------- offer timers (server clock = Date.now() + S.skew)
+function msLeft(ends) { return ends - (Date.now() + S.skew); }
+function fmt(ms) {
+  var t = Math.max(0, Math.floor(ms / 1000)), d = Math.floor(t / 86400), h = Math.floor((t % 86400) / 3600), m = Math.floor((t % 3600) / 60);
+  if (d > 0) return d + 'd ' + h + 'h'; if (h > 0) return h + 'h ' + m + 'm'; if (m > 0) return m + 'm ' + (t % 60) + 's'; return t + 's';
+}
+function tickTimers() {
+  var els = document.querySelectorAll('.tm');
+  for (var i = 0; i < els.length; i++) {
+    var ms = msLeft(+els[i].getAttribute('data-end')); els[i].textContent = ms <= 0 ? 'ENDED' : fmt(ms);
+    els[i].className = 'tm' + (ms <= 0 ? ' gone' : ms < 600000 ? ' low' : '');
+  }
+  var s = S.sel ? product(S.sel) : null, d = $('dtm');
+  if (s && s.ends) { var m2 = msLeft(s.ends); d.textContent = m2 <= 0 ? 'Offer ended' : 'Ends in ' + fmt(m2); d.style.color = m2 < 600000 ? '#ff9a8a' : '#f6d2ff'; }
+}
+setInterval(tickTimers, 1000);
+function setFx() { document.body.className = S.anim === 'OFF' ? 'fx-off' : S.anim === 'FULL' ? 'fx-full' : ''; }
+
+// ---------------------------------------------------------------- purchase celebration: sparkle burst, prism ring, rising gems, banner, balance count-down
+var fxc = $('fx'), fxx = fxc.getContext('2d'), fxRun = 0, gemImg = new Image(), tweenId = 0;
+gemImg.src = ART.gem;
+function burst(ox, oy) {
+  ox /= 2; oy /= 2;
+  var P = [], G = [], i, id = ++fxRun, ring = 0, frame = 0;
+  for (i = 0; i < 120; i++) { var a = Math.random() * 6.283, sp = 1.5 + Math.random() * 6.5; P.push({ x: ox, y: oy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1.2, l: 0, L: 46 + Math.random() * 44, s: 2 + Math.random() * 3.5, c: prismAt(Math.random()), star: Math.random() < .4 }); }
+  for (i = 0; i < 8; i++) G.push({ x: ox + (Math.random() - .5) * 190, y: oy + 10, vy: -1 - Math.random() * 1.6, ph: Math.random() * 6, l: 0, L: 80 + Math.random() * 30, s: 14 + Math.random() * 12 });
+  function step() {
+    if (id !== fxRun) return;
+    fxx.clearRect(0, 0, 1000, 563);
+    ring++; var rr = ring * 8, ra = Math.max(0, 1 - ring / 36), alive = ra > 0;
+    if (ra > 0) {
+      fxx.globalAlpha = ra; var gr = fxx.createLinearGradient(ox - rr, 0, ox + rr, 0);
+      for (var q = 0; q < PRISM.length; q++) gr.addColorStop(q / (PRISM.length - 1), PRISM[q]);
+      fxx.strokeStyle = gr; fxx.lineWidth = 5; fxx.beginPath(); fxx.arc(ox, oy, rr, 0, 6.283); fxx.stroke();
+    }
+    P.forEach(function (p) {
+      if (p.l >= p.L) return; alive = true; p.l++; p.x += p.vx; p.y += p.vy; p.vy += .09; p.vx *= .985;
+      fxx.globalAlpha = Math.max(0, 1 - p.l / p.L); fxx.fillStyle = p.c;
+      if (p.star) { fxx.fillRect(p.x - p.s * 1.6, p.y - p.s * .4, p.s * 3.2, p.s * .8); fxx.fillRect(p.x - p.s * .4, p.y - p.s * 1.6, p.s * .8, p.s * 3.2); } else fxx.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s);
+    });
+    G.forEach(function (g) {
+      if (g.l >= g.L) return; alive = true; g.l++; g.y += g.vy; g.x += Math.sin(g.l / 9 + g.ph) * .9;
+      fxx.globalAlpha = Math.max(0, Math.min(1, (g.L - g.l) / 30)); fxx.imageSmoothingEnabled = false; fxx.drawImage(gemImg, g.x - g.s / 2, g.y - g.s / 2, g.s, g.s);
+    });
+    fxx.globalAlpha = 1;
+    frame++;
+    if (alive && frame < 150) requestAnimationFrame(step); else fxx.clearRect(0, 0, 1000, 563);
+  }
+  requestAnimationFrame(step);
+}
+function tween(a, b) {
+  if (a === b) return;
+  var id = ++tweenId, t0 = Date.now(), dur = 1000;
+  (function step() {
+    if (id !== tweenId) return;
+    var t = Math.min(1, (Date.now() - t0) / dur), e = 1 - Math.pow(1 - t, 3);
+    S.shown = t >= 1 ? null : Math.round(a + (b - a) * e); render();
+    if (t < 1) requestAnimationFrame(step);
+  })();
+}
+function celebrate(m, oldBal) {
+  var p = product(m.product) || { name: '' };
+  setPx('bnt', 'Purchased!', 8, 'prism', 4, true);
+  $('bnn').textContent = p.name || '';
+  var b = $('banner'); b.classList.remove('on'); void b.offsetWidth; b.classList.add('on');
+  setTimeout(function () { b.classList.remove('on'); }, 1950);
+  var c = $('chip'); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash');
+  var st = $('stage').getBoundingClientRect(), r = $('buy').getBoundingClientRect(), k = st.width / 2000 || 1, ox = 1000, oy = 560;
+  if (r.width > 0) { ox = (r.left + r.width / 2 - st.left) / k; oy = (r.top + r.height / 2 - st.top) / k; }
+  burst(ox, oy);
+  tween(oldBal, S.balance);
+}
+
+// ---------------------------------------------------------------- toast
+var toastT = 0;
+function toast(msg, ok) {
+  var t = $('toast'); $('toasttx').textContent = msg; t.className = 'cut on ' + (ok ? 'ok' : 'bad');
+  clearTimeout(toastT); toastT = setTimeout(function () { t.className = 'cut'; }, 4200);
+}
+
+// ---------------------------------------------------------------- events from the server
+function send(msg) { msg.channel = 'snobblegems'; W.postToGame(msg); }
+W.on('shop_state', function (m) {
+  if (!m) return;
+  if (m.chunks > 1 || (S.parts && S.parts.seq === m.seq)) {
+    if (!S.parts || S.parts.seq !== m.seq) S.parts = { seq: m.seq, n: m.chunks, got: {}, head: null };
+    S.parts.got[m.chunk] = m.products || [];
+    if (m.chunk === 0) S.parts.head = m;
+    var have = 0; for (var k in S.parts.got) have++;
+    if (have < S.parts.n || !S.parts.head) return;
+    var head = S.parts.head, all = [];
+    for (var i = 0; i < S.parts.n; i++) all = all.concat(S.parts.got[i]);
+    S.parts = null; applyState(head, all);
+  } else applyState(m, m.products || []);
+});
+function applyState(h, prods) {
+  S.player = h.player; S.currency = h.currency || 'Gems'; S.balance = h.balance; S.earned = h.earnedToday || 0; S.cats = h.cats || []; S.products = prods; S.title = h.title || S.title;
+  if (S.rev !== h.rev) { S.icons = {}; S.rev = h.rev; }
+  if (!curCat() || !S.cats.some(function (c) { return c.id === S.cat; })) { S.cat = S.cats.length ? S.cats[0].id : null; S.page = 0; }
+  S.live = true;
+  if (h.now) S.skew = h.now - Date.now();
+  S.anim = h.anim || 'PURCHASE'; setFx();
+  render();
+}
+var iconPending = 0;
+W.on('shop_icon', function (m) { if (m && m.key && m.data) { S.icons[m.key] = m.data; if (!iconPending) iconPending = requestAnimationFrame(function () { iconPending = 0; render(); }); } });
+W.on('shop_quote', function (m) {
+  if (!m) return;
+  if (m.ok) { S.quote = { product: m.product, token: m.token, name: m.name, color: m.color, price: m.price, balance: m.balance, after: m.after, until: Date.now() + (m.seconds || 30) * 1000 }; renderModal(); }
+  else { S.quote = null; toast(m.message || 'Cannot buy that.', false); render(); }
+});
+W.on('shop_result', function (m) {
+  if (!m) return;
+  var old = S.balance; S.quote = null; S.balance = m.balance;
+  toast(m.message || (m.ok ? 'Purchased.' : 'Purchase failed.'), !!m.ok);
+  render();
+  if (m.ok && S.anim !== 'OFF') celebrate(m, old);
+});
+
+// ---------------------------------------------------------------- input (event delegation; handlers are never replaced)
+$('cats').addEventListener('click', function (e) { var t = e.target.closest('.cat'); if (!t) return; S.cat = t.getAttribute('data-cat'); S.page = 0; S.sel = null; render(); });
+$('grid').addEventListener('click', function (e) { var t = e.target.closest('.card'); if (!t) return; S.sel = t.getAttribute('data-p'); render(); });
+$('grid').addEventListener('dblclick', function (e) { var t = e.target.closest('.card'); if (!t) return; S.sel = t.getAttribute('data-p'); render(); askQuote(); });
+$('pgprev').addEventListener('click', function () { if (S.page > 0) { S.page--; render(); } });
+$('pgnext').addEventListener('click', function () { S.page++; render(); });
+function askQuote() { var p = S.sel ? product(S.sel) : null; if (!p || !p.ok) return; send({ kind: 'quote', product: p.id }); }
+$('buy').addEventListener('click', askQuote);
+$('mok').addEventListener('click', function () { if (S.quote) { var t = S.quote.token; S.quote = null; renderModal(); send({ kind: 'confirm', token: t }); } });
+$('mcancel').addEventListener('click', function () { S.quote = null; renderModal(); send({ kind: 'cancel' }); });
+$('close').addEventListener('click', function () { W.closeGui(); });
+setInterval(function () { if (S.quote) { if (Date.now() > S.quote.until) { S.quote = null; send({ kind: 'cancel' }); } renderModal(); } }, 1000);
+
+// ---------------------------------------------------------------- handshake with the server
+if (!mock) {
+  render();
+  send({ kind: 'hello' });
+  setInterval(function () { send({ kind: S.live ? 'ping' : 'hello' }); }, 4000);
+  window.addEventListener('pagehide', function () { send({ kind: 'bye' }); });
+}
+
+// ---------------------------------------------------------------- mock server (plain browser preview only; never used in the game)
+function mockServer(p) {
+  function emit(n, o) { setTimeout(function () { window.dispatchEvent(new CustomEvent('webgui:' + n, { detail: o })); }, 0); }
+  if (p.kind === 'quote') {
+    var pr = MOCK.products.filter(function (x) { return x.id === p.product; })[0];
+    if (!pr || MOCK.balance < pr.price) { emit('shop_quote', { ok: false, message: 'Not enough ' + MOCK.currency + '.' }); return; }
+    emit('shop_quote', { ok: true, product: pr.id, token: 'mock', name: pr.name, color: pr.color, price: pr.price, balance: MOCK.balance, after: MOCK.balance - pr.price, seconds: 30 });
+  } else if (p.kind === 'confirm') {
+    var q = S.quote || MOCK.lastQuote;
+    var pp = MOCK.products.filter(function (x) { return x.id === (MOCK.lastQuoteProduct); })[0];
+    if (pp && MOCK.balance >= pp.price) { MOCK.balance -= pp.price; emit('shop_result', { ok: true, product: pp.id, message: pp.name + ' purchased for ' + num(pp.price) + ' ' + MOCK.currency + '.', balance: MOCK.balance }); setTimeout(pushMock, 30); }
+  }
+  if (p.kind === 'quote') MOCK.lastQuoteProduct = p.product;
+}
+var MOCK = null;
+function pushMock() {
+  MOCK.products.forEach(function (p) { p.ok = MOCK.balance >= p.price; p.reason = p.ok ? '' : 'Not enough ' + MOCK.currency; p.code = p.ok ? '' : 'funds'; });
+  window.dispatchEvent(new CustomEvent('webgui:shop_state', { detail: { v: 2, seq: ++MOCK.seq, chunk: 0, chunks: 1, now: Date.now(), anim: (location.hash.indexOf('full') >= 0 ? 'FULL' : 'PURCHASE'), timers: true, player: 'Preview', currency: MOCK.currency, balance: MOCK.balance, earnedToday: 42, rev: 1, title: 'Gem Shop', cats: MOCK.cats, products: MOCK.products } }));
+}
+if (mock) {
+  var h = (location.hash || '').replace('#', '').split(',');
+  var bal = parseInt(h[0], 10); if (isNaN(bal)) bal = 12450;
+  var P = function (id, name, color, icon, price, count, cats, desc, extra) { var o = { id: id, name: name, color: color, icon: icon, price: price, count: count, cats: cats, desc: desc, ok: true, reason: '', code: '', limit: '', featured: false }; for (var k in (extra || {})) o[k] = extra[k]; return o; };
+  MOCK = { balance: bal, currency: 'Gems', seq: 0,
+    cats: [{ id: 'featured', name: 'Featured Items', color: '', desc: ['Hand-picked deals.'], count: 5 }, { id: 'shiny', name: 'Shiny Boosts', color: '', desc: ['Shiny Boost Tickets.'], count: 3 },
+           { id: 'skins', name: 'Pokemon Skins', color: '', desc: ['Cosmetic skins for your Pokemon.'], count: 3 }, { id: 'rare', name: 'Rare Items', color: '', desc: ['Items that are hard to come by.'], count: 4 }, { id: 'event', name: 'Event Items', color: '', desc: ['Limited-time goodies.'], count: 2 }],
+    products: [
+      P('shiny_ticket_1', 'Shiny Boost Ticket', '#ff55ff', 'snobblegems:ticket', 250, 1, ['featured', 'shiny'], ['Right-click to start a server-wide shiny boost for everyone.', 'Each ticket is one use.'], { featured: true }),
+      P('shiny_ticket_3', 'Shiny Boost Ticket x3', '#ff55ff', 'snobblegems:ticket', 675, 3, ['shiny'], ['Three tickets. A small saving.']),
+      P('shiny_ticket_10', 'Shiny Boost Ticket x10', '#ff55ff', 'snobblegems:ticket', 2200, 10, ['shiny'], ['Ten tickets for a community event.']),
+      P('rare_candy', 'Rare Candy x5', '#ff55ff', 'cobblemon:rare_candy', 300, 5, ['featured', 'rare'], ['Level a Pokemon up instantly.'], { featured: true }),
+      P('master_ball', 'Master Ball', '#aa00aa', 'cobblemon:master_ball', 2500, 1, ['featured', 'rare'], ['Never fails.'], { featured: true, limit: '0/3 bought' }),
+      P('ability_capsule', 'Ability Capsule', '#55ffff', 'cobblemon:ability_capsule', 400, 1, ['rare'], ['Switch a Pokemon between its regular abilities.']),
+      P('ability_patch', 'Ability Patch', '#ff55ff', 'cobblemon:ability_patch', 1200, 1, ['rare'], ['Unlocks a Hidden Ability.']),
+      P('fireworks', 'Firework Stack', '#55ff55', 'minecraft:firework_rocket', 120, 32, ['event'], ['Light up the spawn.'], { limit: '0/2 today' }),
+      P('cake', 'Event Cake', '#ff55ff', 'minecraft:cake', 60, 1, ['event'], ['Limited-time treat.'], { ends: Date.now() + 5400000 }),
+      P('skin_pikachu', 'Pikachu Skin', '#ff55ff', 'snobblegems:skin', 900, 1, ['skins'], ['A cosmetic skin for your Pikachu.', 'Open the skin menu to apply it.'], { limit: '0/1 bought' }),
+      P('skin_charmander', 'Charmander Skin', '#ff55ff', 'snobblegems:skin', 900, 1, ['skins'], ['A cosmetic skin for your Charmander.'], { ends: Date.now() + 86400000 * 2 + 3600000 * 5 }),
+      P('skin_bulbasaur', 'Bulbasaur Skin', '#ff55ff', 'snobblegems:skin', 1100, 1, ['skins'], ['A cosmetic skin for your Bulbasaur.'], { ends: Date.now() + 420000 }) ] };
+  MOCK.cats[0].count = MOCK.products.filter(function (p) { return p.featured; }).length;
+  if (h[1]) S.cat = h[1];
+  if (h[2]) S.sel = h[2];
+  render(); pushMock();
+  if (h[3] === 'confirm' || h[3] === 'buy') setTimeout(function () { send({ kind: 'quote', product: S.sel }); }, 50);
+  if (h[3] === 'buy') setTimeout(function () { $('mok').click(); }, 300);
+  setFx();
+}
+})();
+</script>
+</body>
+</html>

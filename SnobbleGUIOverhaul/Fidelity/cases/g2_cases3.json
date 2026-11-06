@@ -1,0 +1,72 @@
+[
+ {
+  "case": "g2_cases3__y01_queue",
+  "shot": "y01_queue",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=g2_cases3__y01_queue",
+  "budget": 4848,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g2_cases3\\y01_queue.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "g2_cases3__y02_ticket",
+  "shot": "y02_ticket",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=g2_cases3__y02_ticket",
+  "budget": 6710,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g2_cases3\\y02_ticket.png",
+  "unmappable": [],
+  "steps": 2
+ },
+ {
+  "case": "g2_cases3__y03_stamp_early",
+  "shot": "y03_stamp_early",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=g2_cases3__y03_stamp_early",
+  "budget": 8553,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g2_cases3\\y03_stamp_early.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "g2_cases3__y04_stamp",
+  "shot": "y04_stamp",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=g2_cases3__y04_stamp",
+  "budget": 8553,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g2_cases3\\y04_stamp.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "g2_cases3__y05_stamp_gone",
+  "shot": "y05_stamp_gone",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=g2_cases3__y05_stamp_gone",
+  "budget": 10053,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g2_cases3\\y05_stamp_gone.png",
+  "unmappable": [],
+  "steps": 3
+ },
+ {
+  "case": "g2_cases3__y06_sugs",
+  "shot": "y06_sugs",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=g2_cases3__y06_sugs",
+  "budget": 11053,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g2_cases3\\y06_sugs.png",
+  "unmappable": [],
+  "steps": 4
+ },
+ {
+  "case": "g2_cases3__y07_mine",
+  "shot": "y07_mine",
+  "page": "cases",
+  "url": "/cases/index.html?refcase=g2_cases3__y07_mine",
+  "budget": 12898,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\g2_cases3\\y07_mine.png",
+  "unmappable": [],
+  "steps": 5
+ }
+]

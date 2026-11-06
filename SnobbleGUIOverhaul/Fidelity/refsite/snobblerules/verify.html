@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head><script src="/_inject.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snobblemon Rules Roll</title>
+<style>
+/* Quiet on purpose (no animation, blend modes or hover movement): the game paints this page through an off-screen browser. */
+:root {
+  --bg1: #121a29; --panel: #151e30; --panel2: #1b2740; --line: #2b3a58; --ink: #eef3fb; --mute: #9fb0cb; --dim: #6c7c99;
+  --root: #6fcf6a; --tide: #5bb8ff; --dusk: #b48cff; --gold: #ffd166; --ok: #4ade80; --okd: #1f9d55; --bad: #ff6b6b; --warn: #ffb454;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body { background: linear-gradient(115deg, #0a1a18 0%, #0b1019 34%, #0d1224 66%, #17102b 100%); color: var(--ink); font: 15px/1.45 "Segoe UI", system-ui, sans-serif; user-select: none; -webkit-user-select: none; }
+.wrap { position: absolute; left: 0; right: 0; margin: 0 auto; top: 0; display: flex; flex-direction: column; background: var(--bg1); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.head { display: flex; align-items: center; gap: 14px; padding: 16px 22px 12px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.head .logo { width: 42px; height: 42px; border-radius: 11px; background: var(--panel2); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 22px; font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; }
+.head h1 { font-size: 20px; letter-spacing: .04em; }
+.head .sub { color: var(--mute); font-size: 12.5px; }
+.head .sp { flex: 1; }
+.search { background: #0f1626; border: 1px solid var(--line); color: var(--ink); border-radius: 9px; padding: 8px 12px; width: 230px; font: inherit; outline: none; user-select: text; -webkit-user-select: text; }
+.search:focus { border-color: var(--tide); }
+.btn { font: inherit; font-weight: 700; font-size: 14px; border-radius: 9px; padding: 8px 16px; border: 1px solid var(--line); background: var(--panel2); color: var(--ink); cursor: pointer; }
+.btn:hover { background: #26375a; }
+.btn:disabled { background: #20283a; color: #5f6b84; cursor: not-allowed; }
+.btn.go { background: var(--okd); border-color: var(--ok); color: #fff; }
+.btn.go:hover { background: #25b563; }
+.btn.warn { background: #5a3a14; border-color: var(--warn); color: #ffe3bd; }
+.btn.warn:hover { background: #70491a; }
+.tabs { display: flex; gap: 6px; padding: 10px 22px 0; background: var(--panel); border-bottom: 1px solid var(--line); }
+.tab { font: inherit; font-weight: 700; font-size: 14px; color: var(--mute); background: transparent; border: 1px solid transparent; border-bottom: 0; border-radius: 9px 9px 0 0; padding: 8px 16px; cursor: pointer; }
+.tab:hover { color: var(--ink); background: var(--panel2); }
+.tab.on { color: var(--ink); background: var(--bg1); border-color: var(--line); position: relative; top: 1px; }
+.tab b { display: inline-block; min-width: 24px; text-align: center; margin-left: 7px; padding: 0 7px; border-radius: 11px; background: #243250; font-size: 12.5px; }
+.list { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 22px; }
+.list::-webkit-scrollbar { width: 12px; }
+.list::-webkit-scrollbar-track { background: #101827; }
+.list::-webkit-scrollbar-thumb { background: #3b4f78; border-radius: 6px; border: 2px solid #101827; }
+.row { display: flex; align-items: center; gap: 14px; padding: 10px 14px; margin-bottom: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 11px; }
+.av { width: 38px; height: 38px; border-radius: 10px; flex: none; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; color: #0b1019; }
+.who { flex: 1; min-width: 0; }
+.nm { font-weight: 800; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nm i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #4a5568; margin-left: 8px; vertical-align: middle; }
+.nm i.on { background: var(--ok); }
+.meta { color: var(--mute); font-size: 13px; }
+.badge { font-size: 12px; font-weight: 800; letter-spacing: .05em; border-radius: 12px; padding: 3px 11px; text-transform: uppercase; flex: none; }
+.badge.accepted { background: #14452a; color: #b9f3cf; }
+.badge.unread { background: #2b344a; color: #aebad2; }
+.empty { text-align: center; color: var(--dim); padding: 60px 0; font-size: 16px; }
+.foot { padding: 8px 22px; background: var(--panel); border-top: 1px solid var(--line); color: var(--mute); font-size: 13px; display: flex; gap: 14px; align-items: center; min-height: 38px; }
+.foot .sp { flex: 1; }
+.toast { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); padding: 9px 18px; border-radius: 10px; font-weight: 700; display: none; z-index: 9; max-width: 80%; text-align: center; background: #3a1d28; border: 1px solid #7a2e45; color: #ffd0d8; }
+.toast.on { display: block; }
+.toast.good { background: #12301f; border-color: #2a6a45; color: #b9f3cf; }
+.denied { margin: auto; text-align: center; padding: 40px; }
+.denied h2 { color: var(--bad); font-size: 24px; margin-bottom: 8px; }
+.denied p { color: var(--mute); }
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+  <div class="head">
+    <div class="logo">🛡️</div>
+    <div><h1>Rules Roll</h1><div class="sub" id="sub">Everyone who has read and accepted the rules. Accepting verifies a player automatically.</div></div>
+    <span class="sp"></span>
+    <input class="search" id="search" type="text" maxlength="32" placeholder="Search a player…" autocomplete="off" spellcheck="false">
+    <button class="btn" id="close">Close</button>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="list" id="list"></div>
+  <div class="foot"><span id="info">Connecting…</span><span class="sp"></span><span id="live">●</span></div>
+  <div class="toast" id="toast"></div>
+</div>
+<script>
+(function () {
+'use strict';
+window.webgui = window.webgui || {};
+var W = window.webgui;
+W.postToGame = W.postToGame || function () {};
+W.closeGui = W.closeGui || function () {};
+W.on = W.on || function (n, f) { window.addEventListener('webgui:' + n, function (e) { f(e.detail); }); };
+var $ = function (id) { return document.getElementById(id); };
+function setHtml(el, v) { v = String(v); if (el._h === v) return; el._h = v; el.innerHTML = v; }
+function setText(el, v) { v = String(v); if (el._t === v) return; el._t = v; el.textContent = v; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function send(m) { m.channel = 'snobblerules'; W.postToGame(m); }
+
+var TABS = [['accepted', 'Accepted', ''], ['unread', 'Not finished', ''], ['all', 'Everyone', '']];
+var S = { tab: 'accepted', q: '', rev: -1, state: null, skew: 0, last: 0, denied: false };
+
+function fit() {
+  var vw = innerWidth, vh = innerHeight, z = Math.max(.7, Math.min(1.7, vh / 780 * .92)), w = $('wrap');
+  w.style.zoom = z; w.style.width = Math.min(vw / z - 24, 1100) + 'px'; w.style.height = (vh / z - 24) + 'px'; w.style.top = (12 / z) + 'px';
+}
+window.addEventListener('resize', fit); fit();
+
+var COLORS = ['#6fcf6a', '#5bb8ff', '#b48cff', '#ffd166', '#ff9ab0', '#7ee0d0'];
+function colorOf(name) { var h = 0; for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0; return COLORS[h % COLORS.length]; }
+function ago(t) {
+  if (!t) return 'never';
+  var s = Math.max(0, Math.round((Date.now() + S.skew - t) / 1000));
+  if (s < 90) return 'just now'; if (s < 5400) return Math.round(s / 60) + ' min ago';
+  if (s < 129600) return Math.round(s / 3600) + ' h ago'; return Math.round(s / 86400) + ' d ago';
+}
+function renderTabs() {
+  var c = (S.state && S.state.counts) || {};
+  setHtml($('tabs'), TABS.map(function (t) {
+    return '<button class="tab ' + t[2] + (S.tab === t[0] ? ' on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '<b>' + (c[t[0]] == null ? '–' : c[t[0]]) + '</b></button>';
+  }).join(''));
+}
+function rowHtml(r) {
+  var meta;
+  if (r.status === 'accepted') {
+    meta = 'Read and accepted the rules ' + ago(r.acceptedAt) + ' · ' + new Date(r.acceptedAt).toLocaleString();
+  } else {
+    meta = 'Has not finished the rules · first seen ' + ago(r.firstSeen);
+  }
+  return '<div class="row"><div class="av" style="background:' + colorOf(r.name || '?') + '">' + esc((r.name || '?').charAt(0).toUpperCase()) + '</div>' +
+    '<div class="who"><div class="nm">' + esc(r.name || '(unknown)') + '<i class="' + (r.online ? 'on' : '') + '" title="' + (r.online ? 'Online' : 'Offline') + '"></i></div><div class="meta">' + meta + '</div></div>' +
+    '<span class="badge ' + r.status + '">' + (r.status === 'accepted' ? 'Accepted' : 'Not finished') + '</span></div>';
+}
+function render() {
+  renderTabs();
+  var st = S.state;
+  if (S.denied) {
+    setHtml($('list'), '<div class="denied"><h2>No permission</h2><p>Only staff with the <b>snobblerules.verify</b> permission can use this page.</p></div>');
+    setText($('info'), 'Access denied'); return;
+  }
+  if (!st) { setHtml($('list'), '<div class="empty">Loading…</div>'); return; }
+  var rows = st.rows || [];
+  setHtml($('list'), rows.length ? rows.map(rowHtml).join('') : '<div class="empty">' + (S.q ? 'No players match “' + esc(S.q) + '”.' :
+    S.tab === 'accepted' ? 'Nobody has accepted the rules yet.' : 'Nothing here yet.') + '</div>');
+  setText($('info'), 'Showing ' + rows.length + ' of ' + st.matches + (st.truncated ? ' — type in the search box to find the rest' : ''));
+}
+function ask(force) {
+  send({ kind: S.state ? 'admin_refresh' : 'admin_hello', rev: S.rev, tab: S.tab, q: S.q, force: !!force });
+}
+
+$('tabs').addEventListener('click', function (e) {
+  var t = e.target.closest('[data-tab]'); if (!t) return;
+  S.tab = t.getAttribute('data-tab'); renderTabs(); ask(true);
+});
+var searchT;
+$('search').addEventListener('input', function (e) { S.q = e.target.value.trim(); clearTimeout(searchT); searchT = setTimeout(function () { ask(true); }, 250); });
+$('search').addEventListener('keydown', function (e) { e.stopPropagation(); });
+$('close').onclick = function () { send({ kind: 'bye' }); W.closeGui(); };
+window.addEventListener('pagehide', function () { send({ kind: 'bye' }); });
+
+var toastT;
+function toast(msg, good) { var t = $('toast'); t.textContent = msg; t.className = 'toast on' + (good ? ' good' : ''); clearTimeout(toastT); toastT = setTimeout(function () { t.className = 'toast'; }, 3000); }
+
+W.on('verify_state', function (p) {
+  S.last = Date.now();
+  if (p.same) return;
+  if (p.denied) { S.denied = true; S.state = null; render(); return; }
+  S.denied = false; S.state = p; S.rev = p.rev; if (p.now) S.skew = p.now - Date.now();
+  $('live').style.color = '#4ade80'; render();
+});
+
+render(); ask(true);
+// The server answers only when something changed since the revision we send, so this is cheap. Relative times ("5 min ago") are redrawn once a minute.
+setInterval(function () { if (!S.denied) ask(false); }, 4000);
+setInterval(function () { if (S.state) render(); }, 60000);
+setInterval(function () { $('live').style.color = Date.now() - S.last < 15000 ? '#4ade80' : '#ff6b6b'; }, 3000);
+})();
+</script>
+</body>
+</html>

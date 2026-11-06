@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "snobblegemcurrency",
+  "version": "${version}",
+  "name": "SnobbleGemCurrency",
+  "description": "Server-side Gem currency, Tebex rewards, Shiny Boost Tickets and Gem Shop for Snobblemon Regions.",
+  "authors": ["Snobblemon Regions"],
+  "license": "MIT",
+  "environment": "server",
+  "entrypoints": { "main": ["com.snobblemon.gems.SnobbleGems"] },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "webgui": "*",
+    "placeholder-api": "*",
+    "fabric-permissions-api-v0": "*",
+    "cobblemon": "*",
+    "cobblemon_boosters": "*",
+    "snobblemoncompanion": "*"
+  }
+}

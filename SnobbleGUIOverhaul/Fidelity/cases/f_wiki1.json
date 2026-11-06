@@ -1,0 +1,56 @@
+[
+ {
+  "case": "f_wiki1__w01_home",
+  "shot": "w01_home",
+  "page": "wiki",
+  "url": "/wiki/index.html?refcase=f_wiki1__w01_home",
+  "budget": 3442,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_wiki1\\w01_home.png",
+  "unmappable": [],
+  "steps": 0
+ },
+ {
+  "case": "f_wiki1__w02_mod",
+  "shot": "w02_mod",
+  "page": "wiki",
+  "url": "/wiki/index.html?refcase=f_wiki1__w02_mod",
+  "budget": 5300,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_wiki1\\w02_mod.png",
+  "unmappable": [],
+  "steps": 1
+ },
+ {
+  "case": "f_wiki1__w03_page",
+  "shot": "w03_page",
+  "page": "wiki",
+  "url": "/wiki/index.html?refcase=f_wiki1__w03_page",
+  "budget": 5300,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_wiki1\\w03_page.png",
+  "unmappable": [
+   "clickbox m_card"
+  ],
+  "steps": 1
+ },
+ {
+  "case": "f_wiki1__w04_next",
+  "shot": "w04_next",
+  "page": "wiki",
+  "url": "/wiki/index.html?refcase=f_wiki1__w04_next",
+  "budget": 7643,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_wiki1\\w04_next.png",
+  "unmappable": [
+   "clickbox m_card"
+  ],
+  "steps": 2
+ },
+ {
+  "case": "f_wiki1__w05_reopen",
+  "shot": "w05_reopen",
+  "page": "wiki",
+  "url": "/wiki/index.html?refcase=f_wiki1__w05_reopen",
+  "budget": 2800,
+  "native": "G:\\Claude\\SnobbleGUIOverhaul\\Two-Mod Rework\\tests\\shots_ui\\f_wiki1\\w05_reopen.png",
+  "unmappable": [],
+  "steps": 0
+ }
+]
