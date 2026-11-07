@@ -1,7 +1,10 @@
 package com.cobbleraids.item;
 
 import com.cobbleraids.radar.RaidRadarService;
+import com.cobbleraids.raidio.RaidioMode;
 import eu.pb4.polymer.core.api.item.PolymerItem;
+import eu.pb4.polymer.resourcepack.api.PolymerModelData;
+import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Registry;
@@ -25,6 +28,12 @@ import net.minecraft.world.level.Level;
 public final class RaidRadarItem extends Item implements PolymerItem {
     public static final RaidRadarItem INSTANCE = new RaidRadarItem();
     private static final String OPEN = "cobbleraids_radar_open";
+    private static final String FLAT_MAP = "cobbleraids_radar_flat_map";
+    /** The Raidio's model under {@code assets/cobbleraids/models/item/}, drawn by the resource pack Polymer builds ({@link RaidItemPack}). A player without it sees a clock. */
+    static final String MODEL_PATH = "raidio";
+    /** Requested when this class loads, which is before Polymer builds the pack. It sits on the clock the item is sent as. */
+    private static final PolymerModelData MODEL = PolymerResourcePackUtils.requestModel(Items.CLOCK,
+            ResourceLocation.fromNamespaceAndPath("cobbleraids", "item/" + MODEL_PATH));
     private RaidRadarItem() { super(new Properties().stacksTo(1)); }
     public static void register() {
         Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath("cobbleraids", "raid_radar"), INSTANCE);
@@ -32,19 +41,43 @@ public final class RaidRadarItem extends Item implements PolymerItem {
     public static boolean isOpen(ItemStack stack) {
         return stack.is(INSTANCE) && stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getBoolean(OPEN);
     }
+    /** Whether the owner chose the flat map instead of the hologram (a choice in the radar menu, kept on the item). */
+    public static boolean prefersFlatMap(ItemStack stack) {
+        return stack.is(INSTANCE) && stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getBoolean(FLAT_MAP);
+    }
+    /** Open with the hologram: the item stays a compass, because a held map would cover the hologram. Open with the map: a filled map, as before. */
+    private static boolean showsMap(ItemStack stack, ServerPlayer player) {
+        return player == null || RaidRadarService.showsFlatMap(stack, player);
+    }
     @Override public Item getPolymerItem(ItemStack stack, ServerPlayer player) {
-        return isOpen(stack) ? Items.FILLED_MAP : Items.COMPASS;
+        // Raidio is heard, not seen. A clock stands in for the dial; a vanilla compass would point at world spawn and mislead.
+        if (RaidioMode.enabled()) return Items.CLOCK;
+        return isOpen(stack) && showsMap(stack, player) ? Items.FILLED_MAP : Items.COMPASS;
+    }
+    @Override public int getPolymerCustomModelData(ItemStack stack, ServerPlayer player) {
+        return RaidioMode.enabled() ? MODEL.value() : -1;
     }
     @Override public ItemStack getPolymerItemStack(ItemStack stack, TooltipFlag flag,
                                                   HolderLookup.Provider lookup, ServerPlayer player) {
         ItemStack visual = PolymerItem.super.getPolymerItemStack(stack, flag, lookup, player);
         // Polymer 0.9.19's default component allow-list does not copy MAP_ID.
         // Without this the held map has no texture despite receiving the correct pixel packets.
-        if (isOpen(stack)) visual.set(DataComponents.MAP_ID, stack.get(DataComponents.MAP_ID));
+        if (isOpen(stack)) {
+            if (RaidioMode.enabled()) visual.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);   // a tuned-in Raidio glows
+            else if (showsMap(stack, player)) visual.set(DataComponents.MAP_ID, stack.get(DataComponents.MAP_ID));
+            else visual.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);   // an open radar projecting a hologram glows
+        }
         return visual;
     }
-    @Override public Component getName(ItemStack stack) { return Component.literal("Raid Radar"); }
+    @Override public Component getName(ItemStack stack) { return Component.literal(RaidioMode.enabled() ? "Raidio" : "Raid Radar"); }
     @Override public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
+        if (RaidioMode.enabled()) {
+            lines.add(Component.literal("Use: tune in, or open the menu").withStyle(ChatFormatting.AQUA));
+            lines.add(Component.literal("Turn around slowly: a clear tune means a raid is that way").withStyle(ChatFormatting.GRAY));
+            lines.add(Component.literal("Sneak + use: next raid").withStyle(ChatFormatting.GRAY));
+            lines.add(Component.literal("Each tier has its own tune; it quickens and rises as you close in").withStyle(ChatFormatting.DARK_GRAY));
+            return;
+        }
         lines.add(Component.literal("Use: raid charges / radar menu").withStyle(ChatFormatting.AQUA));
         lines.add(Component.literal("Sneak + use: next raid").withStyle(ChatFormatting.GRAY));
         lines.add(Component.literal("Topography of loaded terrain; direct bearing").withStyle(ChatFormatting.DARK_GRAY));
@@ -62,6 +95,15 @@ public final class RaidRadarItem extends Item implements PolymerItem {
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
+    /** Switches this radar between the hologram and the flat map, and makes it resend whatever it now shows. */
+    public static void toggleDisplayMode(ServerPlayer player,InteractionHand hand) {
+        ItemStack stack=player.getItemInHand(hand);
+        if(!stack.is(INSTANCE)) return;
+        boolean flat=prefersFlatMap(stack);
+        CustomData.update(DataComponents.CUSTOM_DATA,stack,tag -> tag.putBoolean(FLAT_MAP,!flat));
+        RaidRadarService.forget(player.getUUID());
+        player.displayClientMessage(Component.literal(flat?"Raid Radar: 3D hologram":"Raid Radar: flat map").withStyle(ChatFormatting.AQUA),true);
+    }
     public static void toggle(ServerPlayer player,InteractionHand hand) {
         ItemStack stack=player.getItemInHand(hand);
         if(!stack.is(INSTANCE)) return;
@@ -73,7 +115,8 @@ public final class RaidRadarItem extends Item implements PolymerItem {
         }
         CustomData.update(DataComponents.CUSTOM_DATA,stack,tag -> tag.putBoolean(OPEN,!open));
         RaidRadarService.forget(player.getUUID());
-        player.displayClientMessage(Component.literal(open?"Raid Radar closed":"Raid Radar online - sneak + use to cycle raids").withStyle(ChatFormatting.AQUA),true);
+        String name=RaidioMode.enabled()?"Raidio":"Raid Radar";
+        player.displayClientMessage(Component.literal(open?name+" closed":name+" online - sneak + use to cycle raids").withStyle(ChatFormatting.AQUA),true);
     }
 
 }

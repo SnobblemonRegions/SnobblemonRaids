@@ -90,6 +90,7 @@ public final class CobbleRaids implements ModInitializer {
             RaidFaultBarrier.safeTick("lobby", server, RaidLobbyManager::tick);
             RaidFaultBarrier.safeTick("spawning", server, RaidSpawnScheduler::tick);
             RaidFaultBarrier.safeTick("radar", server, com.cobbleraids.radar.RaidRadarService::tick);
+            RaidFaultBarrier.safeTick("raidio", server, com.cobbleraids.raidio.RaidioService::tick);
             RaidFaultBarrier.safeTick("deferred-discard", server, com.cobbleraids.spawn.RaidDeferredDiscard::tick);
             RaidFaultBarrier.safeTick("rewards", server, RaidRewardService::tick);
             RaidFaultBarrier.safeTick("world-boss", server, com.cobbleraids.worldboss.WorldBossService::tick);

@@ -103,7 +103,8 @@ def validate_reveal_pipe_wiring() -> None:
 def validate_no_new_gradle_dependency() -> None:
     build_gradle = read(ROOT / "build.gradle")
     mod_implementations = [line for line in build_gradle.splitlines() if line.strip().startswith("modImplementation")]
-    expected = ("fabric-loader", "fabric-api", "MdwFAVRL", "polymer-core", "polymer-resource-pack", "polymer-common")
+    # polymer-virtual-entity was approved by the owner on 2026-11-04 for the server-side radar hologram (display entities); it is bundled into the jar.
+    expected = ("fabric-loader", "fabric-api", "MdwFAVRL", "polymer-core", "polymer-resource-pack", "polymer-common", "polymer-virtual-entity")
     assert len(mod_implementations) == len(expected), mod_implementations
     for needle in expected:
         assert any(needle in line for line in mod_implementations), f"missing dependency {needle}"

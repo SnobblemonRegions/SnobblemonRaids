@@ -1,12 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
-  "pattern": ["NSN", "UCU", "NSN"],
+  "pattern": ["IAI", "RNR", "IUI"],
   "key": {
-    "N": {"item": "minecraft:netherite_ingot"},
-    "S": {"item": "minecraft:shulker_shell"},
-    "U": {"item": "cobblemon:upgrade"},
-    "C": {"item": "minecraft:compass"}
+    "I": {"item": "minecraft:iron_ingot"},
+    "A": {"item": "minecraft:amethyst_shard"},
+    "R": {"item": "minecraft:redstone"},
+    "N": {"item": "minecraft:note_block"},
+    "U": {"item": "cobblemon:upgrade"}
   },
   "result": {"id": "cobbleraids:raid_radar", "count": 1}
 }

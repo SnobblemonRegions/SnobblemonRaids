@@ -61,14 +61,14 @@ def main():
             command('tp RadarProbe 0.5 4 0.5')
             command('setblock 1 4 0 minecraft:crafting_table')
             command('clear RadarProbe')
-            for item,count in [('minecraft:netherite_ingot',4),('minecraft:shulker_shell',2),('minecraft:compass',1),('cobblemon:upgrade',2)]:
+            for item,count in [('minecraft:iron_ingot',4),('minecraft:redstone',2),('minecraft:note_block',1),('minecraft:amethyst_shard',1),('cobblemon:upgrade',1)]:
                 command(f'give RadarProbe {item} {count}')
             time.sleep(2)
             command('data get entity RadarProbe Inventory')
             action('craft');time.sleep(1)
             data=command('data get entity RadarProbe Inventory')
             assert 'cobbleraids:raid_radar' in data,data
-            for item in ['minecraft:netherite_ingot','minecraft:shulker_shell','cobblemon:upgrade','minecraft:compass']:
+            for item in ['minecraft:iron_ingot','minecraft:redstone','minecraft:note_block','minecraft:amethyst_shard','cobblemon:upgrade']:
                 assert f'id: "{item}"' not in data,data
             checks.append('Real 3x3 recipe crafts one server-side radar and consumes the exact ingredients')
             action('equip')

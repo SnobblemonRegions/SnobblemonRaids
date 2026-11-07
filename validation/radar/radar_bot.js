@@ -2,7 +2,10 @@
 const mineflayer = require('../smoke/node_modules/mineflayer');
 const readline = require('readline');
 const fs = require('fs');
-const bot = mineflayer.createBot({host:'127.0.0.1',port:Number(process.argv[2]),username:process.argv[3]||'RadarProbe',version:'1.21.1',auth:'offline',checkTimeoutInterval:120000});
+// The bot never reads the recipe list, and this library's parser cannot read the server's (Cobblemon's recipes put it out of step), which stopped the bot joining at all.
+// Reading that one packet as raw bytes lets it join. The 1.21 key is the major version the library merges custom packets under.
+const rawRecipes={'1.21':{play:{toClient:{types:{packet_declare_recipes:['container',[{name:'data',type:'restBuffer'}]]}}}}};
+const bot = mineflayer.createBot({host:'127.0.0.1',port:Number(process.argv[2]),username:process.argv[3]||'RadarProbe',version:'1.21.1',auth:'offline',checkTimeoutInterval:120000,customPackets:rawRecipes});
 const emit = data => console.log('RADAR:' + JSON.stringify(data));
 const maps = new Map();
 let packets = 0, fullPackets = 0;
@@ -24,6 +27,8 @@ bot._client.on('custom_payload',packet=>{
   if(scene.hasTarget) {scene.targetX=b.readDoubleBE(offset);scene.targetY=b.readDoubleBE(offset+8);scene.targetZ=b.readDoubleBE(offset+16);}
   hologramScene={...hologramScene,...scene};
 });
+const sounds=[];
+bot._client.on('sound_effect',packet=>sounds.push({sound:packet.sound,category:packet.soundCategory,volume:packet.volume,pitch:packet.pitch}));
 bot.once('spawn', () => emit({event:'ready'}));
 bot.on('error', err => emit({event:'error',message:err.message}));
 bot.on('kicked', reason => emit({event:'kicked',reason}));
@@ -48,7 +53,7 @@ readline.createInterface({input:process.stdin}).on('line', async line => {
         const table=bot.blockAt(new Vec3(1,4,0));
         if (!table || table.name !== 'crafting_table') throw Error('Crafting table not loaded');
         // Place exact slots: custom Cobblemon items need not exist in the probe's vanilla registry.
-        // RCON supplies N,S,C,U in hotbar order; a crafting table maps these to slots 37..40.
+        // RCON supplies iron, redstone, note block, amethyst, upgrade in hotbar order; a crafting table maps these to slots 37..41.
         const window=await bot.openBlock(table);
         // Ask for an authoritative resync after each click. Mineflayer's prediction merges
         // custom Polymer ingredient representations that can share a vanilla base item.
@@ -57,7 +62,7 @@ readline.createInterface({input:process.stdin}).on('line', async line => {
             changedSlots:[],cursorItem:{itemCount:0}});
           await new Promise(resolve=>setTimeout(resolve,150));
         };
-        for (const [source,destinations] of [[37,[1,3,7,9]],[38,[2,8]],[39,[5]],[40,[4,6]]]) {
+        for (const [source,destinations] of [[37,[1,3,7,9]],[38,[4,6]],[39,[5]],[40,[2]],[41,[8]]]) {
           if (!window.slots[source]) throw Error('Ingredient slot empty: '+source);
           await click(source,0);
           for(const destination of destinations) await click(destination,1);
@@ -113,6 +118,10 @@ readline.createInterface({input:process.stdin}).on('line', async line => {
       case 'save_hologram':
         if(!hologramScene?.heights) throw Error('No full hologram snapshot');
         fs.writeFileSync(request.path,JSON.stringify(hologramScene));
+        break;
+      case 'sounds':
+        // Every sound the server sent since the last call (and forgets them), so a phase of a test sees only its own.
+        result={sounds:sounds.splice(0)};
         break;
       case 'stats':
         result={packets,fullPackets,hologramFrames,hologramFullFrames,knownSamples,mapIds:[...maps.keys()],held:bot.heldItem?.name,

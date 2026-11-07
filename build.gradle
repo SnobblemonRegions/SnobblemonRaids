@@ -37,6 +37,10 @@ dependencies {
     modImplementation 'eu.pb4:polymer-core:0.9.19+1.21.1'
     modImplementation 'eu.pb4:polymer-resource-pack:0.9.19+1.21.1'
     modImplementation 'eu.pb4:polymer-common:0.9.19+1.21.1'
+    // The server-side radar hologram is built from Polymer's virtual display entities. This module is not nested in polymer-core, so it is bundled
+    // into this jar (an operator installs nothing extra); a standalone copy of the same or a newer release is used instead if one is present.
+    modImplementation 'eu.pb4:polymer-virtual-entity:0.9.19+1.21.1'
+    include 'eu.pb4:polymer-virtual-entity:0.9.19+1.21.1'
     // Compile-only: the %cobbleraids:points% token is published when this is installed and
     // skipped when it is not, so it must never be pulled in as a hard dependency.
     modCompileOnly 'maven.modrinth:eXts2L7r:U5bhVym2' // Text Placeholder API 2.4.2+1.21
