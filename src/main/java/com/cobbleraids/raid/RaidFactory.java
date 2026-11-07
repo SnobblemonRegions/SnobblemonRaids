@@ -75,7 +75,8 @@ public final class RaidFactory {
             // An ordinary raid lets AscensionLib's battle effects act; an owned one does only if its policy asks (CobbleTowers arms its own).
             List<java.util.UUID> playerIds = ordered.stream().map(ServerPlayer::getUUID).toList();
             boolean armed = AscensionLibArming.wanted(ownership) && AscensionLibArming.declareAndArm(playerIds, bossEntity.getPokemon().getUuid(),
-                    bossEntity.getPokemon().getSpecies().getResourceIdentifier().toString(), bossEntity.getPokemon().getLevel());
+                    bossEntity.getPokemon().getSpecies().getResourceIdentifier().toString(), bossEntity.getPokemon().getLevel(),
+                    AscensionLibArming.threatFor(definition.rarityTier()));
             try {
                 result = BattleRegistry.startBattle(
                         format,

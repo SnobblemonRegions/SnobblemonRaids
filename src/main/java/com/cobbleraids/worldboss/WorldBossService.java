@@ -219,6 +219,15 @@ public final class WorldBossService {
         long now = System.currentTimeMillis();
         WorldBossState s = state;
 
+        // The fall is noticed inside a battle's damage callback and the state is closed in the same call, so the other players' copies
+        // are cleaned up here, a second later and outside any battle: nobody keeps fighting a clone of a boss that is already dead.
+        if (!s.active() || (s.pool() != null && s.pool().isDefeated())) {
+            if (!DUELS.isEmpty() || !CHAIN.isEmpty()) {
+                abortDuels();
+                CHAIN.clear();
+            }
+        }
+
         if (!s.active()) {
             WorldBossMusic.stopAll(current);
             WorldBossRules.Window window = WorldBossRules.window(config, Instant.ofEpochMilli(now));
@@ -388,6 +397,8 @@ public final class WorldBossService {
         if (s == null || !s.active() || s.pool() == null) return "There is no World Boss right now.";
         if (s.pool().isDefeated() || s.pool().current() <= 0f) return "The World Boss has already fallen.";
         if (DUELS.containsKey(player.getUUID())) return "You are already in a duel.";
+        if (!WorldBossRules.hasRoom(fighters(s), player.getUUID()))
+            return "The World Boss already has " + WorldBossRules.MAX_PLAYERS + " challengers.";
         String why = cannotDuel(player, s, config);
         if (why != null) return why;
         CHAIN.remove(player.getUUID());
@@ -419,6 +430,14 @@ public final class WorldBossService {
             String problem = join(player);
             if (problem != null) say(player, problem, ChatFormatting.YELLOW);
         }
+    }
+
+    /** Everyone taking part: anyone who dealt damage, is dueling, or is waiting for their next duel. */
+    private static Set<UUID> fighters(WorldBossState s) {
+        Set<UUID> all = new HashSet<>(s.pool().contributions().keySet());
+        all.addAll(DUELS.keySet());
+        all.addAll(CHAIN.keySet());
+        return all;
     }
 
     /** Leaves the chain: no more automatic duels. Damage already dealt is kept. */
@@ -456,15 +475,28 @@ public final class WorldBossService {
         EncounterRequest request = new EncounterRequest(OWNER, encounterId, List.of(player), definitionId,
                 player.serverLevel(), position, config.duelBossLevel(), OptionalLong.of(config.duelBossHealth()),
                 policy, EncounterRules.none());
+        // Threat VII: owned encounters are not armed by the factory, so each duel declares itself to AscensionLib under its own key
+        // (the encounter id stands in for the boss Pokemon's UUID) and arms its one player. Nothing happens with Threat off.
+        List<UUID> self = List.of(player.getUUID());
+        RaidDefinition fought = RaidDefinitionRegistry.get(definitionId);
+        boolean armed = fought != null && com.cobbleraids.raid.AscensionLibArming.declare(self, encounterId,
+                fought.species().toString(), config.duelBossLevel(), com.cobbleraids.raid.AscensionLibArming.WORLD_BOSS_THREAT);
+        if (armed) com.cobbleraids.raid.AscensionLibArming.arm(self, encounterId);
         StartResult result;
         try {
             result = com.cobbleraids.spawn.RaidBossSpawner.withoutMoves(config.bossBannedMoves(),
                     () -> EncounterService.start(request, DUEL_LISTENER));
         } catch (RuntimeException ex) {
             RaidLog.error("World Boss duel for {} could not start", player.getGameProfile().getName(), ex);
+            if (armed) com.cobbleraids.raid.AscensionLibArming.endEncounter(encounterId);
             return "The duel could not start. Tell an administrator.";
+        } finally {
+            if (armed) com.cobbleraids.raid.AscensionLibArming.disarmAll(self);
         }
-        if (result instanceof StartResult.Refused refused) return refused.reason();
+        if (result instanceof StartResult.Refused refused) {
+            if (armed) com.cobbleraids.raid.AscensionLibArming.endEncounter(encounterId);
+            return refused.reason();
+        }
         long gameTick = player.serverLevel().getGameTime();
         DUELS.put(player.getUUID(), new Duel(encounterId, gameTick));
         PokemonEntity duelBoss = EncounterService.bossOf(encounterId);
@@ -488,7 +520,7 @@ public final class WorldBossService {
      * (found in two thread dumps). With no good ground at all (the player is flying, or in a cave) the nearest candidate at the player's own
      * height is used, which is still at least 6 blocks away.
      */
-    private static Vec3 duelPosition(ServerPlayer player) {
+    public static Vec3 duelPosition(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
         Vec3 look = player.getLookAngle();
         var spots = WorldBossDuelSpot.candidates(player.getX(), player.getZ(), look.x, look.z);
@@ -531,6 +563,7 @@ public final class WorldBossService {
     }
 
     private static void duelEnded(EncounterResult result) {
+        com.cobbleraids.raid.AscensionLibArming.endEncounter(result.encounterId());   // the duel's own Threat declaration; harmless if it had none
         UUID playerId = DUEL_PLAYER.remove(result.encounterId());
         if (playerId == null) return;
         DUELS.remove(playerId);
@@ -692,6 +725,18 @@ public final class WorldBossService {
             flush(current);
             RaidLog.info("World Boss {} defeated: {} player(s) paid {} Raid Points each", s.bossId(), paid,
                     config.rewardRaidPoints());
+            // Balance phase 3: the fallen pool pays Cobblemon experience by share (PoolExperienceRules, x5 for a World Boss).
+            RaidFaultBarrier.guard("worldboss:experience", () -> {
+                RaidDefinition fallen = RaidDefinitionRegistry.get(ResourceLocation.tryParse(s.definitionId()));
+                var species = fallen == null ? null : com.cobblemon.mod.common.api.pokemon.PokemonSpecies.getByIdentifier(fallen.species());
+                if (species == null) return;
+                com.cobbleraids.duel.PoolExperience.grant(current, species.getBaseExperienceYield(), config.duelBossLevel(),
+                        com.cobbleraids.duel.PoolExperienceRules.WORLD_BOSS_MULTIPLIER, damage, damage.keySet());
+            });
+            // Balance phase 3: AscensionLib pays Apex Shards, attunement and dust by damage share (nothing with Threat off or no library).
+            final UUID worldBossId = s.bossId();
+            RaidFaultBarrier.guard("worldboss:ascensionlib", () -> com.cobbleraids.raid.AscensionLibArming.settleVictory(
+                    "worldboss:" + worldBossId, "world_boss", damage, damage.keySet(), () -> {}));
         }
         if (!s.defeatAnnounced()) {
             announceDefeat(current, damage, total);
@@ -844,11 +889,16 @@ public final class WorldBossService {
      * entity's first tick and whenever its level changes, and removeAllEffects() there takes the Invisibility with it.
      */
     public static void restoreDuelLook(PokemonEntity boss) {
+        // Balance phase 3: a duel raid's copies are always hidden, so its players see only the raid boss they walked up to.
+        if (com.cobbleraids.spawn.RaidBossEntityMarker.isOwnedBy(boss, com.cobbleraids.duel.RaidDuelService.OWNER)) {
+            hideDuelBoss(boss);
+            return;
+        }
         if (!com.cobbleraids.spawn.RaidBossEntityMarker.isOwnedBy(boss, OWNER)) return;
         if (WorldBossConfigManager.get().look().duelBossInvisible()) hideDuelBoss(boss);
     }
 
-    private static void hideDuelBoss(PokemonEntity boss) {
+    public static void hideDuelBoss(PokemonEntity boss) {
         boss.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.INVISIBILITY,
                 net.minecraft.world.effect.MobEffectInstance.INFINITE_DURATION, 0, false, false, false));
     }
