@@ -314,36 +314,6 @@ class RaidBossTraitsTest {
             assertTrue(parse("{\"traits\": {\"aspects\": \"halloween\"}}").aspects().isEmpty());
         }
 
-        @Test
-        @DisplayName("every shipped Halloween World Boss definition forces the halloween aspect and has its skin textures")
-        void shippedHalloweenDefinitionsAreWired() throws Exception {
-            java.nio.file.Path raids = java.nio.file.Path.of("src/main/resources/data/cobbleraids/raids");
-            java.nio.file.Path assets = java.nio.file.Path.of("compat/halloween/resourcepack/assets/cobblemon");
-            int checked = 0;
-            try (var files = java.nio.file.Files.list(raids)) {
-                for (java.nio.file.Path file : (Iterable<java.nio.file.Path>) files.filter(f -> f.getFileName().toString().startsWith("worldboss_halloween_"))::iterator) {
-                    JsonObject root = JsonParser.parseString(java.nio.file.Files.readString(file)).getAsJsonObject();
-                    assertEquals(java.util.List.of("halloween"), RaidBossTraits.fromJson(root, file.toString()).aspects(), file.toString());
-                    assertTrue(!root.getAsJsonObject("spawn").get("enabled").getAsBoolean(), "a skin definition must not join the natural raid spawns: " + file);
-                    String species = root.get("species").getAsString().substring("cobblemon:".length());
-                    try (var resolvers = java.nio.file.Files.walk(assets.resolve("bedrock/pokemon/resolvers"))) {
-                        java.nio.file.Path resolver = resolvers.filter(r -> r.getFileName().toString().equals("1_" + species + "_halloween.json")).findFirst().orElse(null);
-                        assertTrue(resolver != null, "no Halloween resolver for " + species);
-                        JsonObject r = JsonParser.parseString(java.nio.file.Files.readString(resolver)).getAsJsonObject();
-                        for (var variation : r.getAsJsonArray("variations")) {
-                            String texture = variation.getAsJsonObject().get("texture").getAsString().substring("cobblemon:".length());
-                            assertTrue(java.nio.file.Files.exists(assets.resolve(texture)), "missing texture " + texture);
-                            if (variation.getAsJsonObject().has("model")) {
-                                String model = variation.getAsJsonObject().get("model").getAsString().substring("cobblemon:".length());
-                                assertTrue(java.nio.file.Files.exists(assets.resolve("bedrock/pokemon/models/" + resolver.getParent().getFileName() + "/" + model.replace(".geo", ".geo.json"))), "missing model " + model);
-                            }
-                        }
-                    }
-                    checked++;
-                }
-            }
-            assertEquals(7, checked);
-        }
     }
 
 }

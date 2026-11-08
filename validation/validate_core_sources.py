@@ -13,7 +13,7 @@ EXPECTED_COUNTS = Counter({"starter": 27, "powerhouse": 12, "legendary": 71, "my
 # World Boss skin variants (worldboss_<skin>_<species>.json): an extra definition of a species that
 # already has one, selected by a forced aspect. They are outside the natural-raid invariants below.
 SKIN_PREFIX = "worldboss_"
-SKIN_VARIANTS = 7
+SKIN_VARIANTS = 0   # none ship at present (the Halloween skins were removed)
 
 
 def load(path: Path):
