@@ -16,7 +16,6 @@ import com.cobbleraids.config.RaidDefinitionRegistry;
 import com.cobbleraids.fault.RaidConsistencyAuditScheduler;
 import com.cobbleraids.fault.RaidFaultBarrier;
 import com.cobbleraids.interaction.RaidBossInteractionListener;
-import com.cobbleraids.item.HalloweenSkinPack;
 import com.cobbleraids.item.RaidHeldItems;
 import com.cobbleraids.item.RaidItemPack;
 import com.cobbleraids.item.RaidKeyItems;
@@ -70,7 +69,6 @@ public final class CobbleRaids implements ModInitializer {
         // a loot table naming an unregistered id costs the whole table, not just the entry.
         com.cobbleraids.worldboss.arena.ArenaBlocks.register();
         RaidItemPack.register();
-        HalloweenSkinPack.register();
         RaidKeyItems.register();
         RaidHeldItems.register();
         com.cobbleraids.item.RaidRadarItem.register();
