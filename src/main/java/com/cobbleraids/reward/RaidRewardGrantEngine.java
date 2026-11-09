@@ -112,10 +112,15 @@ public final class RaidRewardGrantEngine {
 
         int[] awarded = { 0 };
         RaidFaultBarrier.guard("reward:raid-points", () -> {
-            RaidPointsStore.award(player.getServer(), player.getUUID(), finalAmount);
-            awarded[0] = finalAmount;
-            RaidFaultBarrier.guard("stats:points", () ->
-                    com.cobbleraids.stats.RaidStats.onPointsEarned(player.getServer(), player.getUUID(), finalAmount));
+            int credited = RaidPointsStore.awardCapped(player.getServer(), player.getUUID(), finalAmount,
+                    com.cobbleraids.reward.points.RaidPointsSource.RAID);
+            awarded[0] = credited;
+            if (credited > 0) {
+                RaidFaultBarrier.guard("stats:points", () ->
+                        com.cobbleraids.stats.RaidStats.onPointsEarned(player.getServer(), player.getUUID(), credited));
+            }
+            com.cobbleraids.reward.points.RaidPointsCapNotice.tell(player,
+                    com.cobbleraids.reward.points.RaidPointsSource.RAID, finalAmount, credited);
         });
         return awarded[0];
     }

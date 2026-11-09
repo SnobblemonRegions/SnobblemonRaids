@@ -45,7 +45,9 @@ class RaidPlayerRecordsRoundTripTest {
                 .withPurchaseOn("cobbleraids:lifetime_charm", 0L, java.time.Instant.parse("2026-09-12T12:00:00Z"))
                 .withTitleUnlocked("novice_raider")
                 .withTitleUnlocked("veteran_raider")
-                .withSelectedTitle("veteran_raider");
+                .withSelectedTitle("veteran_raider")
+                .withPointsEarned(com.cobbleraids.reward.points.RaidPointsSource.RAID, 20_400L, 210)
+                .withPointsEarned(com.cobbleraids.reward.points.RaidPointsSource.TOWER, 20_400L, 60);
 
         RaidPlayerRecords reloaded = roundTrip(Map.of(playerId, record));
 
@@ -60,6 +62,9 @@ class RaidPlayerRecordsRoundTripTest {
         assertEquals(record.purchases(), result.purchases());
         assertEquals(record.unlockedTitles(), result.unlockedTitles());
         assertEquals(record.selectedTitle(), result.selectedTitle());
+        // A restart that dropped today's earnings would hand every player a fresh daily cap.
+        assertEquals(record.pointsEarned(), result.pointsEarned());
+        assertEquals(210, result.pointsEarnedOn(com.cobbleraids.reward.points.RaidPointsSource.RAID, 20_400L));
     }
 
     @Test

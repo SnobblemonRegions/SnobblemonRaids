@@ -31,6 +31,15 @@ public record RaidPurchaseTally(int count, long day) {
                 : new RaidPurchaseTally(1, today);
     }
 
+    /**
+     * The tally after {@code amount} more on {@code today}, restarting on a new day. Used to count Raid
+     * Points earned against a daily cap, where one award adds its whole amount rather than one.
+     */
+    public RaidPurchaseTally plus(long today, int amount) {
+        long base = day == today ? count : 0L;
+        return new RaidPurchaseTally((int) Math.min(Integer.MAX_VALUE, base + Math.max(0, amount)), today);
+    }
+
     /** What the count is worth now: the stored count, or zero once its day has passed. */
     public int countOn(long today, boolean resets) {
         if (!resets) return count;

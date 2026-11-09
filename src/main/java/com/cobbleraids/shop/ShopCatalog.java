@@ -105,7 +105,9 @@ public record ShopCatalog(int version, int perPage, ShopLimits limits, List<Shop
                 ShopEntry.ofItem("calcium", 60, "cobblemon:calcium", 2),
                 ShopEntry.ofItem("zinc", 60, "cobblemon:zinc", 2),
                 ShopEntry.ofItem("carbos", 60, "cobblemon:carbos", 2),
-                ShopEntry.ofItem("ability_capsule", 300, "cobblemon:ability_capsule", 1, 1, ShopResetPeriod.DAILY),
+                // 1,200: about 33 raids at the average 36 RP, four days at the daily raid cap. It was
+                // 300, half a Patch, which made rerolling an ability a near-daily habit.
+                ShopEntry.ofItem("ability_capsule", 1_200, "cobblemon:ability_capsule", 1, 1, ShopResetPeriod.DAILY),
                 ShopEntry.ofItem("ability_patch", 600, "cobblemon:ability_patch", 1, 1, ShopResetPeriod.DAILY),
                 ShopEntry.ofItem("pp_up", 5, "cobblemon:pp_up", 1, ShopEntry.UNLIMITED, ShopResetPeriod.DAILY),
                 ShopEntry.ofItem("pp_max", 15, "cobblemon:pp_max", 1, ShopEntry.UNLIMITED, ShopResetPeriod.DAILY),
@@ -299,8 +301,16 @@ public record ShopCatalog(int version, int perPage, ShopLimits limits, List<Shop
             new ShopPokemonGift("dratini", 15, false, "adamant", null, null, null, null, null,
                     Map.of("hp", 31, "attack", 31, "speed", 31), Map.of()));
 
+    /**
+     * Version-4 listings that have since been repriced. An entry still exactly one of these was never
+     * edited, so it moves to the current listing, the same rule {@link #SUPERSEDED} applies to older ones.
+     */
+    private static final Map<String, ShopEntry> REPRICED_SINCE_V4 = Map.of(
+            "ability_capsule", ShopEntry.ofItem("ability_capsule", 300, "cobblemon:ability_capsule", 1, 1,
+                    ShopResetPeriod.DAILY));
+
     private static ShopEntry migrated(ShopEntry entry) {
-        if (!entry.equals(SUPERSEDED.get(entry.id()))) return entry;
+        if (!entry.equals(SUPERSEDED.get(entry.id())) && !entry.equals(REPRICED_SINCE_V4.get(entry.id()))) return entry;
         // An entry whose shelf was retired in version 4 has no current listing to move to, and
         // stays as the operator has it.
         return defaultsEntry(entry.id()).orElse(entry);

@@ -36,4 +36,26 @@ public final class CobbleRaidsPoints {
     public static int award(MinecraftServer server, UUID playerId, int amount) {
         return RaidPointsStore.award(server, playerId, amount);
     }
+
+    /**
+     * Credits Raid Points earned from repeatable content, counted against that content's daily cap.
+     * Returns what was actually credited: the full amount, part of it, or 0 once today's cap is
+     * reached. {@code source} is {@code "tower"} for a tower run; any other value is not capped and
+     * behaves exactly like {@link #award}, returning the amount credited. The player is told when
+     * an award was trimmed.
+     *
+     * <p>Added in API version 1 without a bump: it is a new method, and the existing ones are unchanged.
+     */
+    public static int awardEarned(MinecraftServer server, UUID playerId, int amount, String source) {
+        if (amount <= 0) return 0;
+        var capped = com.cobbleraids.reward.points.RaidPointsSource.fromId(source);
+        if (capped.isEmpty()) {
+            RaidPointsStore.award(server, playerId, amount);
+            return amount;
+        }
+        int credited = RaidPointsStore.awardCapped(server, playerId, amount, capped.get());
+        com.cobbleraids.reward.points.RaidPointsCapNotice.tell(server.getPlayerList().getPlayer(playerId),
+                capped.get(), amount, credited);
+        return credited;
+    }
 }

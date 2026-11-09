@@ -128,7 +128,7 @@ public final class RaidPlayerRecords extends SavedData {
             return new RaidPlayerRecord(current.raidsWon(), current.winsByTier(),
                     current.defeatsBySpecies(), current.totalContribution(), current.bossesCaught(),
                     gotStone ? 0 : current.raidsSinceMegaStone() + 1, current.raidPoints(),
-                    current.purchases(), current.unlockedTitles(), current.selectedTitle());
+                    current.purchases(), current.unlockedTitles(), current.selectedTitle(), current.pointsEarned());
         });
         persist(server);
     }
@@ -144,6 +144,25 @@ public final class RaidPlayerRecords extends SavedData {
                 (existing == null ? RaidPlayerRecord.EMPTY : existing).withPoints(delta));
         persist(server);
         return updated.raidPoints();
+    }
+
+    /**
+     * Credits Raid Points from capped content: as much of {@code amount} as {@code source}'s daily cap
+     * still allows, counted against today in the same write as the balance, so a crash cannot pay an
+     * award without counting it. Returns what was actually credited, which may be 0.
+     */
+    public static int addCappedPoints(MinecraftServer server, UUID playerId, int amount,
+                                      com.cobbleraids.reward.points.RaidPointsSource source, int cap, long today) {
+        int[] credited = { 0 };
+        LIVE.compute(playerId, (ignored, existing) -> {
+            RaidPlayerRecord current = existing == null ? RaidPlayerRecord.EMPTY : existing;
+            int allowed = com.cobbleraids.reward.points.RaidPointsDailyCap.allowance(
+                    current.pointsEarnedOn(source, today), cap, amount);
+            credited[0] = allowed;
+            return allowed <= 0 ? current : current.withPoints(allowed).withPointsEarned(source, today, allowed);
+        });
+        if (credited[0] > 0) persist(server);
+        return credited[0];
     }
 
     /**
@@ -257,12 +276,22 @@ public final class RaidPlayerRecords extends SavedData {
             for (int t = 0; t < titleTag.size(); t++) unlockedTitles.add(titleTag.getString(t));
             String selectedTitle = playerTag.contains("selected_title")
                     ? playerTag.getString("selected_title") : null;
+            Map<String, RaidPurchaseTally> pointsEarned = new LinkedHashMap<>();
+            ListTag earnedTag = playerTag.getList("points_earned", Tag.TAG_COMPOUND);
+            for (int e = 0; e < earnedTag.size(); e++) {
+                CompoundTag row = earnedTag.getCompound(e);
+                String source = row.getString("source");
+                if (!source.isEmpty()) {
+                    pointsEarned.put(source, new RaidPurchaseTally(
+                            Math.max(0, row.getInt("count")), row.getLong("day")));
+                }
+            }
 
             store.loaded.put(playerTag.getUUID("player"), new RaidPlayerRecord(
                     playerTag.getInt("wins"), tiers, species,
                     playerTag.getDouble("contribution"), playerTag.getInt("caught"),
                     playerTag.getInt("since_mega"), playerTag.getInt("points"), purchases,
-                    unlockedTitles, selectedTitle));
+                    unlockedTitles, selectedTitle, pointsEarned));
         }
         return store;
     }
@@ -304,6 +333,17 @@ public final class RaidPlayerRecords extends SavedData {
             }
             if (record.selectedTitle() != null) {
                 playerTag.putString("selected_title", record.selectedTitle());
+            }
+            if (!record.pointsEarned().isEmpty()) {
+                ListTag earned = new ListTag();
+                record.pointsEarned().forEach((source, tally) -> {
+                    CompoundTag row = new CompoundTag();
+                    row.putString("source", source);
+                    row.putInt("count", tally.count());
+                    row.putLong("day", tally.day());
+                    earned.add(row);
+                });
+                playerTag.put("points_earned", earned);
             }
             players.add(playerTag);
         }

@@ -31,6 +31,8 @@ TIERS = ["starter", "powerhouse", "legendary", "mythical"]
 # read from the generator on purpose: this file exists to catch the generator disagreeing with what
 # the economy was designed to do, and a check that asks the thing it is checking cannot do that.
 MEGA_RATE = 1000
+# Starter raids drop no Mega Stone, whichever boss it is. Stated here, not read from the generator.
+MEGA_TIERS = ("powerhouse", "legendary", "mythical")
 TERA_RATE = 1190
 TOLERANCE = Fraction(1, 1000000)
 
@@ -158,6 +160,8 @@ def main():
 
     # --- mega stones ------------------------------------------------------------------------------
     for boss, entry in sorted(manifest.get("mega", {}).items()):
+        if entry["tier"] not in MEGA_TIERS:
+            continue
         table_id = "cobbleraids:specialty/boss/" + boss
         outcomes = distribution(table_id, tags)
         stones = [stone["item"] for stone in entry["stones"]]
@@ -268,10 +272,11 @@ def main():
             print("  - " + failure, file=sys.stderr)
         return 1
 
-    checked = len(TIERS) * 3 + len(manifest.get("mega", {}))
+    mega_count = sum(1 for e in manifest.get("mega", {}).values() if e["tier"] in MEGA_TIERS)
+    checked = len(TIERS) * 3 + mega_count
     print("Economy probability validation: PASS -- %d tables walked exactly; mega %.2f%% aggregate"
           " over %d bosses, tera %.2f%%, TM/TR 80/20, no premium item reachable from a general roll"
-          % (checked, MEGA_RATE / 100.0, len(manifest.get("mega", {})), TERA_RATE / 100.0))
+          % (checked, MEGA_RATE / 100.0, mega_count, TERA_RATE / 100.0))
     return 0
 
 

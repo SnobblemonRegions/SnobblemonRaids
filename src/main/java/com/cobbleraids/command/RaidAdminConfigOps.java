@@ -138,6 +138,8 @@ final class RaidAdminConfigOps {
         setting(source, "enabled", config.raidPoints().enabled());
         setting(source, "amount", tierValues(config.raidPoints().starter(), config.raidPoints().powerhouse(),
                 config.raidPoints().legendary(), config.raidPoints().mythical()));
+        setting(source, "daily_cap_raids", config.raidPoints().dailyCapRaids());
+        setting(source, "daily_cap_towers", config.raidPoints().dailyCapTowers());
 
         section(source, "personal_boss_shop");
         setting(source, "enabled", config.personalBossShop().enabled());

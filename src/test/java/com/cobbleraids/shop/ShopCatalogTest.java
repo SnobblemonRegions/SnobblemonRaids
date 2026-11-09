@@ -484,6 +484,18 @@ class ShopCatalogTest {
     }
 
     @Test
+    @DisplayName("an untouched 300 RP Ability Capsule moves to 1,200; an operator's own price stays")
+    void abilityCapsuleRepriceMigrates() {
+        String template = """
+                {"version": 4, "sections": [{"id": "consumables", "title": "Consumables", "entries": [
+                  {"id": "ability_capsule", "cost": COST, "limit": 1, "reset": "daily", "item": "cobblemon:ability_capsule", "count": 1}]}]}
+                """;
+
+        assertEquals(1_200, ShopCatalog.fromJson(parse(template.replace("COST", "300"))).byId().get("ability_capsule").cost());
+        assertEquals(450, ShopCatalog.fromJson(parse(template.replace("COST", "450"))).byId().get("ability_capsule").cost());
+    }
+
+    @Test
     @DisplayName("the shipped prices and limits for the strong items")
     void strongItemPricing() {
         Map<String, ShopEntry> byId = ShopCatalog.defaults().byId();
@@ -494,7 +506,7 @@ class ShopCatalogTest {
         assertEquals(400, byId.get("exp_share").cost());
         assertEquals(ShopResetPeriod.WEEKLY, byId.get("exp_share").reset());
         assertEquals(600, byId.get("ability_patch").cost());
-        assertEquals(300, byId.get("ability_capsule").cost());
+        assertEquals(1_200, byId.get("ability_capsule").cost());
         for (String id : List.of("ability_patch", "ability_capsule")) {
             assertEquals(1, byId.get(id).limit(), id + " is one a day");
             assertEquals(ShopResetPeriod.DAILY, byId.get(id).reset());

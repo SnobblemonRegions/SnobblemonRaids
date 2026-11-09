@@ -212,7 +212,7 @@ figures are in `validation/economy/probability_report.md`.
 
 ```text
 cobbleraids:specialty/<tier>            one premium roll: mega stones, charms, TMs, capsules…
-cobbleraids:specialty/boss/<species>    the same, for the 21 bosses that have a Mega Stone
+cobbleraids:specialty/boss/<species>    the same, for the 9 non-starter bosses that drop a Mega Stone
 cobbleraids:general/<tier>              the ordinary roll: base consumables, cards, curios
 cobbleraids:base/<tier>                 what both fall back to, and never itself a premium item
 ```

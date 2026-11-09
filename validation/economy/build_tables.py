@@ -260,6 +260,17 @@ SPECIALTY_ROWS = [
 # 15% with no floor, over a far tighter distribution. See RaidMegaPity.
 MEGA_WEIGHT = 1000
 
+# Tiers whose bosses can drop their Mega Stone. Starter raids lost theirs on 8 Nov 2026: 12 of the 21
+# stone-carrying bosses were starters, the easiest and most common raids, so stones arrived far faster
+# than the four hours sized above. A starter boss now rolls its tier's ordinary specialty table, is not
+# mega-capable, and does not move the pity counter (RewardPlanResolver asks whether the boss table exists).
+MEGA_TIERS = ("powerhouse", "legendary", "mythical")
+
+
+def mega_bosses(manifest):
+    """The bosses that drop a Mega Stone: every boss with one, outside the tiers that lost them."""
+    return {boss: entry for boss, entry in manifest["mega"].items() if entry["tier"] in MEGA_TIERS}
+
 # Namespaces guaranteed present. Everything else is an optional mod, and an item from one can
 # never be named directly in a pool -- see optional_item_table(). "cobbleraids" is here because the
 # raid core and guardian scale are registered by this mod: if they are missing the mod is missing,
@@ -403,14 +414,14 @@ def build_tables(manifest):
     tables["specialty/leaf/guardian_scale.json"] = single_pool([item_entry("cobbleraids:guardian_scale")])
 
     # specialty/mega/<species> -- the stones one boss can drop, split evenly inside the mega row
-    for boss, entry in sorted(manifest["mega"].items()):
+    for boss, entry in sorted(mega_bosses(manifest).items()):
         tables["specialty/mega/%s.json" % boss] = single_pool(
             [item_entry(stone["item"], 1) for stone in entry["stones"]])
 
     # specialty/<tier> and specialty/boss/<boss>
     for index, tier in enumerate(TIERS):
         tables["specialty/%s.json" % tier] = single_pool(specialty_entries(tables, index, tier, None))
-    for boss, entry in sorted(manifest["mega"].items()):
+    for boss, entry in sorted(mega_bosses(manifest).items()):
         tier_index = TIERS.index(entry["tier"])
         tables["specialty/boss/%s.json" % boss] = single_pool(
             specialty_entries(tables, tier_index, entry["tier"], boss))
@@ -520,7 +531,7 @@ def write_report(manifest):
         cells = []
         for index in range(len(TIERS)):
             for matched in (True, False):
-                weight = dict(specialty_breakdown(index, matched)).get(name, 0)
+                weight = dict(specialty_breakdown(index, matched and TIERS[index] in MEGA_TIERS)).get(name, 0)
                 cells.append("%.2f%%" % (weight / 100.0) if weight else "--")
         lines.append("| " + name + " | " + " | ".join(cells) + " |")
     lines.append("")
@@ -528,12 +539,13 @@ def write_report(manifest):
     lines.append("## Mega Stones")
     lines.append("")
     lines.append("The 5.00%% row splits evenly between a boss's stones, so a single-stone boss is"
-                 " 5.00%% and an X/Y boss is 2.50%% each. %d of 132 bosses have one."
-                 % len(manifest["mega"]))
+                 " 5.00%% and an X/Y boss is 2.50%% each. %d of 132 bosses drop one; starter"
+                 " raids never do (%d starter bosses carry a stone and drop none)."
+                 % (len(mega_bosses(manifest)), len(manifest["mega"]) - len(mega_bosses(manifest))))
     lines.append("")
     lines.append("| Boss | Tier | Stones | Each |")
     lines.append("|---|---|---|---:|")
-    for boss, entry in sorted(manifest["mega"].items()):
+    for boss, entry in sorted(mega_bosses(manifest).items()):
         stones = ", ".join(s["item"].split(":")[1] for s in entry["stones"])
         lines.append("| %s | %s | %s | %.2f%% |"
                      % (boss, entry["tier"], stones, MEGA_WEIGHT / 100.0 / len(entry["stones"])))

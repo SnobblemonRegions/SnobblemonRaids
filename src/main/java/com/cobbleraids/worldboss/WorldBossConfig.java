@@ -252,6 +252,20 @@ public record WorldBossConfig(
             "absorb", "megadrain", "gigadrain", "drainpunch", "leechlife", "hornleech", "drainingkiss", "paraboliccharge", "oblivionwing",
             "dreameater", "bitterblade", "matchagotcha", "leechseed", "ingrain", "aquaring", "swallow");
 
+    /**
+     * About two raids. It shipped at 200, five and a half raids a kill, and live data from 27 Oct to
+     * 8 Nov 2026 had 93 kills paying 35% of every Raid Point earned.
+     */
+    public static final int DEFAULT_REWARD_RAID_POINTS = 75;
+
+    /** What shipped before the cut. A file still holding exactly this was never tuned. */
+    static final int SUPERSEDED_REWARD_RAID_POINTS = 200;
+
+    /** Moves an untouched shipped reward to the current one; any other value is an operator's and stays. */
+    static int migratedRewardRaidPoints(int stored) {
+        return stored == SUPERSEDED_REWARD_RAID_POINTS ? DEFAULT_REWARD_RAID_POINTS : stored;
+    }
+
     /** What a fresh install gets: disabled, with numbers that are a starting point for a bot test. */
     public static WorldBossConfig defaults() {
         return new WorldBossConfig(false, List.of("cobbleraids:marshadow", "cobbleraids:gengar",
@@ -259,7 +273,7 @@ public record WorldBossConfig(
                 20_000f, 6_000f, 1f, 20f, 900,
                 70, 3_000L, 240, 30, 45, true, 128.0,
                 "minecraft:overworld", 300, 1500, 30, 30, true, 40, 60,
-                5f, 200, 0, true, 40, 8f, 3f, "#9A5CC6", 50, Music.defaults(), Dome.defaults(), Look.defaults(), Night.defaults(), Arena.defaults(),
+                5f, DEFAULT_REWARD_RAID_POINTS, 0, true, 40, 8f, 3f, "#9A5CC6", 50, Music.defaults(), Dome.defaults(), Look.defaults(), Night.defaults(), Arena.defaults(),
                 150_000f, HEALING_MOVES);
     }
 
@@ -314,7 +328,7 @@ public record WorldBossConfig(
                 (int) num(spawn, "spawn.lifetime_minutes", d.spawnLifetimeMinutes),
                 (int) num(spawn, "spawn.join_countdown_seconds", d.joinCountdownSeconds),
                 num(reward, "reward.min_percent_of_average", d.minPercentOfAverage),
-                (int) num(reward, "reward.raid_points", d.rewardRaidPoints),
+                migratedRewardRaidPoints((int) num(reward, "reward.raid_points", d.rewardRaidPoints)),
                 (int) num(reward, "reward.max_per_player_per_day", d.rewardMaxPerDay),
                 bool(visual, "visual.border_particles", d.borderParticles),
                 (int) num(visual, "visual.view_distance", d.borderViewDistance),

@@ -247,13 +247,16 @@ def main():
     present = set()
     if os.path.isdir(boss_table_dir):
         present = {name[:-5] for name in os.listdir(boss_table_dir) if name.endswith(".json")}
-    expected = set(manifest.get("mega", {}))
+    # Starter raids drop no Mega Stone (8 Nov 2026), so a starter boss must have no boss table either:
+    # one would make it mega-capable and roll its stone.
+    expected = {boss for boss, entry in manifest.get("mega", {}).items()
+                if entry["tier"] in ("powerhouse", "legendary", "mythical")}
     for boss in sorted(expected - present):
         failures.append("boss " + boss + " has a mega stone but no specialty/boss table, so it can"
                         " never drop one")
     for boss in sorted(present - expected):
-        failures.append("specialty/boss/" + boss + " exists but that boss has no mega stone, so"
-                        " nothing reaches it")
+        failures.append("specialty/boss/" + boss + " exists but that boss drops no mega stone (none,"
+                        " or a starter), so it must not have one")
 
     # --- tags and table references --------------------------------------------------------------
     known_tags = manifest.get("item_tags", {})

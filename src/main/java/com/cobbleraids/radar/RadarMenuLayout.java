@@ -6,13 +6,13 @@ package com.cobbleraids.radar;
  *
  * <pre>
  *   C . . . H . . . C        C corner, H header (charges summary)
- *   . 1 2 3 M T . G .        1 2 3 charges, M hologram or flat map, T next-charge timer, G how it works
+ *   . 1 2 3 M T P G .        1 2 3 charges, M hologram or flat map, T next-charge timer, P Raid Points today, G how it works
  *   C . . O . N . X C        O open/close, N next raid, X close menu
  * </pre>
  */
 final class RadarMenuLayout {
     static final int SIZE = 27;
-    static final int HEADER = 4, MODE = 13, CLOCK = 14, GUIDE = 16;
+    static final int HEADER = 4, MODE = 13, CLOCK = 14, POINTS = 15, GUIDE = 16;
     static final int[] CHARGES = {10, 11, 12};
     static final int TOGGLE = 20, NEXT = 22, CLOSE = 24;
     static final int[] CORNERS = {0, 8, 18, 26};
