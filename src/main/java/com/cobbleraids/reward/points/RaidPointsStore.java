@@ -32,6 +32,27 @@ public final class RaidPointsStore {
     }
 
     /**
+     * Credits points from content with a daily cap, up to what the cap still allows today (UTC, the
+     * same day the shop's daily limits use). Returns what was credited: the full amount, part of it,
+     * or 0 once the cap is reached. A cap of 0 in the config means no cap.
+     */
+    public static int awardCapped(MinecraftServer server, UUID playerId, int amount, RaidPointsSource source) {
+        if (amount <= 0) return 0;
+        int cap = com.cobbleraids.config.CobbleRaidsConfigManager.get().raidPoints().dailyCapFor(source);
+        return RaidPlayerRecords.addCappedPoints(server, playerId, amount, source, cap, today());
+    }
+
+    /** What {@code source} has paid this player today, for showing progress toward the cap. */
+    public static int earnedToday(UUID playerId, RaidPointsSource source) {
+        return RaidPlayerRecords.get(playerId).pointsEarnedOn(source, today());
+    }
+
+    /** The day a daily cap counts against: the shop's daily window, so both reset together. */
+    public static long today() {
+        return com.cobbleraids.shop.ShopResetPeriod.DAILY.windowOf(java.time.Instant.now());
+    }
+
+    /**
      * Takes points if the player has them.
      *
      * <p>Returns false and takes nothing when the balance is short, rather than clamping to zero:

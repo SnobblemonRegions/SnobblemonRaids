@@ -401,17 +401,41 @@ public record CobbleRaidsConfig(
      * toward it is not -- the contribution reward is the extra loot selections, which already
      * scale.
      */
-    public record RaidPoints(boolean enabled, int starter, int powerhouse, int legendary, int mythical) {
+    public record RaidPoints(boolean enabled, int starter, int powerhouse, int legendary, int mythical,
+                             int dailyCapRaids, int dailyCapTowers) {
         private static final int MAX_AWARD = 100_000;
+
+        /**
+         * 300 a day from raids, about eight average raids: live data from 27 Oct to 8 Nov 2026 had only the
+         * three players online twelve hours a day above it. Towers get half, so Raid Points stay mostly a
+         * raid reward. 0 turns a cap off.
+         */
+        public static final int DEFAULT_DAILY_CAP_RAIDS = 300;
+        public static final int DEFAULT_DAILY_CAP_TOWERS = 150;
 
         public RaidPoints {
             validate("starter", starter);
             validate("powerhouse", powerhouse);
             validate("legendary", legendary);
             validate("mythical", mythical);
+            validate("daily_cap_raids", dailyCapRaids);
+            validate("daily_cap_towers", dailyCapTowers);
+        }
+
+        /** The tier amounts with the shipped daily caps. */
+        public RaidPoints(boolean enabled, int starter, int powerhouse, int legendary, int mythical) {
+            this(enabled, starter, powerhouse, legendary, mythical, DEFAULT_DAILY_CAP_RAIDS, DEFAULT_DAILY_CAP_TOWERS);
         }
 
         public static RaidPoints defaults() { return new RaidPoints(true, 25, 50, 75, 100); }
+
+        /** The day's ceiling for {@code source}; 0 means no cap. */
+        public int dailyCapFor(com.cobbleraids.reward.points.RaidPointsSource source) {
+            return switch (source) {
+                case RAID -> dailyCapRaids;
+                case TOWER -> dailyCapTowers;
+            };
+        }
 
         public int pointsFor(RaidRarityTier tier) {
             return switch (tier) {

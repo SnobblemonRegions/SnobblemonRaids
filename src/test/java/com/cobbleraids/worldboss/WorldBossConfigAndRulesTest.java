@@ -358,4 +358,13 @@ class WorldBossConfigAndRulesTest {
         assertEquals(0, WorldBossRules.joinSecondsLeft(start, 0, start), "0 switches the countdown off");
         assertEquals(60, WorldBossRules.joinSecondsLeft(start, 60, start - 5_000L), "never more than the configured length");
     }
+
+    @org.junit.jupiter.api.Test
+    @org.junit.jupiter.api.DisplayName("the old shipped reward of 200 moves to 75; any other value is the operator's")
+    void untouchedRewardMovesToTheNewDefault() {
+        assertEquals(75, WorldBossConfig.defaults().rewardRaidPoints());
+        assertEquals(75, WorldBossConfig.migratedRewardRaidPoints(200));
+        assertEquals(500, WorldBossConfig.migratedRewardRaidPoints(500));
+        assertEquals(0, WorldBossConfig.migratedRewardRaidPoints(0));
+    }
 }

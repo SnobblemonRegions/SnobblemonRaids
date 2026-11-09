@@ -30,10 +30,11 @@ public record RaidPlayerRecord(
         int raidPoints,
         Map<String, RaidPurchaseTally> purchases,
         Set<String> unlockedTitles,
-        String selectedTitle
+        String selectedTitle,
+        Map<String, RaidPurchaseTally> pointsEarned
 ) {
     public static final RaidPlayerRecord EMPTY =
-            new RaidPlayerRecord(0, Map.of(), Map.of(), 0.0, 0, 0, 0, Map.of(), Set.of(), null);
+            new RaidPlayerRecord(0, Map.of(), Map.of(), 0.0, 0, 0, 0, Map.of(), Set.of(), null, Map.of());
 
     public RaidPlayerRecord {
         // Built key-first rather than with EnumMap's copy constructor: that one throws
@@ -50,6 +51,30 @@ public record RaidPlayerRecord(
                 new LinkedHashMap<>(purchases == null ? Map.of() : purchases));
         unlockedTitles = Collections.unmodifiableSet(
                 new LinkedHashSet<>(unlockedTitles == null ? Set.of() : unlockedTitles));
+        pointsEarned = Collections.unmodifiableMap(
+                new LinkedHashMap<>(pointsEarned == null ? Map.of() : pointsEarned));
+    }
+
+    /**
+     * Raid Points credited from {@code source} on {@code today}, the figure a daily cap is measured
+     * against. Zero once the stored day has passed, the same way a daily purchase tally reads.
+     */
+    public int pointsEarnedOn(com.cobbleraids.reward.points.RaidPointsSource source, long today) {
+        return pointsEarned.getOrDefault(source.id(), RaidPurchaseTally.NONE).countOn(today, true);
+    }
+
+    /**
+     * The same record with {@code amount} more Raid Points counted as earned from {@code source} on
+     * {@code today}. Only the current day is kept per source, so the map never holds more than one row
+     * for each kind of content that pays Raid Points.
+     */
+    public RaidPlayerRecord withPointsEarned(com.cobbleraids.reward.points.RaidPointsSource source, long today,
+                                             int amount) {
+        if (amount <= 0) return this;
+        LinkedHashMap<String, RaidPurchaseTally> updated = new LinkedHashMap<>(pointsEarned);
+        updated.put(source.id(), pointsEarned.getOrDefault(source.id(), RaidPurchaseTally.NONE).plus(today, amount));
+        return new RaidPlayerRecord(raidsWon, winsByTier, defeatsBySpecies, totalContribution,
+                bossesCaught, raidsSinceMegaStone, raidPoints, purchases, unlockedTitles, selectedTitle, updated);
     }
 
     public int winsIn(RaidRarityTier tier) {
@@ -78,12 +103,12 @@ public record RaidPlayerRecord(
         species.merge(definitionId, 1, Integer::sum);
         return new RaidPlayerRecord(raidsWon + 1, tiers, species,
                 totalContribution + contribution, bossesCaught, raidsSinceMegaStone, raidPoints, purchases,
-                unlockedTitles, selectedTitle);
+                unlockedTitles, selectedTitle, pointsEarned);
     }
 
     public RaidPlayerRecord withCatch() {
         return new RaidPlayerRecord(raidsWon, winsByTier, defeatsBySpecies, totalContribution,
-                bossesCaught + 1, raidsSinceMegaStone, raidPoints, purchases, unlockedTitles, selectedTitle);
+                bossesCaught + 1, raidsSinceMegaStone, raidPoints, purchases, unlockedTitles, selectedTitle, pointsEarned);
     }
 
     /**
@@ -97,7 +122,7 @@ public record RaidPlayerRecord(
         long updated = (long) raidPoints + delta;
         int clamped = (int) Math.max(0L, Math.min(Integer.MAX_VALUE, updated));
         return new RaidPlayerRecord(raidsWon, winsByTier, defeatsBySpecies, totalContribution,
-                bossesCaught, raidsSinceMegaStone, clamped, purchases, unlockedTitles, selectedTitle);
+                bossesCaught, raidsSinceMegaStone, clamped, purchases, unlockedTitles, selectedTitle, pointsEarned);
     }
 
     /** How many times a limited entry has been bought, and on which day. Never null. */
@@ -115,7 +140,7 @@ public record RaidPlayerRecord(
         LinkedHashMap<String, RaidPurchaseTally> updated = new LinkedHashMap<>(purchases);
         updated.put(entryId, purchasesOf(entryId).increment(window));
         return new RaidPlayerRecord(raidsWon, winsByTier, defeatsBySpecies, totalContribution,
-                bossesCaught, raidsSinceMegaStone, raidPoints, updated, unlockedTitles, selectedTitle);
+                bossesCaught, raidsSinceMegaStone, raidPoints, updated, unlockedTitles, selectedTitle, pointsEarned);
     }
 
     /**
@@ -155,7 +180,7 @@ public record RaidPlayerRecord(
         });
         return kept.size() == purchases.size() ? this
                 : new RaidPlayerRecord(raidsWon, winsByTier, defeatsBySpecies, totalContribution,
-                        bossesCaught, raidsSinceMegaStone, raidPoints, kept, unlockedTitles, selectedTitle);
+                        bossesCaught, raidsSinceMegaStone, raidPoints, kept, unlockedTitles, selectedTitle, pointsEarned);
     }
 
     /** Whether {@code titleId} has ever been unlocked, regardless of what is currently selected. */
@@ -173,12 +198,12 @@ public record RaidPlayerRecord(
         LinkedHashSet<String> updated = new LinkedHashSet<>(unlockedTitles);
         updated.add(titleId);
         return new RaidPlayerRecord(raidsWon, winsByTier, defeatsBySpecies, totalContribution,
-                bossesCaught, raidsSinceMegaStone, raidPoints, purchases, updated, selectedTitle);
+                bossesCaught, raidsSinceMegaStone, raidPoints, purchases, updated, selectedTitle, pointsEarned);
     }
 
     /** The same record wearing {@code titleId}, or no title at all when it is {@code null}. */
     public RaidPlayerRecord withSelectedTitle(String titleId) {
         return new RaidPlayerRecord(raidsWon, winsByTier, defeatsBySpecies, totalContribution,
-                bossesCaught, raidsSinceMegaStone, raidPoints, purchases, unlockedTitles, titleId);
+                bossesCaught, raidsSinceMegaStone, raidPoints, purchases, unlockedTitles, titleId, pointsEarned);
     }
 }

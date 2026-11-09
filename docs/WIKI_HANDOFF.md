@@ -258,7 +258,7 @@ Tables (all under `data/cobbleraids/loot_table/`):
 
 ```text
 cobbleraids:specialty/<tier>          one premium roll: mega stones, charms, TMs, capsules...
-cobbleraids:specialty/boss/<species>  the same, for the 21 bosses that have a Mega Stone
+cobbleraids:specialty/boss/<species>  the same, for the 9 non-starter bosses that drop a Mega Stone
 cobbleraids:general/<tier>            the ordinary roll: consumables, cards, curios
 cobbleraids:base/<tier>               what both fall back to; never a premium item
 ```
@@ -594,7 +594,7 @@ reloaded with `/cobbleraids reload`. Values below are the shipped defaults.
 | `currency` | `enabled`, per-tier amounts, `scale_with_contribution`, `minimum_share_percentage` | true, 200/500/1200/2500, true, 10 | CobbleDollars payout |
 | `dynamic_level` | `enabled`, `level_offset`, `max_level` | true, 0, 100 | |
 | `mega_pity` | `enabled`, `threshold` | true, 12 | |
-| `raid_points` | `enabled`, per tier | true, 25/50/75/100 | |
+| `raid_points` | `enabled`, per tier, `daily_cap_raids`, `daily_cap_towers` | true, 25/50/75/100, 300, 150 | Daily caps reset at 00:00 UTC; 0 turns one off. Past the cap a raid still pays its loot. |
 | `personal_boss_shop` | `enabled`, `reroll_cost`, `buy_cost_<tier>` | true, 50, 500/750/1000/1500 | |
 | `tier_scaling` | `enabled`, per tier multipliers | **false** | Optional extra health, time and reward scaling |
 | `boss_glow` | `enabled`, `radius_blocks` | true, 48 | |

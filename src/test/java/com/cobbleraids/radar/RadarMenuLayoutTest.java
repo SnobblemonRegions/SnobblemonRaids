@@ -14,7 +14,7 @@ class RadarMenuLayoutTest {
     private static Set<Integer> used() {
         Set<Integer> slots = new HashSet<>();
         for (int slot : RadarMenuLayout.CHARGES) assertTrue(slots.add(slot), "slot " + slot + " used twice");
-        for (int slot : new int[] {RadarMenuLayout.HEADER, RadarMenuLayout.CLOCK, RadarMenuLayout.GUIDE, RadarMenuLayout.MODE, RadarMenuLayout.TOGGLE,
+        for (int slot : new int[] {RadarMenuLayout.HEADER, RadarMenuLayout.CLOCK, RadarMenuLayout.POINTS, RadarMenuLayout.GUIDE, RadarMenuLayout.MODE, RadarMenuLayout.TOGGLE,
                 RadarMenuLayout.NEXT, RadarMenuLayout.CLOSE}) assertTrue(slots.add(slot), "slot " + slot + " used twice");
         for (int slot : RadarMenuLayout.CORNERS) assertTrue(slots.add(slot), "corner " + slot + " clashes with an item");
         return slots;

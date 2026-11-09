@@ -71,6 +71,18 @@ public final class RaidRadarMenu extends ChestMenu {
                 fullyCharged ? "Fully charged" : "Next charge in " + CommandFormat.duration(account.secondsToNext(now)), ChatFormatting.GOLD,
                 fullyCharged ? "You have all " + capacity + " raid charges." : "Full in " + CommandFormat.duration(account.secondsToFull(now)),
                 "Refills 1 charge per hour, up to " + capacity + ".", "Refills while you are offline, too."));
+        int pointsCap = com.cobbleraids.config.CobbleRaidsConfigManager.get().raidPoints()
+                .dailyCapFor(com.cobbleraids.reward.points.RaidPointsSource.RAID);
+        if (pointsCap > 0) {
+            int earned = com.cobbleraids.reward.points.RaidPointsStore.earnedToday(owner.getUUID(),
+                    com.cobbleraids.reward.points.RaidPointsSource.RAID);
+            boolean capped = earned >= pointsCap;
+            display.setItem(RadarMenuLayout.POINTS, icon(capped ? Items.GRAY_DYE : Items.PRISMARINE_CRYSTALS,
+                    "Raid Points today: " + Math.min(earned, pointsCap) + " / " + pointsCap,
+                    capped ? ChatFormatting.RED : ChatFormatting.LIGHT_PURPLE,
+                    capped ? "Today's limit is reached." : (pointsCap - earned) + " more from raids today.",
+                    "Raids still pay loot past the limit.", "Resets at 00:00 UTC."));
+        }
         boolean flat = RaidRadarItem.prefersFlatMap(owner.getItemInHand(hand));
         if (RaidioMode.enabled()) {
             display.setItem(RadarMenuLayout.MODE, icon(Items.JUKEBOX, "How Raidio works", ChatFormatting.AQUA,

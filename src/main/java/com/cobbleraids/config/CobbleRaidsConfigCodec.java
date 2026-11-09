@@ -135,7 +135,9 @@ final class CobbleRaidsConfigCodec {
                 Json.integer(raidPointsObject, "starter", rp.starter()),
                 Json.integer(raidPointsObject, "powerhouse", rp.powerhouse()),
                 Json.integer(raidPointsObject, "legendary", rp.legendary()),
-                Json.integer(raidPointsObject, "mythical", rp.mythical()));
+                Json.integer(raidPointsObject, "mythical", rp.mythical()),
+                Json.integer(raidPointsObject, "daily_cap_raids", rp.dailyCapRaids()),
+                Json.integer(raidPointsObject, "daily_cap_towers", rp.dailyCapTowers()));
 
         JsonObject personalBossShopObject = Json.object(root, "personal_boss_shop");
         CobbleRaidsConfig.PersonalBossShop pbs = defaults.personalBossShop();
@@ -339,6 +341,8 @@ final class CobbleRaidsConfigCodec {
         raidPointsJson.addProperty("powerhouse", raidPoints.powerhouse());
         raidPointsJson.addProperty("legendary", raidPoints.legendary());
         raidPointsJson.addProperty("mythical", raidPoints.mythical());
+        raidPointsJson.addProperty("daily_cap_raids", raidPoints.dailyCapRaids());
+        raidPointsJson.addProperty("daily_cap_towers", raidPoints.dailyCapTowers());
         root.add("raid_points", raidPointsJson);
 
         CobbleRaidsConfig.PersonalBossShop personalBossShop = config.personalBossShop();

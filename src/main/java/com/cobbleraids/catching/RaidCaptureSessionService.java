@@ -453,8 +453,13 @@ public final class RaidCaptureSessionService {
     private static RaidCaptureSession settleDecline(MinecraftServer server, ArrayDeque<RaidCaptureSession> queue, RaidCaptureSession resolved) {
         if (resolved.bankedRaidPoints() > 0) {
             RaidFaultBarrier.guard("capture-decline:raid-points", () -> {
-                RaidPointsStore.award(server, resolved.playerId(), resolved.bankedRaidPoints());
-                com.cobbleraids.stats.RaidStats.onPointsEarned(server, resolved.playerId(), resolved.bankedRaidPoints());
+                // Counted against the raid cap on the day it is credited, not the day the raid was won:
+                // the cap limits what reaches a balance, and a banked claim has not reached it yet.
+                int credited = RaidPointsStore.awardCapped(server, resolved.playerId(), resolved.bankedRaidPoints(),
+                        com.cobbleraids.reward.points.RaidPointsSource.RAID);
+                if (credited > 0) com.cobbleraids.stats.RaidStats.onPointsEarned(server, resolved.playerId(), credited);
+                com.cobbleraids.reward.points.RaidPointsCapNotice.tell(server.getPlayerList().getPlayer(resolved.playerId()),
+                        com.cobbleraids.reward.points.RaidPointsSource.RAID, resolved.bankedRaidPoints(), credited);
             });
         }
         removeFromQueue(queue, resolved);
