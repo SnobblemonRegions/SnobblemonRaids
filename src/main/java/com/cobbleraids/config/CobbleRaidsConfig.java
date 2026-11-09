@@ -743,7 +743,7 @@ public record CobbleRaidsConfig(
                         1800,           // default_definition_cooldown_seconds
                         RaidTierWeights.defaults(),
                         RaidTierSpawnChance.defaults(),
-                        AnnouncementPrecision.NEAREST_HUNDRED
+                        AnnouncementPrecision.BIOME_ONLY   // players find the raid with a Raidio
                 ),
                 new RecruitmentDefaults(20, 10.0, VALIDATED_MAX_HUMAN_PLAYERS),
                 new CombatDefaults(900, false, 3),

@@ -583,7 +583,7 @@ reloaded with `/cobbleraids reload`. Values below are the shipped defaults.
 | | `default_definition_cooldown_seconds` | 1800 | |
 | | `tier_weights` | 70/20/8/2 | Mix selector |
 | | `tier_spawn_chance` | 1.0 each | Rate dial |
-| | `announcement_precision` | `nearest_hundred` | How exactly the announcement names the area |
+| | `announcement_precision` | `biome_only` | How exactly the announcement names the area: `biome_only` (players find it with a Raidio), `nearest_hundred`, `exact` or `disabled` |
 | `recruitment_defaults` | `duration_seconds`, `radius`, `max_players` | 20, 10, 4 | |
 | `combat_defaults` | `time_limit_seconds`, `allow_flee`, `max_failed_attempts` | 900, false, 3 | |
 | `battle_carryover` | `health`, `pp`, `status` | true, true, false | Cost carried to the real party |

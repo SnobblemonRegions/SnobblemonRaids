@@ -1,5 +1,7 @@
 package com.cobbleraids.spawn;
 
+import com.cobbleraids.config.CobbleRaidsConfig;
+import com.cobbleraids.config.CobbleRaidsConfigManager;
 import com.cobbleraids.config.RaidRarityTier;
 import com.cobbleraids.presentation.RaidBossNameplate;
 import com.cobbleraids.presentation.RaidBroadcast;
@@ -42,8 +44,9 @@ public final class RaidSpawnAnnouncementService {
 
     /**
      * Server-wide by default, because a wild raid is an invitation to everyone -- see
-     * {@link #toggleMute} for the opt-out. Coordinates are deliberately rounded: precise ones would
-     * make the announcement a waypoint and skip the finding entirely.
+     * {@link #toggleMute} for the opt-out. How much of the location it gives away is
+     * {@code natural_spawning.announcement_precision}: by default only the biome, so players find the
+     * raid with a Raidio rather than walking to a waypoint.
      */
     static void naturalSpawn(
             MinecraftServer server,
@@ -53,8 +56,9 @@ public final class RaidSpawnAnnouncementService {
             BlockPos position,
             RaidRarityTier tier
     ) {
-        int hintX = coordinateHint(position.getX());
-        int hintZ = coordinateHint(position.getZ());
+        CobbleRaidsConfig.AnnouncementPrecision precision =
+                CobbleRaidsConfigManager.get().naturalSpawning().announcementPrecision();
+        if (precision == CobbleRaidsConfig.AnnouncementPrecision.DISABLED) return;
         MutableComponent speciesName = entity.getPokemon().getSpecies().getTranslatedName();
         String biomeName = biomeId == null ? "Unknown Biome" : friendlyName(biomeId);
         RaidRenown renown = RaidRenownMarker.read(entity).orElse(null);
@@ -75,7 +79,7 @@ public final class RaidSpawnAnnouncementService {
                     .append(Component.literal(" raid, has appeared in ").withStyle(ChatFormatting.YELLOW));
         }
         message.append(Component.literal(biomeName).withStyle(ChatFormatting.GREEN))
-                .append(Component.literal("! Coordinate hint: near X " + hintX + ", Z " + hintZ)
+                .append(Component.literal("! " + locationHint(precision, position.getX(), position.getZ()))
                         .withStyle(ChatFormatting.YELLOW))
                 .append(Component.literal(" (" + friendlyName(dimensionId) + ").")
                         .withStyle(ChatFormatting.DARK_GRAY));
@@ -94,6 +98,15 @@ public final class RaidSpawnAnnouncementService {
     static void bossLeft(PokemonEntity boss, double radius) {
         RaidBroadcast.near(boss, radius, Component.literal("The raid boss lost interest and left.")
                 .withStyle(ChatFormatting.GRAY));
+    }
+
+    /** The sentence after the biome: coordinates only when the server asks for them, else a pointer to the Raidio. */
+    static String locationHint(CobbleRaidsConfig.AnnouncementPrecision precision, int x, int z) {
+        return switch (precision) {
+            case EXACT -> "Location: X " + x + ", Z " + z;
+            case NEAREST_HUNDRED -> "Coordinate hint: near X " + coordinateHint(x) + ", Z " + coordinateHint(z);
+            case BIOME_ONLY, DISABLED -> "Tune a Raidio to track it down";
+        };
     }
 
     static int coordinateHint(int coordinate) {
