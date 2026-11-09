@@ -72,6 +72,8 @@ public final class CobbleRaids implements ModInitializer {
         RaidKeyItems.register();
         RaidHeldItems.register();
         com.cobbleraids.item.RaidRadarItem.register();
+        // Last of the items: Polymer's recipe-viewer support (JEI, REI, EMI) only lists items in a creative tab.
+        com.cobbleraids.item.RaidCreativeTab.register();
         com.cobbleraids.radar.RadarHologramNetworking.register();
 
         RaidInstructionRegistrar.register();
