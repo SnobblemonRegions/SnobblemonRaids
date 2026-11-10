@@ -50,6 +50,18 @@ public final class RaidDuelRules {
         return Math.round(perPlayerPool(tier) * Math.pow(n, CROWD_EXPONENT));
     }
 
+    /**
+     * Who a won raid pays: everybody who actually fought a duel and did not give the raid up. A player whose party was wiped is
+     * still paid (their damage counts); one who withdrew, walked away or never came back from a disconnect forfeited, exactly as
+     * leaving a party raid did; and one whose first duel never started took no part at all.
+     */
+    public static java.util.Set<java.util.UUID> victors(java.util.Collection<java.util.UUID> players,
+            java.util.Set<java.util.UUID> fought, java.util.Set<java.util.UUID> forfeited) {
+        java.util.Set<java.util.UUID> victors = new java.util.LinkedHashSet<>();
+        for (java.util.UUID player : players) if (fought.contains(player) && !forfeited.contains(player)) victors.add(player);
+        return victors;
+    }
+
     /** Whether one more player may join a duel raid that has {@code current} already. */
     public static boolean hasRoom(int current) {
         return current < MAX_PLAYERS;

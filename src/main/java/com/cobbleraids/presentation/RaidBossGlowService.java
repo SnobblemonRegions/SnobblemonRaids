@@ -159,6 +159,12 @@ public final class RaidBossGlowService {
                 return;
             }
 
+            // A duel raid's copy is hidden so its player sees only the boss they walked up to; an outline would draw it back in.
+            if (RaidBossEntityMarker.isOwnedBy(boss, com.cobbleraids.duel.RaidDuelService.OWNER)) {
+                if (boss.hasEffect(MobEffects.GLOWING)) boss.removeEffect(MobEffects.GLOWING);
+                return;
+            }
+
             RaidRarityTier tier = RaidBossEntityMarker.definitionId(boss)
                     .map(RaidDefinitionRegistry::get)
                     .map(RaidDefinition::rarityTier)

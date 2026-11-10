@@ -74,6 +74,13 @@ public final class RaidChargeStore extends SavedData {
         private boolean finished;
         private Reservation(MinecraftServer server, Map<UUID, RaidChargeAccount> before) { this.server=server; this.before=before; }
         public void commit() { finished=true; }
+        /** Hands one player's charge back before the commit, for a player whose part in the raid never began. */
+        public void release(UUID id) {
+            if (finished || !before.containsKey(id)) return;
+            RaidChargeAccount account = before.remove(id);
+            if (account == null) accounts.remove(id); else accounts.put(id, account);
+            persist(server);
+        }
         @Override public void close() {
             if (finished) return;
             finished=true; restore(before); persist(server);

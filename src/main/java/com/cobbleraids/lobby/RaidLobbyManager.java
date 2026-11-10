@@ -49,7 +49,8 @@ public final class RaidLobbyManager {
         if (!RaidBossEntityMarker.isRaidBoss(boss)) return JoinResult.NOT_A_RAID_BOSS;
         // Its participants were chosen by the mod that owns it; nobody else can recruit into it.
         if (RaidBossEntityMarker.isOwned(boss)) {
-            player.sendSystemMessage(Component.literal("This boss belongs to another encounter and cannot be joined.")
+            player.sendSystemMessage(Component.literal(com.cobbleraids.duel.RaidDuelService.isFace(boss)
+                            ? "This raid is already under way." : "This boss belongs to another encounter and cannot be joined.")
                     .withStyle(ChatFormatting.RED));
             return JoinResult.OWNED_ENCOUNTER;
         }
@@ -65,6 +66,11 @@ public final class RaidLobbyManager {
             return JoinResult.TOO_FAR;
         }
 
+        // Between two duels of a raid a player is in no battle, so the battle check at lock would let them into a second raid.
+        if (com.cobbleraids.duel.RaidDuelService.isInRaid(player.getUUID())) {
+            player.sendSystemMessage(Component.literal("Finish the raid you are in first.").withStyle(ChatFormatting.RED));
+            return JoinResult.UNAVAILABLE;
+        }
         if (!hasCharge(player)) return JoinResult.NO_CHARGES;
 
         long now = boss.level().getGameTime();
@@ -273,6 +279,7 @@ public final class RaidLobbyManager {
         if (player.level() != boss.level()) return false;
         if (!isWithinRecruitmentRadius(player, boss, definition.recruitment().radius())) return false;
         if (Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player) != null) return false;
+        if (com.cobbleraids.duel.RaidDuelService.isInRaid(player.getUUID())) return false;
         return !Cobblemon.INSTANCE.getStorage().getParty(player).toBattleTeam(true, false).isEmpty();
     }
 
