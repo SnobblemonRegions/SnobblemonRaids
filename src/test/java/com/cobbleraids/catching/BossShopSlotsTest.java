@@ -58,4 +58,13 @@ class BossShopSlotsTest {
         assertFalse(BossShopSlots.expired(SAVED, SAVED - DAY, 7));
         assertEquals(7 * DAY, BossShopSlots.millisLeft(SAVED, SAVED - DAY, 7));
     }
+
+    @Test
+    @DisplayName("the Your Bosses page says how many slots are used, and how many are free")
+    void heading() {
+        assertEquals("Your Bosses - 3/5 slots", BossShopSlots.heading(3, 5));
+        assertEquals("Your Bosses - 0/5 slots", BossShopSlots.heading(0, 5));
+        assertEquals("Your Bosses - 7/5 slots", BossShopSlots.heading(7, 5), "a player over the cap is shown as they are");
+        assertEquals("Your Bosses - 1/1 slot", BossShopSlots.heading(1, 1));
+    }
 }

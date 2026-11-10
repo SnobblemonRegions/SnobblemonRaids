@@ -32,6 +32,11 @@ public final class BossShopSlots {
         return saved.size() < maxSlots ? Verdict.ROOM : Verdict.FULL;
     }
 
+    /** The title of the Your Bosses page, which doubles as its slot counter. */
+    public static String heading(int used, int maxSlots) {
+        return "Your Bosses - " + used + "/" + maxSlots + (maxSlots == 1 ? " slot" : " slots");
+    }
+
     /** Whether a boss saved at {@code savedAt} has been kept its {@code keepDays}. Zero days keeps it for ever. */
     public static boolean expired(long savedAt, long now, int keepDays) {
         return keepDays > 0 && now - savedAt >= keepDays * DAY_MILLIS;

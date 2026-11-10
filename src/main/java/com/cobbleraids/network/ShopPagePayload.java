@@ -26,5 +26,15 @@ public record ShopPagePayload(
         int pageCount,
         int balance,
         List<ShopEntryPayload> entries,
-        long rotatesInMillis
-) {}
+        long rotatesInMillis,
+        PersonalExtras personal
+) {
+    /** The part of the Your Bosses page that is not an entry: the slot counter and any boss waiting to be saved. */
+    public record PersonalExtras(int slotsUsed, int maxSlots, com.cobbleraids.catching.BossShopOffers.OfferView offer) {}
+
+    /** Every page but Your Bosses. */
+    public ShopPagePayload(String heading, int pageIndex, int pageCount, int balance,
+                           List<ShopEntryPayload> entries, long rotatesInMillis) {
+        this(heading, pageIndex, pageCount, balance, entries, rotatesInMillis, null);
+    }
+}

@@ -61,12 +61,38 @@ public final class RaidShopGateway {
     private static final String PERSONAL_PREFIX = "personal:";
     private static final String REROLL_PREFIX = "reroll:";
     private static final String ROTATING_PREFIX = "rotating.";
+    private static final String REPLACE_PREFIX = "replace:";
 
     private static final ShopPurchaseConfirmation CONFIRMATION = new ShopPurchaseConfirmation();
 
     /** The entry this player has clicked once and is being asked to click again, or null. For the views to mark it. */
     public static String awaitingConfirmation(ServerPlayer player) {
         return CONFIRMATION.pending(player.getUUID(), System.currentTimeMillis());
+    }
+
+    /**
+     * Keeps the boss the player was offered, or declines it ({@code decline}). {@code replace} names the saved boss to give up when
+     * every slot is used; giving one up is permanent, so it takes the same second click a purchase does.
+     */
+    public static void handleKeep(ServerPlayer player, int pageIndex, String replace, boolean decline) {
+        if (decline) {
+            CONFIRMATION.clear(player.getUUID());
+            com.cobbleraids.catching.BossShopOffers.decline(player);
+            sendPage(player, pageIndex);
+            return;
+        }
+        ResourceLocation target = replace == null || replace.isEmpty() ? null : ResourceLocation.tryParse(replace);
+        if (target != null && !CONFIRMATION.confirm(player.getUUID(), REPLACE_PREFIX + target, System.currentTimeMillis())) {
+            player.sendSystemMessage(Component.literal("Click SWAP again to give up "
+                            + target.getPath().replace('_', ' ') + " for the new boss. That cannot be undone.")
+                    .withStyle(ChatFormatting.YELLOW));
+            sendPage(player, pageIndex);
+            return;
+        }
+        CONFIRMATION.clear(player.getUUID());
+        boolean saved = com.cobbleraids.catching.BossShopOffers.accept(player, target);
+        if (saved) WebSounds.play(player, SoundEvents.EXPERIENCE_ORB_PICKUP, 0.7f, 1.2f);
+        sendPage(player, pageIndex);
     }
 
     /** A player left, or the server stopped: nothing half-confirmed is carried over. */
@@ -132,7 +158,9 @@ public final class RaidShopGateway {
         List<ShopPageView> catalogPages = listablePages(ShopCatalogManager.pages());
         com.cobbleraids.catching.BossShopOffers.pruneExpired(player);
         Map<ResourceLocation, BossSnapshot> personal = DefeatedBossSnapshots.forPlayer(player.getUUID());
-        boolean hasPersonalPage = !personal.isEmpty();
+        com.cobbleraids.catching.BossShopOffers.OfferView offer = com.cobbleraids.catching.BossShopOffers.view(player);
+        // A boss waiting to be saved is shown here even before the player has saved any, so the page exists for it too.
+        boolean hasPersonalPage = !personal.isEmpty() || offer != null;
         List<ShopRotation.Listing> rotating = ShopRotationService.current(Instant.now(), player.getUUID());
         boolean hasRotatingPage = !rotating.isEmpty();
         int pageCount = catalogPages.size() + (hasRotatingPage ? 1 : 0) + (hasPersonalPage ? 1 : 0);
@@ -148,6 +176,7 @@ public final class RaidShopGateway {
         String heading;
         List<ShopEntryPayload> entries;
         long rotatesInMillis = 0L;
+        ShopPagePayload.PersonalExtras extras = null;
         if (index < catalogPages.size()) {
             heading = catalogPages.get(index).heading();
             entries = buildCatalogEntries(catalogPages.get(index), player);
@@ -161,11 +190,14 @@ public final class RaidShopGateway {
         } else {
             // Always the last page, so page 0 -- and every existing bookmark or expectation about
             // it -- stays exactly what it already was.
-            heading = "Your Bosses";
-            entries = buildPersonalEntries(personal);
+            int used = personal.size();
+            int slots = com.cobbleraids.catching.BossShopOffers.maxSlots();
+            heading = com.cobbleraids.catching.BossShopSlots.heading(used, slots);
+            entries = buildPersonalEntries(personal, offer != null && offer.full());
+            extras = new ShopPagePayload.PersonalExtras(used, slots, offer);
         }
         ShopWebPage.deliver(player, new ShopPagePayload(heading, index, pageCount,
-                RaidPointsStore.balance(player.getUUID()), entries, rotatesInMillis));
+                RaidPointsStore.balance(player.getUUID()), entries, rotatesInMillis, extras));
     }
 
     /**
@@ -242,7 +274,7 @@ public final class RaidShopGateway {
      * which has no stable iteration order at all, and a personal page whose cells reshuffle between
      * one open and the next reads as broken even though nothing is actually wrong.
      */
-    private static List<ShopEntryPayload> buildPersonalEntries(Map<ResourceLocation, BossSnapshot> personal) {
+    private static List<ShopEntryPayload> buildPersonalEntries(Map<ResourceLocation, BossSnapshot> personal, boolean replacing) {
         CobbleRaidsConfig.PersonalBossShop config = CobbleRaidsConfigManager.get().personalBossShop();
         List<BossSnapshot> sorted = new ArrayList<>(personal.values());
         sorted.sort(Comparator.comparing(snapshot -> snapshot.species().toString()));
@@ -256,7 +288,8 @@ public final class RaidShopGateway {
                     // pokemon().species() already provides, and this needs to match it exactly to
                     // resolve the same icons.
                     snapshot.species().getPath(), BossSnapshotService.buyBackLevel(snapshot), snapshot.shiny(),
-                    snapshot.ivPercent(), snapshot.evPercent(), true, config.rerollCost()));
+                    // While a full shop is choosing what to give up, a cell offers that instead of a reroll.
+                    snapshot.ivPercent(), snapshot.evPercent(), !replacing, config.rerollCost()));
         }
         return entries;
     }

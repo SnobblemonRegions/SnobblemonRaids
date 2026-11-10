@@ -49,6 +49,8 @@ public final class ShopWebPage {
                 RaidShopGateway.handle(player, ShopActionPayload.turnTo(0));
             }
             case "turn" -> RaidShopGateway.handle(player, ShopActionPayload.turnTo(page));
+            case "keep" -> RaidShopGateway.handleKeep(player, page, WebJson.bounded(message, "replace", ShopActionPayload.MAX_ID_LENGTH), false);
+            case "decline" -> RaidShopGateway.handleKeep(player, page, "", true);
             case "buy" -> {
                 String id = WebJson.string(message, "id");
                 if (!id.isEmpty() && id.length() <= ShopActionPayload.MAX_ID_LENGTH) {
@@ -70,6 +72,9 @@ public final class ShopWebPage {
         JsonArray entries = new JsonArray();
         Set<String> wanted = new LinkedHashSet<>();
         String awaiting = RaidShopGateway.awaitingConfirmation(player);
+        // Giving up a saved boss is confirmed on that boss's own Replace button.
+        String awaitingReplace = awaiting != null && awaiting.startsWith("replace:") ? awaiting.substring("replace:".length()) : null;
+        boolean replacing = payload.personal() != null && payload.personal().offer() != null && payload.personal().offer().full();
         // A reroll is confirmed on the cell it belongs to, which carries the personal: id.
         boolean awaitingReroll = awaiting != null && awaiting.startsWith("reroll:");
         String awaitingCell = awaitingReroll ? "personal:" + awaiting.substring("reroll:".length()) : awaiting;
@@ -80,8 +85,13 @@ public final class ShopWebPage {
             cell.addProperty("confirm", awaited && !awaitingReroll);
             cell.addProperty("confirmReroll", awaited && awaitingReroll);
             // A saved boss leaves after its days are up; -1 when the server keeps them for ever.
-            if (entry.personal()) cell.addProperty("leavesInMillis",
-                    com.cobbleraids.catching.BossShopOffers.millisLeft(player, entry.id()));
+            if (entry.personal()) {
+                cell.addProperty("leavesInMillis", com.cobbleraids.catching.BossShopOffers.millisLeft(player, entry.id()));
+                String species = entry.id().substring(entry.id().indexOf(':') + 1);
+                cell.addProperty("canReplace", replacing);
+                cell.addProperty("replaceId", species);
+                cell.addProperty("confirmReplace", replacing && species.equals(awaitingReplace));
+            }
             cell.addProperty("cost", entry.cost());
             cell.addProperty("pokemon", entry.pokemon());
             cell.addProperty("count", entry.count());
@@ -111,6 +121,28 @@ public final class ShopWebPage {
             entries.add(cell);
         }
         page.add("entries", entries);
+        if (payload.personal() != null) {
+            page.addProperty("slotsUsed", payload.personal().slotsUsed());
+            page.addProperty("maxSlots", payload.personal().maxSlots());
+            var offer = payload.personal().offer();
+            if (offer != null) {
+                var boss = offer.snapshot();
+                JsonObject o = new JsonObject();
+                String species = boss.species().getPath();
+                o.addProperty("species", species);
+                o.addProperty("level", com.cobbleraids.catching.BossSnapshotService.buyBackLevel(boss));
+                o.addProperty("shiny", boss.shiny());
+                o.addProperty("ivPercent", boss.ivPercent());
+                o.addProperty("evPercent", boss.evPercent());
+                o.addProperty("expiresInMillis", offer.expiresInMillis());
+                o.addProperty("full", offer.full());
+                String key = WebIcons.speciesKey(species, boss.shiny());
+                if (WebIcons.dataUrl(key).isEmpty()) key = WebIcons.FALLBACK_ITEM;
+                o.addProperty("icon", key);
+                wanted.add(key);
+                page.add("offer", o);
+            }
+        }
 
         // Icons first: the page paints from its cache when the page message lands.
         ICONS.send(player, wanted);

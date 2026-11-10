@@ -15,7 +15,8 @@ const art = (key) => { const u = icons.get(key); return u ? 'url(' + u + ')' : '
 
 function render() {
   if (!page) return;
-  const pokemon = page.entries.length > 0 && page.entries.every((e) => e.pokemon);
+  // A boss waiting to be saved is drawn as a wide cell of the Pokemon grid, even before any boss is saved.
+  const pokemon = !!page.offer || (page.entries.length > 0 && page.entries.every((e) => e.pokemon));
   grid.className = pokemon ? 'pokemon' : 'items';
   document.querySelector('.stage').classList.toggle('single', page.pageCount <= 1);
   $('crumb').textContent = '/ ' + page.heading;
@@ -23,7 +24,8 @@ function render() {
   $('where').textContent = 'PAGE ' + (page.pageIndex + 1) + ' OF ' + page.pageCount;
 
   grid.textContent = '';
-  if (page.entries.length === 0) {
+  if (page.offer) grid.appendChild(offerCell(page.offer));
+  if (page.entries.length === 0 && !page.offer) {
     const e = RC.el('div', 'empty', 'Nothing for sale right now.');
     e.style.gridColumn = '1 / -1';
     e.style.padding = '8cqw 0';
@@ -65,7 +67,7 @@ function cell(entry, pokemon) {
   el.appendChild(image);
 
   // The server asks for a second click before it spends anything; the cell says so until it gets one.
-  const price = entry.soldOut ? 'SOLD OUT' : entry.confirm ? (pokemon ? 'CONFIRM ' + RC.num(entry.cost) + ' RP?' : 'CONFIRM?') : RC.num(entry.cost) + ' RP';
+  const price = entry.soldOut ? 'SOLD OUT' : entry.confirm ? 'CONFIRM?' : RC.num(entry.cost) + ' RP';
   if (pokemon) {
     const body = RC.el('div', 'body');
     const name = RC.el('div', 'name' + (entry.shiny ? ' shiny' : ''), (entry.shiny ? '★ ' : '') + RC.title(entry.species));
@@ -76,6 +78,7 @@ function cell(entry, pokemon) {
     const priceRow = RC.el('div', 'pricerow');
     priceRow.appendChild(RC.el('div', 'price', price));
     if (entry.personal && entry.canReroll) priceRow.appendChild(rerollButton(entry));
+    if (entry.personal && entry.canReplace) priceRow.appendChild(replaceButton(entry));
     body.appendChild(priceRow);
     el.appendChild(body);
   } else {
@@ -96,8 +99,45 @@ function leavesIn(millis) {
   return d > 0 ? d + 'd ' + h + 'h' : h > 0 ? h + 'h ' + m + 'm' : m + 'm';
 }
 
+// The boss the player just beat, waiting for a yes or no. Shown on top of Your Bosses.
+function offerCell(offer) {
+  const el = RC.el('div', 'panel cell offer');
+  el.dataset.icon = offer.icon || '';
+  const image = RC.el('div', 'art');
+  image.style.backgroundImage = art(offer.icon);
+  el.appendChild(image);
+  const body = RC.el('div', 'body');
+  body.appendChild(RC.el('div', 'meta kicker', 'NEW BOSS TO KEEP  -  DECIDE WITHIN ' + leavesIn(offer.expiresInMillis).toUpperCase()));
+  body.appendChild(RC.el('div', 'name' + (offer.shiny ? ' shiny' : ''), (offer.shiny ? '★ ' : '') + RC.title(offer.species)));
+  body.appendChild(RC.el('div', 'meta', 'Level ' + offer.level + '   IV ' + offer.ivPercent + '%   EV ' + offer.evPercent + '%'));
+  body.appendChild(RC.el('div', 'meta hint', offer.full
+    ? 'Your shop is full. Press SWAP on the boss you will give up.'
+    : 'You have a free slot (' + page.slotsUsed + '/' + page.maxSlots + ' used).'));
+  el.appendChild(body);
+  const actions = RC.el('div', 'actions');
+  if (!offer.full) {
+    const keep = RC.el('button', 'keepbtn', 'KEEP IT');
+    keep.addEventListener('click', () => send({ action: 'keep', page: page.pageIndex }));
+    actions.appendChild(keep);
+  }
+  const no = RC.el('button', 'declinebtn', 'NO THANKS');
+  no.addEventListener('click', () => send({ action: 'decline', page: page.pageIndex }));
+  actions.appendChild(no);
+  el.appendChild(actions);
+  return el;
+}
+
+function replaceButton(entry) {
+  const r = RC.el('button', 'reroll replace' + (entry.confirmReplace ? ' confirm' : ''), entry.confirmReplace ? 'SURE?' : 'SWAP');
+  r.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    send({ action: 'keep', page: page.pageIndex, replace: entry.replaceId });
+  });
+  return r;
+}
+
 function rerollButton(entry) {
-  const r = RC.el('button', 'reroll' + (entry.confirmReroll ? ' confirm' : ''), entry.confirmReroll ? 'CONFIRM?' : 'REROLL');
+  const r = RC.el('button', 'reroll' + (entry.confirmReroll ? ' confirm' : ''), entry.confirmReroll ? 'SURE?' : 'REROLL');
   r.addEventListener('click', (ev) => {
     ev.stopPropagation();
     send({ action: 'buy', page: page.pageIndex, id: 'reroll:' + entry.id.substring('personal:'.length) });
@@ -120,6 +160,7 @@ function tooltipFor(entry) {
     if (entry.leavesInMillis >= 0) out.push(['Leaves your shop in ' + leavesIn(entry.leavesInMillis), entry.leavesInMillis < 86400000 ? 'bad' : 'mu']);
   }
   if (entry.confirm) out.push(['Click again to confirm', 'hi']);
+  if (entry.canReplace) out.push([entry.confirmReplace ? 'Click SWAP again: this boss is given up for good' : 'Swap this boss for the new one', 'hi']);
   if (entry.confirmReroll) out.push(['Click REROLL again to confirm', 'hi']);
   if (entry.soldOut) {
     out.push([entry.limit === 1 ? 'Already purchased' : 'All ' + entry.limit + ' bought', 'ok']);
@@ -144,6 +185,7 @@ $('close').addEventListener('click', RC.close);
 addEventListener('webgui:shop_icons', (e) => {
   for (const [key, url] of Object.entries(e.detail || {})) icons.set(key, url);
   grid.querySelectorAll('.cell').forEach((el) => {
+    if (!el.dataset.icon) return;
     const url = icons.get(el.dataset.icon);
     if (url) el.querySelector('.art').style.backgroundImage = 'url(' + url + ')';
   });
