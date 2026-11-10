@@ -148,11 +148,18 @@ final class CobbleRaidsConfigCodec {
                 Json.integer(personalBossShopObject, "buy_cost_powerhouse", pbs.buyCostPowerhouse()),
                 Json.integer(personalBossShopObject, "buy_cost_legendary", pbs.buyCostLegendary()),
                 Json.integer(personalBossShopObject, "buy_cost_mythical", pbs.buyCostMythical()));
+        int bossShopSlots = Json.integer(personalBossShopObject, "max_slots", pbs.maxSlots());
+        int bossShopKeepDays = Json.integer(personalBossShopObject, "keep_days", pbs.keepDays());
         // A block still holding the old shipped prices was never tuned, so it moves to the new ones.
         if (personalBossShop.equals(CobbleRaidsConfig.PersonalBossShop.supersededDefaults())
                 || personalBossShop.equals(CobbleRaidsConfig.PersonalBossShop.previousDefaults())) {
             personalBossShop = pbs;
         }
+        // The price block above is compared whole against old shipped prices, so the two newer settings are
+        // read apart from it and put back afterwards; otherwise that migration would reset them too.
+        personalBossShop = new CobbleRaidsConfig.PersonalBossShop(personalBossShop.enabled(), personalBossShop.rerollCost(),
+                personalBossShop.buyCostStarter(), personalBossShop.buyCostPowerhouse(), personalBossShop.buyCostLegendary(),
+                personalBossShop.buyCostMythical(), bossShopSlots, bossShopKeepDays);
 
         JsonObject tierScalingObject = Json.object(root, "tier_scaling");
         CobbleRaidsConfig.TierScaling ts = defaults.tierScaling();
@@ -205,9 +212,15 @@ final class CobbleRaidsConfigCodec {
                 Json.bool(reconnectGraceObject, "enabled", rg.enabled()),
                 Json.integer(reconnectGraceObject, "grace_seconds", rg.graceSeconds()));
 
+        JsonObject duelRaidObject = Json.object(root, "duel_raid");
+        CobbleRaidsConfig.DuelRaid dr = defaults.duelRaid();
+        CobbleRaidsConfig.DuelRaid duelRaid = new CobbleRaidsConfig.DuelRaid(
+                Json.integer(duelRaidObject, "duel_time_limit_seconds", dr.duelTimeLimitSeconds()),
+                Json.integer(duelRaidObject, "raid_time_limit_seconds", dr.raidTimeLimitSeconds()));
+
         return new CobbleRaidsConfig(naturalSpawning, recruitmentDefaults, combatDefaults, battleCarryover,
                 bossTraits, catching, currency, dynamicLevel, megaPity, raidPoints, personalBossShop, tierScaling,
-                bossGlow, bossMovement, renown, reconnectGrace, Json.bool(root, "debug_logging", defaults.debugLogging()));
+                bossGlow, bossMovement, renown, reconnectGrace, duelRaid, Json.bool(root, "debug_logging", defaults.debugLogging()));
     }
 
     private static CobbleRaidsConfig.TierMultipliers readTierMultipliers(
@@ -353,6 +366,8 @@ final class CobbleRaidsConfigCodec {
         personalBossShopJson.addProperty("buy_cost_powerhouse", personalBossShop.buyCostPowerhouse());
         personalBossShopJson.addProperty("buy_cost_legendary", personalBossShop.buyCostLegendary());
         personalBossShopJson.addProperty("buy_cost_mythical", personalBossShop.buyCostMythical());
+        personalBossShopJson.addProperty("max_slots", personalBossShop.maxSlots());
+        personalBossShopJson.addProperty("keep_days", personalBossShop.keepDays());
         root.add("personal_boss_shop", personalBossShopJson);
 
         CobbleRaidsConfig.TierScaling tierScaling = config.tierScaling();
@@ -399,6 +414,11 @@ final class CobbleRaidsConfigCodec {
         reconnectGraceJson.addProperty("enabled", reconnectGrace.enabled());
         reconnectGraceJson.addProperty("grace_seconds", reconnectGrace.graceSeconds());
         root.add("reconnect_grace", reconnectGraceJson);
+
+        JsonObject duelRaidJson = new JsonObject();
+        duelRaidJson.addProperty("duel_time_limit_seconds", config.duelRaid().duelTimeLimitSeconds());
+        duelRaidJson.addProperty("raid_time_limit_seconds", config.duelRaid().raidTimeLimitSeconds());
+        root.add("duel_raid", duelRaidJson);
 
         root.addProperty("debug_logging", config.debugLogging());
         return root;

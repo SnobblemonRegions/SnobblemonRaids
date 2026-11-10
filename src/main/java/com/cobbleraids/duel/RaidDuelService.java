@@ -70,6 +70,9 @@ public final class RaidDuelService {
         final WorldBossPool pool;
         final Set<UUID> players;
         final Set<UUID> out = ConcurrentHashMap.newKeySet();
+        /** Players who had at least one duel start, and players who gave the raid up; see {@link RaidDuelRules#victors}. */
+        final Set<UUID> fought = ConcurrentHashMap.newKeySet();
+        final Set<UUID> forfeited = ConcurrentHashMap.newKeySet();
         final Map<UUID, UUID> duelOfPlayer = new ConcurrentHashMap<>();
         final Map<UUID, Long> chainAt = new ConcurrentHashMap<>();
         /** Game tick each live duel began, and the ticks its player spent offline (reconnect grace), which do not count against it. */
@@ -81,6 +84,12 @@ public final class RaidDuelService {
         final long startedTick;
         final String renownTitle;
         final String renownBoon;
+        /** The stat a renowned boss's epithet focuses, or null; every copy is given the same focus. */
+        final com.cobbleraids.renown.RenownBoon statFocus;
+        /** Both clocks, read once at the start so a config reload cannot move a raid's deadline under its players. */
+        final long windowTicks;
+        final long duelLimitTicks;
+        boolean lastMinuteWarned;
         boolean finished;
 
         DuelRaid(RaidDefinition definition, PokemonEntity boss, List<ServerPlayer> players, long startedTick) {
@@ -88,10 +97,20 @@ public final class RaidDuelService {
             this.boss = boss;
             this.bossLevel = boss.getPokemon().getLevel();
             this.players = new LinkedHashSet<>(players.stream().map(ServerPlayer::getUUID).toList());
-            this.pool = new WorldBossPool(RaidDuelRules.poolFor(definition.rarityTier(), players.size()));
             this.startedTick = startedTick;
             this.lastTick = startedTick;
+            var clocks = com.cobbleraids.config.CobbleRaidsConfigManager.get().duelRaid();
+            this.windowTicks = clocks.raidTimeLimitSeconds() * (long) SECOND;
+            this.duelLimitTicks = clocks.duelTimeLimitSeconds() * (long) SECOND;
             var renown = com.cobbleraids.renown.RaidRenownMarker.read(boss);
+            this.statFocus = renown.map(com.cobbleraids.renown.RaidRenown::boon)
+                    .filter(b -> b.kind() == com.cobbleraids.renown.RenownBoon.Kind.STAT_FOCUS).orElse(null);
+            // A renowned boss has a larger shared pool, and a larger one again with the hp_pool boon, as its party raid had.
+            var renownConfig = com.cobbleraids.config.CobbleRaidsConfigManager.get().renown();
+            long basePool = RaidDuelRules.poolFor(definition.rarityTier(), players.size());
+            this.pool = new WorldBossPool(renown.isEmpty() ? basePool : com.cobbleraids.raid.RaidScalingPolicy.renownPool(basePool,
+                    renownConfig.baseHealthBonus(), renown.get().boon().kind() == com.cobbleraids.renown.RenownBoon.Kind.HP_POOL,
+                    renownConfig.healthBonus()));
             this.renownTitle = renown.map(com.cobbleraids.renown.RaidRenown::title).orElse("");
             this.renownBoon = renown.map(r -> r.boon().encode()).orElse("");
         }
@@ -112,8 +131,27 @@ public final class RaidDuelService {
         if (players.isEmpty()) return "no players";
         if (players.size() > RaidDuelRules.MAX_PLAYERS) return "at most " + RaidDuelRules.MAX_PLAYERS + " players";
         long now = server.overworld().getGameTime();
+        // One raid charge each, spent before anything exists and handed back if the raid does not begin. A party raid spent it in
+        // RaidFactory, which an owned duel never reaches for charges.
+        com.cobbleraids.charges.RaidChargeStore.Reservation charges;
+        try {
+            charges = com.cobbleraids.charges.RaidChargeStore.get(server)
+                    .reserve(server, players.stream().map(ServerPlayer::getUUID).toList());
+        } catch (RuntimeException ex) {
+            return ex.getMessage() == null ? "raid charges could not be spent" : ex.getMessage();
+        }
+        try (charges) {
+            String refused = start(server, players, definition, boss, now, charges);
+            if (refused == null) charges.commit();
+            return refused;
+        }
+    }
+
+    private static String start(MinecraftServer server, List<ServerPlayer> players, RaidDefinition definition, PokemonEntity boss,
+                                long now, com.cobbleraids.charges.RaidChargeStore.Reservation charges) {
         DuelRaid raid = new DuelRaid(definition, boss, players, now);
         // Never recruitable again, and never wandering off while its copies are fought.
+        boolean hadNoAi = boss.isNoAi();
         RaidBossEntityMarker.markOwned(boss, FACE_OWNER);
         boss.setNoAi(true);
         FACES.add(boss.getUUID());
@@ -128,15 +166,24 @@ public final class RaidDuelService {
             else {
                 raid.out.add(player.getUUID());
                 say(player, "Your duel could not start: " + why, ChatFormatting.RED);
+                // They take no part in this raid, so it does not cost them a charge.
+                RaidFaultBarrier.guard("duel-raid:charge-release", () -> charges.release(player.getUUID()));
             }
         }
         if (started == 0) {
             RAIDS.remove(raid.raidId);
             FACES.remove(boss.getUUID());
             AscensionLibArming.endEncounter(boss.getPokemon().getUuid());
+            // The lobby tells its players the boss remains available, and an owned boss refuses every lobby.
+            RaidBossEntityMarker.clearOwned(boss);
+            boss.setNoAi(hadNoAi);
             return "no duel could start";
         }
         RaidLog.info("Duel raid {} ({}): {} player(s), pool {}", raid.raidId, definition.id(), players.size(), raid.pool.max());
+        for (ServerPlayer player : players) {
+            if (!raid.out.contains(player.getUUID())) say(player, "The raid has begun. You have "
+                    + com.cobbleraids.presentation.CommandFormat.duration(raid.windowTicks / SECOND) + " to defeat the boss.", ChatFormatting.GOLD);
+        }
         return null;
     }
 
@@ -154,7 +201,7 @@ public final class RaidDuelService {
         AscensionLibArming.arm(self, raid.boss.getPokemon().getUuid());
         StartResult result;
         try {
-            result = EncounterService.start(request, LISTENER);
+            result = EncounterService.start(request, LISTENER, copy -> applyStatFocus(raid, copy));
         } catch (RuntimeException ex) {
             RaidLog.error("A duel of raid {} for {} could not start", raid.raidId, player.getGameProfile().getName(), ex);
             return "tell an administrator";
@@ -168,9 +215,23 @@ public final class RaidDuelService {
         BY_DUEL.put(encounterId, raid);
         DUEL_PLAYER.put(encounterId, player.getUUID());
         raid.duelOfPlayer.put(player.getUUID(), encounterId);
+        raid.fought.add(player.getUUID());
         raid.duelStarted.put(player.getUUID(), raid.boss.level().getGameTime());
         raid.pausedTicks.remove(player.getUUID());
         return null;
+    }
+
+    /**
+     * Gives a duel's copy the stat focus of the renowned boss it stands for. The copy is a fresh spawn of the definition, so without
+     * this the boss a player actually fights has none of the boon its title promises. Maximum IV, and the same EVs the raid boss was
+     * given at spawn, read from it rather than recomputed so the copy can never end up stronger than the boss it copies.
+     */
+    private static void applyStatFocus(DuelRaid raid, PokemonEntity copy) {
+        if (raid.statFocus == null) return;
+        var stat = com.cobbleraids.pokemon.PokemonStatNames.statFor(raid.statFocus.stat());
+        Pokemon pokemon = copy.getPokemon();
+        pokemon.setIV(stat, com.cobblemon.mod.common.pokemon.IVs.MAX_VALUE);
+        pokemon.setEV(stat, raid.boss.getPokemon().getEvs().getOrDefault(stat));
     }
 
     /**
@@ -197,6 +258,13 @@ public final class RaidDuelService {
         }
 
         @Override
+        public void onParticipantLeft(UUID encounterId, UUID playerId, com.cobbleraids.api.encounter.LeaveReason reason) {
+            // Withdrew, fled, or never came back from a disconnect: all three give the raid up, as they did a party raid.
+            DuelRaid raid = BY_DUEL.get(encounterId);
+            if (raid != null) raid.forfeited.add(playerId);
+        }
+
+        @Override
         public void onEnded(EncounterResult result) {
             DuelRaid raid = BY_DUEL.remove(result.encounterId());
             UUID playerId = DUEL_PLAYER.remove(result.encounterId());
@@ -214,7 +282,10 @@ public final class RaidDuelService {
             } else {
                 raid.out.add(playerId);
                 ServerPlayer player = server.getPlayerList().getPlayer(playerId);
-                if (player != null) say(player, "You are out of this raid. Your damage still counts.", ChatFormatting.YELLOW);
+                // A player who gave the raid up has already been told so, and their damage earns them nothing.
+                if (player != null && !raid.forfeited.contains(playerId)) {
+                    say(player, "You are out of this raid. Your damage still counts.", ChatFormatting.YELLOW);
+                }
             }
         }
     };
@@ -225,9 +296,17 @@ public final class RaidDuelService {
         long now = server.overworld().getGameTime();
         for (DuelRaid raid : List.copyOf(RAIDS.values())) {
             if (raid.finished) continue;
-            if (raid.boss.isRemoved() || now - raid.startedTick > RaidDuelRules.WINDOW_SECONDS * (long) SECOND) {
+            long left = raid.windowTicks - (now - raid.startedTick);
+            if (bossDestroyed(raid.boss) || left < 0) {
                 finish(server, raid, false);
                 continue;
+            }
+            if (!raid.lastMinuteWarned && left <= 60L * SECOND && raid.windowTicks > 60L * SECOND) {
+                raid.lastMinuteWarned = true;
+                for (UUID id : raid.players) {
+                    ServerPlayer player = raid.out.contains(id) ? null : server.getPlayerList().getPlayer(id);
+                    if (player != null) say(player, "One minute left to defeat the raid boss!", ChatFormatting.RED);
+                }
             }
             long delta = Math.max(0L, now - raid.lastTick);
             raid.lastTick = now;
@@ -251,27 +330,44 @@ public final class RaidDuelService {
      * player chains to a fresh copy. A player who is offline is under reconnect grace, so their duel's clock stands still.
      */
     private static void enforceDuel(MinecraftServer server, DuelRaid raid, UUID playerId, UUID duel, long now, long delta) {
+        // A duel that is already decided cannot be aborted, so enforcing here would repeat the message every tick until it is finalized.
+        if (!EncounterService.isFighting(duel)) return;
         ServerPlayer player = server.getPlayerList().getPlayer(playerId);
         if (player == null) {
             raid.pausedTicks.merge(playerId, delta, Long::sum);
             return;
         }
         if (player.level() != raid.boss.level() || player.distanceToSqr(raid.boss) > RaidDuelRules.LEASH_BLOCKS * RaidDuelRules.LEASH_BLOCKS) {
-            say(player, "You walked away from the raid.", ChatFormatting.YELLOW);
+            say(player, "You walked away from the raid and forfeited its rewards.", ChatFormatting.YELLOW);
+            raid.forfeited.add(playerId);
             EncounterService.abort(duel);
             return;
         }
         long used = now - raid.duelStarted.getOrDefault(playerId, now) - raid.pausedTicks.getOrDefault(playerId, 0L);
-        if (used > RaidDuelRules.DUEL_LIMIT_SECONDS * (long) SECOND) {
+        if (used > raid.duelLimitTicks) {
             raid.timedOut.add(playerId);
             say(player, "Your duel ran out of time. Your damage still counts; a fresh duel is coming.", ChatFormatting.YELLOW);
             EncounterService.abort(duel);
         }
     }
 
+    /**
+     * Whether the raid boss is really gone. An entity also reports itself removed while its chunk is merely unloaded, which happens
+     * when every player of the raid is offline under reconnect grace; ending the raid on that would take their held duels with it.
+     */
+    private static boolean bossDestroyed(PokemonEntity boss) {
+        var reason = boss.getRemovalReason();
+        return reason != null && reason.shouldDestroy();
+    }
+
     /** Whether this entity is the raid boss of a duel raid in progress (it is never battling itself: its players fight hidden copies). */
     public static boolean isFace(PokemonEntity boss) {
         return boss != null && FACES.contains(boss.getUUID());
+    }
+
+    /** As {@link #isFace(PokemonEntity)}, for a caller that has only the entity's id. */
+    public static boolean isFace(UUID bossId) {
+        return bossId != null && FACES.contains(bossId);
     }
 
     private static void finish(MinecraftServer server, DuelRaid raid, boolean won) {
@@ -285,22 +381,31 @@ public final class RaidDuelService {
         int elapsed = (int) Math.min(Integer.MAX_VALUE, server.overworld().getGameTime() - raid.startedTick);
         RaidLog.info("Duel raid {} ({}) {} after {}s: {} of {} pool dealt", raid.raidId, raid.definition.id(),
                 won ? "won" : "lost", elapsed / SECOND, raid.pool.max() - raid.pool.current(), raid.pool.max());
+        Set<UUID> victors = RaidDuelRules.victors(raid.players, raid.fought, raid.forfeited);
+        // A win is recorded for the players it pays; a loss for everybody who joined.
         RaidFaultBarrier.guard("duel-raid:stats", () -> com.cobbleraids.stats.RaidStats.onDuelRaidEnd(server, raid.definition.id(), won,
-                raid.players, damage, elapsed / SECOND, !raid.renownTitle.isEmpty()));
-        if (won) RaidFaultBarrier.guard("duel-raid:victory", () -> payVictory(server, raid, damage, elapsed));
+                won ? victors : raid.players, damage, elapsed / SECOND, !raid.renownTitle.isEmpty()));
+        if (won) RaidFaultBarrier.guard("duel-raid:victory", () -> payVictory(server, raid, victors, damage, elapsed));
         else for (UUID id : raid.players) {
             ServerPlayer player = server.getPlayerList().getPlayer(id);
             if (player != null) say(player, "The raid boss got away.", ChatFormatting.RED);
         }
         AscensionLibArming.endEncounter(raid.boss.getPokemon().getUuid());
+        // Explicitly, as every party raid's cleanup does: the discard below releases the slot only while the boss is loaded.
+        com.cobbleraids.spawn.RaidSpawnScheduler.forget(raid.boss.getUUID());
         if (!raid.boss.isRemoved()) raid.boss.discard();
     }
 
     /** What a won party raid pays, from the shared pool's contributions. */
-    private static void payVictory(MinecraftServer server, DuelRaid raid, Map<UUID, Float> damage, int elapsed) {
+    private static void payVictory(MinecraftServer server, DuelRaid raid, Set<UUID> victors, Map<UUID, Float> damage, int elapsed) {
+        for (UUID id : raid.players) {
+            if (victors.contains(id)) continue;
+            ServerPlayer player = server.getPlayerList().getPlayer(id);
+            if (player != null) say(player, "The raid boss is defeated, but you had left the raid.", ChatFormatting.YELLOW);
+        }
+        if (victors.isEmpty()) return;
         RaidDefinition definition = RaidDefinitionRegistry.get(raid.definition.id());
         if (definition == null) definition = raid.definition;
-        Set<UUID> victors = Set.copyOf(raid.players);
         Pokemon bossPokemon = raid.boss.getPokemon();
         Map<UUID, Double> percent = ContributionMath.percentages(damage, victors);
         final RaidDefinition def = definition;

@@ -220,6 +220,8 @@ public final class RaidSpawnScheduler {
             if (!spawn.dimension().equals(level.dimension().location()) || spawn.secondsLeft(schedulerTick) <= 0) continue;
             Entity entity = level.getEntity(entry.getKey());
             if (entity instanceof PokemonEntity boss && (boss.isRemoved() || boss.isBattling())) continue;
+            // A duel raid's boss is fought through hidden copies and never battles itself, but it is just as unjoinable.
+            if (com.cobbleraids.duel.RaidDuelService.isFace(entry.getKey())) continue;
             contacts.add(new RadarContact(entry.getKey(), spawn.definitionId(),
                     entity == null ? Vec3.atCenterOf(spawn.position()) : entity.position(),
                     Math.max(0, spawn.secondsLeft(schedulerTick)), entity == null));

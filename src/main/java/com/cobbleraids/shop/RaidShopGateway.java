@@ -62,13 +62,37 @@ public final class RaidShopGateway {
     private static final String REROLL_PREFIX = "reroll:";
     private static final String ROTATING_PREFIX = "rotating.";
 
+    private static final ShopPurchaseConfirmation CONFIRMATION = new ShopPurchaseConfirmation();
+
+    /** The entry this player has clicked once and is being asked to click again, or null. For the views to mark it. */
+    public static String awaitingConfirmation(ServerPlayer player) {
+        return CONFIRMATION.pending(player.getUUID(), System.currentTimeMillis());
+    }
+
+    /** A player left, or the server stopped: nothing half-confirmed is carried over. */
+    public static void forget(java.util.UUID playerId) { CONFIRMATION.clear(playerId); }
+
+    public static void onServerStopped() { CONFIRMATION.clearAll(); }
+
     /** Handles a page turn or a purchase from the web page. */
     public static void handle(ServerPlayer player, ShopActionPayload action) {
         if (!action.isPurchase()) {
+            // Looking at another page is not a second click on anything.
+            CONFIRMATION.clear(player.getUUID());
             sendPage(player, action.pageIndex());
             return;
         }
         String id = action.entryId();
+        // Raid Points are not refundable, so one click never spends them: the same entry has to be clicked twice.
+        if (!CONFIRMATION.confirm(player.getUUID(), id, System.currentTimeMillis())) {
+            player.sendSystemMessage(Component.literal(id.startsWith(REROLL_PREFIX)
+                            ? "Click REROLL again to confirm. A reroll cannot be undone."
+                            : "Click it again to confirm your purchase. Raid Points are not refunded.")
+                    .withStyle(ChatFormatting.YELLOW));
+            WebSounds.play(player, SoundEvents.UI_BUTTON_CLICK.value(), 0.6f, 1.0f);
+            sendPage(player, action.pageIndex());
+            return;
+        }
         ShopPurchaseResult result;
         String message;
         // Checked before the catalogue lookup, not after: a coincidentally-prefixed operator id in
@@ -106,6 +130,7 @@ public final class RaidShopGateway {
 
     private static void sendPage(ServerPlayer player, int requestedPage) {
         List<ShopPageView> catalogPages = listablePages(ShopCatalogManager.pages());
+        com.cobbleraids.catching.BossShopOffers.pruneExpired(player);
         Map<ResourceLocation, BossSnapshot> personal = DefeatedBossSnapshots.forPlayer(player.getUUID());
         boolean hasPersonalPage = !personal.isEmpty();
         List<ShopRotation.Listing> rotating = ShopRotationService.current(Instant.now(), player.getUUID());

@@ -58,18 +58,20 @@ setInterval(tick, 1000);
 
 function cell(entry, pokemon) {
   const affordable = page.balance >= entry.cost && !entry.soldOut;
-  const el = RC.el('div', 'panel cell' + (affordable ? '' : ' dim') + (entry.soldOut ? ' soldout' : ''));
+  const el = RC.el('div', 'panel cell' + (affordable ? '' : ' dim') + (entry.soldOut ? ' soldout' : '') + (entry.confirm ? ' confirm' : ''));
   el.dataset.icon = entry.icon || '';
   const image = RC.el('div', 'art');
   image.style.backgroundImage = art(entry.icon);
   el.appendChild(image);
 
-  const price = entry.soldOut ? 'SOLD OUT' : RC.num(entry.cost) + ' RP';
+  // The server asks for a second click before it spends anything; the cell says so until it gets one.
+  const price = entry.soldOut ? 'SOLD OUT' : entry.confirm ? (pokemon ? 'CONFIRM ' + RC.num(entry.cost) + ' RP?' : 'CONFIRM?') : RC.num(entry.cost) + ' RP';
   if (pokemon) {
     const body = RC.el('div', 'body');
     const name = RC.el('div', 'name' + (entry.shiny ? ' shiny' : ''), (entry.shiny ? '★ ' : '') + RC.title(entry.species));
     body.append(name, RC.el('div', 'meta', 'Level ' + entry.level));
     if (entry.personal) body.appendChild(RC.el('div', 'meta', 'IV ' + entry.ivPercent + '%  EV ' + entry.evPercent + '%'));
+    if (entry.personal && entry.leavesInMillis >= 0) body.appendChild(RC.el('div', 'meta leaves', 'Leaves in ' + leavesIn(entry.leavesInMillis)));
     // The price and the reroll button share a row, so a long price can never run under the button.
     const priceRow = RC.el('div', 'pricerow');
     priceRow.appendChild(RC.el('div', 'price', price));
@@ -87,8 +89,15 @@ function cell(entry, pokemon) {
   return el;
 }
 
+// A saved boss stays a set number of days. Shown as days and hours, or hours and minutes on its last day.
+function leavesIn(millis) {
+  const minutes = Math.max(1, Math.ceil(millis / 60000));
+  const d = Math.floor(minutes / 1440), h = Math.floor(minutes / 60) % 24, m = minutes % 60;
+  return d > 0 ? d + 'd ' + h + 'h' : h > 0 ? h + 'h ' + m + 'm' : m + 'm';
+}
+
 function rerollButton(entry) {
-  const r = RC.el('button', 'reroll', 'REROLL');
+  const r = RC.el('button', 'reroll' + (entry.confirmReroll ? ' confirm' : ''), entry.confirmReroll ? 'CONFIRM?' : 'REROLL');
   r.addEventListener('click', (ev) => {
     ev.stopPropagation();
     send({ action: 'buy', page: page.pageIndex, id: 'reroll:' + entry.id.substring('personal:'.length) });
@@ -108,7 +117,10 @@ function tooltipFor(entry) {
   if (entry.personal) {
     out.push(['IV ' + entry.ivPercent + '%   EV ' + entry.evPercent + '%', 'hi']);
     if (entry.canReroll) out.push(['Reroll (risky): ' + entry.rerollCost + ' RP', 'hi']);
+    if (entry.leavesInMillis >= 0) out.push(['Leaves your shop in ' + leavesIn(entry.leavesInMillis), entry.leavesInMillis < 86400000 ? 'bad' : 'mu']);
   }
+  if (entry.confirm) out.push(['Click again to confirm', 'hi']);
+  if (entry.confirmReroll) out.push(['Click REROLL again to confirm', 'hi']);
   if (entry.soldOut) {
     out.push([entry.limit === 1 ? 'Already purchased' : 'All ' + entry.limit + ' bought', 'ok']);
     out.push([page.rotatesInMillis > 0 ? 'Back with the next restock' : 'Resets daily', 'mu']);

@@ -51,6 +51,13 @@ public final class RaidBossEntityMarker {
         entity.addTag(OWNER_PREFIX + owner);
     }
 
+    /** Hands a boss back after an encounter that marked it owned failed to start, so it can be recruited again. */
+    public static void clearOwned(PokemonEntity entity) {
+        for (String tag : List.copyOf(entity.getTags())) {
+            if (tag.startsWith(OWNER_PREFIX)) entity.removeTag(tag);
+        }
+    }
+
     /** True when the boss belongs to an encounter started by {@code owner} (see {@link #markOwned}). */
     public static boolean isOwnedBy(PokemonEntity entity, ResourceLocation owner) {
         return entity != null && entity.getTags().contains(OWNER_PREFIX + owner);

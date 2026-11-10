@@ -37,6 +37,7 @@ public final class RaidCommands {
         RaidRewardCommand.build(dispatcher);   // first: owns the requirement-free root
         RaidPointsCommand.build(dispatcher);
         RaidShopCommand.build(dispatcher);
+        BossShopCommand.build(dispatcher);
         RaidWebCommand.build(dispatcher);
         RaidStatsCommand.build(dispatcher);
         RaidTitleCommand.build(dispatcher);

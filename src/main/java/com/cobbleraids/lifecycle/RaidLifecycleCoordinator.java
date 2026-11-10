@@ -1,5 +1,6 @@
 package com.cobbleraids.lifecycle;
 
+import com.cobbleraids.RaidLog;
 import com.cobbleraids.api.encounter.EncounterPolicy;
 import com.cobbleraids.api.encounter.LeaveReason;
 import com.cobbleraids.encounter.EncounterService;
@@ -47,12 +48,16 @@ import net.minecraft.server.level.ServerPlayer;
 public final class RaidLifecycleCoordinator {
     private static final RaidFinalizationGuard FINALIZATION = new RaidFinalizationGuard();
     private static final Set<UUID> VICTORY_REQUESTED = ConcurrentHashMap.newKeySet();
+    private static final TerminalRaidWatch TERMINAL_WATCH = new TerminalRaidWatch();
     private RaidLifecycleCoordinator() {}
 
     /** Called after RaidSession reaches COMPLETED. */
     public static void requestVictory(RaidSession raid) {
         if (raid == null || raid.getStatus() != RaidSession.Status.COMPLETED) return;
         if (!VICTORY_REQUESTED.add(raid.getId())) return;
+        // Whether or not anything is written below: Showdown may already have ended this battle, in
+        // which case it never answers. See TerminalRaidWatch.
+        TERMINAL_WATCH.victoryRequested(raid.getId());
         PokemonBattle battle = raid.getBattle();
         String winners = raid.getActiveParticipants().stream()
                 .map(UUID::toString)
@@ -239,8 +244,68 @@ public final class RaidLifecycleCoordinator {
      */
     public static void abortAll() {
         for (RaidSession raid : RaidRegistry.all()) {
-            RaidFaultBarrier.guard("shutdown:abort-raid", () -> abort(raid));
+            RaidFaultBarrier.guard("shutdown:abort-raid", () -> {
+                abort(raid);
+                // abort() refuses a raid already in a terminal state, and one that is won but still
+                // waiting on its victory is exactly that. It has no later tick to be finalized on, so
+                // its battle and boss are cleaned up here rather than saved with the world.
+                if (RaidRegistry.get(raid.getBattle()) == raid) finalizeNonVictory(raid, false);
+            });
         }
+    }
+
+    /**
+     * Finalizes every raid that reached a terminal state and was then left registered. Server tick.
+     *
+     * <p>The ordinary endings never come through here; see {@link TerminalRaidWatch} for the one that
+     * does. It is logged as an error every time, so a raid ended this way is still a line in the log
+     * with an id in it rather than something that quietly repaired itself.
+     */
+    public static void tickTerminalWatch(MinecraftServer server) {
+        if (RaidRegistry.isEmpty()) {
+            TERMINAL_WATCH.clear();
+            return;
+        }
+        Map<UUID, RaidSession> terminal = null;
+        for (RaidSession raid : RaidRegistry.all()) {
+            RaidSession.Status status = raid.getStatus();
+            if (status == RaidSession.Status.WAITING || status == RaidSession.Status.ACTIVE) continue;
+            if (terminal == null) terminal = new LinkedHashMap<>();
+            terminal.put(raid.getId(), raid);
+        }
+        if (terminal == null) {
+            TERMINAL_WATCH.clear();
+            return;
+        }
+        for (UUID raidId : TERMINAL_WATCH.tick(terminal.keySet())) {
+            RaidSession raid = terminal.get(raidId);
+            RaidFaultBarrier.guard("stranded-raid", () -> finalizeStranded(raid));
+        }
+    }
+
+    private static void finalizeStranded(RaidSession raid) {
+        RaidLog.error("Raid {} ({}) reached {} but was never finalized (battle {}, ended={}); finalizing it now",
+                raid.getId(), raid.getDefinitionId(), raid.getStatus(), raid.getBattle().getBattleId(),
+                raid.getBattle().getEnded());
+        if (raid.getOutcome() == RaidOutcome.VICTORY) {
+            // What Cobblemon's WinInstruction would have set before ending the battle, so the end it
+            // gets here is recorded as the same victory rather than as a stopped battle.
+            RaidFaultBarrier.guard("stranded-raid:winners", () -> declareWinners(raid));
+            finalizeVictory(raid);
+        } else finalizeNonVictory(raid, raid.getStatus() == RaidSession.Status.FAILED);
+    }
+
+    private static void declareWinners(RaidSession raid) {
+        PokemonBattle battle = raid.getBattle();
+        if (battle.getEnded()) return;
+        List<BattleActor> winners = new ArrayList<>();
+        List<BattleActor> losers = new ArrayList<>();
+        for (BattleActor actor : battle.getActors()) {
+            if (raid.isActiveParticipant(actor.getUuid())) winners.add(actor);
+            else if (raid.getBossActorId().equals(actor.getUuid())) losers.add(actor);
+        }
+        battle.setWinners(winners);
+        battle.setLosers(losers);
     }
 
     /** The raid's tier for AscensionLib's raid pay; starter when the definition has gone (a reload mid-raid). */
@@ -275,6 +340,10 @@ public final class RaidLifecycleCoordinator {
                             raid.getContributionSnapshot(), raid.getActiveParticipants()));
         },
                 // Separate steps, so one that throws cannot skip the others; see RaidFinalizationGuard.
+                // A no-op on the ordinary path, where BATTLE_VICTORY arrives after Cobblemon ended the
+                // battle. A victory finalized by the terminal watch has a battle nobody ended, and
+                // skipping this would leave its players in a battle UI they cannot leave.
+                () -> RaidBattleTermination.end(raid.getBattle()),
                 () -> RaidRegistry.remove(raid.getBattle()),
                 () -> cleanupBossEntity(raid),
                 () -> VICTORY_REQUESTED.remove(raid.getId()),
@@ -378,8 +447,9 @@ public final class RaidLifecycleCoordinator {
             for (UUID playerId : victors) {
                 ServerPlayer player = server.getPlayerList().getPlayer(playerId);
                 if (player == null) continue;
-                RaidFaultBarrier.guard("boss-snapshot", () ->
-                        BossSnapshotService.snapshot(server, playerId, definition.rarityTier(), bossPokemon));
+                // Offered, not saved: slots are few, so which bosses fill them is the player's choice.
+                RaidFaultBarrier.guard("boss-snapshot", () -> com.cobbleraids.catching.BossShopOffers.offer(
+                        server, player, BossSnapshotService.build(server, definition.rarityTier(), bossPokemon)));
             }
         }
         if (bossPokemon == null) return;
@@ -523,5 +593,6 @@ public final class RaidLifecycleCoordinator {
     public static void onServerStopped() {
         FINALIZATION.clear();
         VICTORY_REQUESTED.clear();
+        TERMINAL_WATCH.clear();
     }
 }

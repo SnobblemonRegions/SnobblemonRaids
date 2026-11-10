@@ -90,6 +90,8 @@ public final class HubWebPage {
                     default -> { }
                 }
             }
+            // The page is closing. Nothing is held per viewer, so there is nothing to release.
+            case "bye" -> { }
             default -> RaidLog.warn("Ignoring unknown hub page action from {}", player.getGameProfile().getName());
         }
     }

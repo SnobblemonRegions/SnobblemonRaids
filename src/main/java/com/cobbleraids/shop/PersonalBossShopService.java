@@ -42,6 +42,7 @@ public final class PersonalBossShopService {
     private PersonalBossShopService() {}
 
     public static ShopPurchaseResult purchase(ServerPlayer player, ResourceLocation species) {
+        com.cobbleraids.catching.BossShopOffers.pruneExpired(player);
         BossSnapshot snapshot = DefeatedBossSnapshots.get(player.getUUID(), species);
         if (snapshot == null) return ShopPurchaseResult.UNKNOWN_ENTRY;
 
@@ -96,6 +97,7 @@ public final class PersonalBossShopService {
     }
 
     public static ShopPurchaseResult reroll(ServerPlayer player, ResourceLocation species) {
+        com.cobbleraids.catching.BossShopOffers.pruneExpired(player);
         BossSnapshot snapshot = DefeatedBossSnapshots.get(player.getUUID(), species);
         if (snapshot == null) return ShopPurchaseResult.UNKNOWN_ENTRY;
 
@@ -112,7 +114,8 @@ public final class PersonalBossShopService {
         BossSnapshot updated = new BossSnapshot(species, snapshot.level(), snapshot.shiny(),
                 BossSnapshotService.percentOf(pokemon.getIvs().total(), 186),
                 BossSnapshotService.percentOf(pokemon.getEvs().total(), 510),
-                snapshot.rarityTier(), tag, System.currentTimeMillis());
+                // The day it was saved, not today: a reroll must not buy a saved boss another week.
+                snapshot.rarityTier(), tag, snapshot.capturedAtEpochMs());
         DefeatedBossSnapshots.put(player.getServer(), player.getUUID(), updated);
 
         RaidPlayerRecords.flush(player.getServer());

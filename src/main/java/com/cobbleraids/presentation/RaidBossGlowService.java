@@ -49,6 +49,40 @@ public final class RaidBossGlowService {
         TRACKER.register(boss, level, Boolean.TRUE);
     }
 
+    /**
+     * Takes every boss this service is not tracking back out of the glow teams, once, at server start.
+     *
+     * <p>Team membership is saved with the world, and the only thing that removes a member is this
+     * service untracking its boss. A server that is killed rather than stopped therefore reloads the
+     * membership it last saved, including bosses that were destroyed after that save and whose entities
+     * will never load again to be untracked -- entries nothing else would ever remove. A boss that is
+     * still alive loses nothing: it is tracked again when it loads, and its glow is re-applied from there.
+     *
+     * @return how many stale members were removed
+     */
+    public static int onServerStarted(MinecraftServer server) {
+        Map<UUID, ResourceLocation> tracked = TRACKER.trackedBosses();
+        Scoreboard scoreboard = server.getScoreboard();
+        int removed = 0;
+        for (RaidRarityTier tier : RaidRarityTier.values()) {
+            PlayerTeam team = scoreboard.getPlayerTeam(teamName(tier));
+            if (team == null) continue;
+            for (String member : java.util.List.copyOf(team.getPlayers())) {
+                UUID memberId;
+                try {
+                    memberId = UUID.fromString(member);
+                } catch (IllegalArgumentException notAnEntity) {
+                    // A player name: somebody put a person in the team by hand, which is theirs to undo.
+                    continue;
+                }
+                if (tracked.containsKey(memberId)) continue;
+                scoreboard.removePlayerFromTeam(member, team);
+                removed++;
+            }
+        }
+        return removed;
+    }
+
     public static void onServerStopping(MinecraftServer server) {
         TRACKER.onServerStopping(server);
     }
@@ -121,6 +155,12 @@ public final class RaidBossGlowService {
 
             // Inside a running World Boss zone the outline would draw the duel copy and the showpiece through terrain: no glow there.
             if (com.cobbleraids.worldboss.WorldBossService.suppressesGlowAt(boss.level().dimension().location(), boss.getX(), boss.getZ())) {
+                if (boss.hasEffect(MobEffects.GLOWING)) boss.removeEffect(MobEffects.GLOWING);
+                return;
+            }
+
+            // A duel raid's copy is hidden so its player sees only the boss they walked up to; an outline would draw it back in.
+            if (RaidBossEntityMarker.isOwnedBy(boss, com.cobbleraids.duel.RaidDuelService.OWNER)) {
                 if (boss.hasEffect(MobEffects.GLOWING)) boss.removeEffect(MobEffects.GLOWING);
                 return;
             }

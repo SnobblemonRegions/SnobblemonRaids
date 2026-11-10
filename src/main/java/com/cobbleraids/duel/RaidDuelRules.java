@@ -16,13 +16,13 @@ public final class RaidDuelRules {
 
     /** The most players one duel raid takes. */
     public static final int MAX_PLAYERS = 8;
-    /** How long the group has to empty the pool. */
+    /** How long the group has to empty the pool: the default of {@code duel_raid.raid_time_limit_seconds} in the server config. */
     public static final int WINDOW_SECONDS = 600;
     /** The exponent the pool grows with. */
     public static final double CROWD_EXPONENT = 0.85;
     /** First guess: one player's share of the pool is this many of their duel bosses. Tune from the phase-0 logs. */
     public static final int DUELS_PER_PLAYER = 3;
-    /** One duel's own time limit (the World Boss's method): a duel still running after this long is ended and its player chains on. */
+    /** One duel's own time limit, the default of {@code duel_raid.duel_time_limit_seconds}: a duel still running after this long is ended and its player chains on. */
     public static final int DUEL_LIMIT_SECONDS = 240;
     /** A player this far from the raid boss, or in another dimension, has walked out of the raid. */
     public static final double LEASH_BLOCKS = 48.0;
@@ -48,6 +48,18 @@ public final class RaidDuelRules {
     public static long poolFor(RaidRarityTier tier, int players) {
         int n = Math.max(1, Math.min(MAX_PLAYERS, players));
         return Math.round(perPlayerPool(tier) * Math.pow(n, CROWD_EXPONENT));
+    }
+
+    /**
+     * Who a won raid pays: everybody who actually fought a duel and did not give the raid up. A player whose party was wiped is
+     * still paid (their damage counts); one who withdrew, walked away or never came back from a disconnect forfeited, exactly as
+     * leaving a party raid did; and one whose first duel never started took no part at all.
+     */
+    public static java.util.Set<java.util.UUID> victors(java.util.Collection<java.util.UUID> players,
+            java.util.Set<java.util.UUID> fought, java.util.Set<java.util.UUID> forfeited) {
+        java.util.Set<java.util.UUID> victors = new java.util.LinkedHashSet<>();
+        for (java.util.UUID player : players) if (fought.contains(player) && !forfeited.contains(player)) victors.add(player);
+        return victors;
     }
 
     /** Whether one more player may join a duel raid that has {@code current} already. */
