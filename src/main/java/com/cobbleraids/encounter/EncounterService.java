@@ -155,6 +155,15 @@ public final class EncounterService {
         return session == null ? null : session.getBossEntity();
     }
 
+    /**
+     * Whether the encounter's battle is still being fought. False once it has reached a terminal state,
+     * even in the moment before its finalization removes it -- when {@link #abort} can no longer end it.
+     */
+    public static boolean isFighting(UUID encounterId) {
+        RaidSession session = encounterId == null ? null : ACTIVE.get(encounterId);
+        return session != null && session.getStatus() == RaidSession.Status.ACTIVE;
+    }
+
     public static boolean isActive(UUID encounterId) {
         return encounterId != null && ACTIVE.containsKey(encounterId);
     }

@@ -114,6 +114,7 @@ public final class RaidDuelService {
         long now = server.overworld().getGameTime();
         DuelRaid raid = new DuelRaid(definition, boss, players, now);
         // Never recruitable again, and never wandering off while its copies are fought.
+        boolean hadNoAi = boss.isNoAi();
         RaidBossEntityMarker.markOwned(boss, FACE_OWNER);
         boss.setNoAi(true);
         FACES.add(boss.getUUID());
@@ -134,6 +135,9 @@ public final class RaidDuelService {
             RAIDS.remove(raid.raidId);
             FACES.remove(boss.getUUID());
             AscensionLibArming.endEncounter(boss.getPokemon().getUuid());
+            // The lobby tells its players the boss remains available, and an owned boss refuses every lobby.
+            RaidBossEntityMarker.clearOwned(boss);
+            boss.setNoAi(hadNoAi);
             return "no duel could start";
         }
         RaidLog.info("Duel raid {} ({}): {} player(s), pool {}", raid.raidId, definition.id(), players.size(), raid.pool.max());
@@ -225,7 +229,7 @@ public final class RaidDuelService {
         long now = server.overworld().getGameTime();
         for (DuelRaid raid : List.copyOf(RAIDS.values())) {
             if (raid.finished) continue;
-            if (raid.boss.isRemoved() || now - raid.startedTick > RaidDuelRules.WINDOW_SECONDS * (long) SECOND) {
+            if (bossDestroyed(raid.boss) || now - raid.startedTick > RaidDuelRules.WINDOW_SECONDS * (long) SECOND) {
                 finish(server, raid, false);
                 continue;
             }
@@ -251,6 +255,8 @@ public final class RaidDuelService {
      * player chains to a fresh copy. A player who is offline is under reconnect grace, so their duel's clock stands still.
      */
     private static void enforceDuel(MinecraftServer server, DuelRaid raid, UUID playerId, UUID duel, long now, long delta) {
+        // A duel that is already decided cannot be aborted, so enforcing here would repeat the message every tick until it is finalized.
+        if (!EncounterService.isFighting(duel)) return;
         ServerPlayer player = server.getPlayerList().getPlayer(playerId);
         if (player == null) {
             raid.pausedTicks.merge(playerId, delta, Long::sum);
@@ -267,6 +273,15 @@ public final class RaidDuelService {
             say(player, "Your duel ran out of time. Your damage still counts; a fresh duel is coming.", ChatFormatting.YELLOW);
             EncounterService.abort(duel);
         }
+    }
+
+    /**
+     * Whether the raid boss is really gone. An entity also reports itself removed while its chunk is merely unloaded, which happens
+     * when every player of the raid is offline under reconnect grace; ending the raid on that would take their held duels with it.
+     */
+    private static boolean bossDestroyed(PokemonEntity boss) {
+        var reason = boss.getRemovalReason();
+        return reason != null && reason.shouldDestroy();
     }
 
     /** Whether this entity is the raid boss of a duel raid in progress (it is never battling itself: its players fight hidden copies). */
@@ -293,6 +308,8 @@ public final class RaidDuelService {
             if (player != null) say(player, "The raid boss got away.", ChatFormatting.RED);
         }
         AscensionLibArming.endEncounter(raid.boss.getPokemon().getUuid());
+        // Explicitly, as every party raid's cleanup does: the discard below releases the slot only while the boss is loaded.
+        com.cobbleraids.spawn.RaidSpawnScheduler.forget(raid.boss.getUUID());
         if (!raid.boss.isRemoved()) raid.boss.discard();
     }
 

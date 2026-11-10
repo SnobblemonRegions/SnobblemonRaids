@@ -98,6 +98,7 @@ public final class CobbleRaids implements ModInitializer {
             RaidFaultBarrier.safeTick("capture-sessions", server, RaidCaptureSessionService::tick);
             RaidFaultBarrier.safeTick("reconnect-grace", server, RaidReconnectService::tick);
             RaidFaultBarrier.safeTick("combat-timer", server, RaidCombatRuleService::tick);
+            RaidFaultBarrier.safeTick("terminal-raid-watch", server, RaidLifecycleCoordinator::tickTerminalWatch);
             RaidFaultBarrier.safeTick("boss-glow", server, RaidBossGlowService::tick);
             RaidFaultBarrier.safeTick("web-sounds", server, com.cobbleraids.web.WebSounds::tick);
             RaidFaultBarrier.safeTick("consistency-audit", server, RaidConsistencyAuditScheduler::tick);
@@ -134,6 +135,12 @@ public final class CobbleRaids implements ModInitializer {
                 RaidFaultBarrier.guard("startup:thread-guard", () -> RaidThreadGuard.onServerStarted(server)));
         ServerLifecycleEvents.SERVER_STARTED.register(server ->
                 RaidFaultBarrier.guard("startup:spawn-scheduler", () -> RaidSpawnScheduler.onServerStarted(server)));
+        // After the sweep above too, so a boss it discarded has already left its glow team by the ordinary route.
+        ServerLifecycleEvents.SERVER_STARTED.register(server ->
+                RaidFaultBarrier.guard("startup:boss-glow", () -> {
+                    int removed = RaidBossGlowService.onServerStarted(server);
+                    if (removed > 0) RaidLog.info("Removed {} stale raid boss(es) from the glow scoreboard teams.", removed);
+                }));
         // After the spawn scheduler's sweep above, which discards every stale raid boss: an event that
         // survived a restart re-creates its showpiece here.
         ServerLifecycleEvents.SERVER_STARTED.register(server ->
