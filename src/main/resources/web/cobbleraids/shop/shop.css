@@ -24,10 +24,22 @@
 .pokemon .cell .tag { right: 0.8cqw; top: 0.4cqw; }
 .shiny { color: #ffe066; }
 .pokemon .cell .pricerow { display: flex; align-items: center; justify-content: space-between; gap: 0.6cqw; min-width: 0; }
-.pokemon .cell .pricerow .price { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.reroll { flex: none; padding: 0.15cqw 0.6cqw; border: 1px solid #ffd84a; color: #ffd84a; font: 700 var(--fs-s) var(--pix); background: rgba(40, 32, 6, 0.9); cursor: pointer; }
+.pokemon .cell .pricerow .price { flex: none; font-size: var(--fs-s); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reroll { flex: none; padding: 0.1cqw 0.4cqw; letter-spacing: -0.02em; border: 1px solid #ffd84a; color: #ffd84a; font: 700 var(--fs-s) var(--pix); background: rgba(40, 32, 6, 0.9); cursor: pointer; }
 .reroll:hover { background: #ffd84a; color: #221a02; }
 .pokemon .cell .leaves { color: #ffd84a; }
+/* The boss waiting to be saved: one wide cell across the top of Your Bosses. */
+.cell.offer { grid-column: 1 / -1; cursor: default; outline: 2px solid #ffd84a; outline-offset: -2px; }
+.cell.offer .body { right: 24cqw; }
+.cell.offer .kicker { color: #ffd84a; letter-spacing: 0.1em; }
+.cell.offer .hint { color: var(--hi); }
+.cell.offer .actions { position: absolute; right: 1cqw; top: 0; bottom: 0; width: 22cqw; display: flex; flex-direction: column; justify-content: center; gap: 0.7cqw; }
+.cell.offer .actions button { padding: 0.5cqw 1cqw; font: 700 var(--fs) var(--pix); cursor: pointer; }
+.cell.offer .keepbtn { border: 1px solid #ffd84a; background: #ffd84a; color: #221a02; }
+.cell.offer .declinebtn { border: 1px solid var(--ln); background: transparent; color: var(--mu); }
+.cell.offer .declinebtn:hover { border-color: var(--hi); color: var(--hi); }
+.reroll.replace { border-color: #ff9a4a; color: #ff9a4a; }
+.reroll.replace:hover, .reroll.replace.confirm { background: #ff9a4a; color: #221a02; }
 /* Clicked once: the server is waiting for the second click before it spends anything. */
 .cell.confirm { outline: 2px solid #ffd84a; outline-offset: -2px; }
 .cell.confirm .price { color: #ffd84a; }

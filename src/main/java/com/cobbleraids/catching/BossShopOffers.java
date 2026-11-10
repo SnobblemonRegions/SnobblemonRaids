@@ -42,6 +42,34 @@ public final class BossShopOffers {
 
     private BossShopOffers() {}
 
+    /** What the shop page needs to draw an offer: the boss, how long is left to decide, and whether a slot must be given up. */
+    public record OfferView(BossSnapshot snapshot, long expiresInMillis, boolean full) {}
+
+    /** The offer this player has not answered, or null. {@code full} is whether keeping it means replacing a saved boss. */
+    public static OfferView view(ServerPlayer player) {
+        Offer offer = OFFERS.get(player.getUUID());
+        long now = System.currentTimeMillis();
+        if (offer == null) return null;
+        if (now > offer.expiresAt()) {
+            OFFERS.remove(player.getUUID(), offer);
+            return null;
+        }
+        boolean full = BossShopSlots.verdict(DefeatedBossSnapshots.forPlayer(player.getUUID()).keySet(),
+                offer.snapshot().species(), config().maxSlots()) == BossShopSlots.Verdict.FULL;
+        return new OfferView(offer.snapshot(), offer.expiresAt() - now, full);
+    }
+
+    /** The player lets the offered boss go. */
+    public static void decline(ServerPlayer player) {
+        Offer gone = OFFERS.remove(player.getUUID());
+        if (gone != null) say(player, name(gone.snapshot()) + " was not added to your boss shop.", ChatFormatting.YELLOW);
+    }
+
+    /** How many saved bosses this player has and how many they may have. */
+    public static int slotsUsed(ServerPlayer player) { return DefeatedBossSnapshots.forPlayer(player.getUUID()).size(); }
+
+    public static int maxSlots() { return config().maxSlots(); }
+
     private static CobbleRaidsConfig.PersonalBossShop config() {
         return CobbleRaidsConfigManager.get().personalBossShop();
     }
@@ -104,7 +132,7 @@ public final class BossShopOffers {
                 ChatFormatting.YELLOW);
         for (BossSnapshot snapshot : sorted(saved)) {
             player.sendSystemMessage(Component.literal("  ").append(describe(snapshot)).append(Component.literal("  "))
-                    .append(button("[Replace]", SAVE_COMMAND + " " + snapshot.species(),
+                    .append(button("[Swap]", SAVE_COMMAND + " " + snapshot.species(),
                             "Give up " + name(snapshot) + " for " + name(offered))));
         }
     }
