@@ -16,13 +16,13 @@ public final class RaidDuelRules {
 
     /** The most players one duel raid takes. */
     public static final int MAX_PLAYERS = 8;
-    /** How long the group has to empty the pool. */
+    /** How long the group has to empty the pool: the default of {@code duel_raid.raid_time_limit_seconds} in the server config. */
     public static final int WINDOW_SECONDS = 600;
     /** The exponent the pool grows with. */
     public static final double CROWD_EXPONENT = 0.85;
     /** First guess: one player's share of the pool is this many of their duel bosses. Tune from the phase-0 logs. */
     public static final int DUELS_PER_PLAYER = 3;
-    /** One duel's own time limit (the World Boss's method): a duel still running after this long is ended and its player chains on. */
+    /** One duel's own time limit, the default of {@code duel_raid.duel_time_limit_seconds}: a duel still running after this long is ended and its player chains on. */
     public static final int DUEL_LIMIT_SECONDS = 240;
     /** A player this far from the raid boss, or in another dimension, has walked out of the raid. */
     public static final double LEASH_BLOCKS = 48.0;

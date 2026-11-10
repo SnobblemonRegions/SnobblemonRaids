@@ -58,13 +58,14 @@ setInterval(tick, 1000);
 
 function cell(entry, pokemon) {
   const affordable = page.balance >= entry.cost && !entry.soldOut;
-  const el = RC.el('div', 'panel cell' + (affordable ? '' : ' dim') + (entry.soldOut ? ' soldout' : ''));
+  const el = RC.el('div', 'panel cell' + (affordable ? '' : ' dim') + (entry.soldOut ? ' soldout' : '') + (entry.confirm ? ' confirm' : ''));
   el.dataset.icon = entry.icon || '';
   const image = RC.el('div', 'art');
   image.style.backgroundImage = art(entry.icon);
   el.appendChild(image);
 
-  const price = entry.soldOut ? 'SOLD OUT' : RC.num(entry.cost) + ' RP';
+  // The server asks for a second click before it spends anything; the cell says so until it gets one.
+  const price = entry.soldOut ? 'SOLD OUT' : entry.confirm ? (pokemon ? 'CONFIRM ' + RC.num(entry.cost) + ' RP?' : 'CONFIRM?') : RC.num(entry.cost) + ' RP';
   if (pokemon) {
     const body = RC.el('div', 'body');
     const name = RC.el('div', 'name' + (entry.shiny ? ' shiny' : ''), (entry.shiny ? '★ ' : '') + RC.title(entry.species));
@@ -88,7 +89,7 @@ function cell(entry, pokemon) {
 }
 
 function rerollButton(entry) {
-  const r = RC.el('button', 'reroll', 'REROLL');
+  const r = RC.el('button', 'reroll' + (entry.confirmReroll ? ' confirm' : ''), entry.confirmReroll ? 'CONFIRM?' : 'REROLL');
   r.addEventListener('click', (ev) => {
     ev.stopPropagation();
     send({ action: 'buy', page: page.pageIndex, id: 'reroll:' + entry.id.substring('personal:'.length) });
@@ -109,6 +110,8 @@ function tooltipFor(entry) {
     out.push(['IV ' + entry.ivPercent + '%   EV ' + entry.evPercent + '%', 'hi']);
     if (entry.canReroll) out.push(['Reroll (risky): ' + entry.rerollCost + ' RP', 'hi']);
   }
+  if (entry.confirm) out.push(['Click again to confirm', 'hi']);
+  if (entry.confirmReroll) out.push(['Click REROLL again to confirm', 'hi']);
   if (entry.soldOut) {
     out.push([entry.limit === 1 ? 'Already purchased' : 'All ' + entry.limit + ' bought', 'ok']);
     out.push([page.rotatesInMillis > 0 ? 'Back with the next restock' : 'Resets daily', 'mu']);

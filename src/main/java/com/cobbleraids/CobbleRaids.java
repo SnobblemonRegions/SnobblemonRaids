@@ -187,6 +187,7 @@ public final class CobbleRaids implements ModInitializer {
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
                 RaidFaultBarrier.guard("player-disconnect:request-throttles", () -> {
                     com.cobbleraids.radar.RaidRadarService.forget(handler.getPlayer().getUUID());
+                    com.cobbleraids.shop.RaidShopGateway.forget(handler.getPlayer().getUUID());
                     TrophyRoomGateway.forget(handler.getPlayer().getUUID());
                     LegendRoomGateway.forget(handler.getPlayer().getUUID());
                     RaidCaptureSessionService.forgetLogThrottle(handler.getPlayer().getUUID());
@@ -248,6 +249,7 @@ public final class CobbleRaids implements ModInitializer {
             RaidFaultBarrier.guard("shutdown:reconnect-grace", RaidReconnectService::onServerStopped);
             RaidFaultBarrier.guard("shutdown:rewards", RaidRewardService::onServerStopped);
             RaidFaultBarrier.guard("shutdown:web-sounds", com.cobbleraids.web.WebSounds::clear);
+            RaidFaultBarrier.guard("shutdown:shop-confirmations", com.cobbleraids.shop.RaidShopGateway::onServerStopped);
             RaidFaultBarrier.guard("shutdown:capture-sessions", RaidCaptureSessionService::onServerStopped);
             RaidFaultBarrier.guard("shutdown:spawn-history", RaidSpawnHistory::onServerStopped);
             RaidFaultBarrier.guard("shutdown:player-records", RaidPlayerRecords::onServerStopped);

@@ -205,9 +205,15 @@ final class CobbleRaidsConfigCodec {
                 Json.bool(reconnectGraceObject, "enabled", rg.enabled()),
                 Json.integer(reconnectGraceObject, "grace_seconds", rg.graceSeconds()));
 
+        JsonObject duelRaidObject = Json.object(root, "duel_raid");
+        CobbleRaidsConfig.DuelRaid dr = defaults.duelRaid();
+        CobbleRaidsConfig.DuelRaid duelRaid = new CobbleRaidsConfig.DuelRaid(
+                Json.integer(duelRaidObject, "duel_time_limit_seconds", dr.duelTimeLimitSeconds()),
+                Json.integer(duelRaidObject, "raid_time_limit_seconds", dr.raidTimeLimitSeconds()));
+
         return new CobbleRaidsConfig(naturalSpawning, recruitmentDefaults, combatDefaults, battleCarryover,
                 bossTraits, catching, currency, dynamicLevel, megaPity, raidPoints, personalBossShop, tierScaling,
-                bossGlow, bossMovement, renown, reconnectGrace, Json.bool(root, "debug_logging", defaults.debugLogging()));
+                bossGlow, bossMovement, renown, reconnectGrace, duelRaid, Json.bool(root, "debug_logging", defaults.debugLogging()));
     }
 
     private static CobbleRaidsConfig.TierMultipliers readTierMultipliers(
@@ -399,6 +405,11 @@ final class CobbleRaidsConfigCodec {
         reconnectGraceJson.addProperty("enabled", reconnectGrace.enabled());
         reconnectGraceJson.addProperty("grace_seconds", reconnectGrace.graceSeconds());
         root.add("reconnect_grace", reconnectGraceJson);
+
+        JsonObject duelRaidJson = new JsonObject();
+        duelRaidJson.addProperty("duel_time_limit_seconds", config.duelRaid().duelTimeLimitSeconds());
+        duelRaidJson.addProperty("raid_time_limit_seconds", config.duelRaid().raidTimeLimitSeconds());
+        root.add("duel_raid", duelRaidJson);
 
         root.addProperty("debug_logging", config.debugLogging());
         return root;

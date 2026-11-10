@@ -69,9 +69,16 @@ public final class ShopWebPage {
         page.addProperty("rotatesInMillis", payload.rotatesInMillis());
         JsonArray entries = new JsonArray();
         Set<String> wanted = new LinkedHashSet<>();
+        String awaiting = RaidShopGateway.awaitingConfirmation(player);
+        // A reroll is confirmed on the cell it belongs to, which carries the personal: id.
+        boolean awaitingReroll = awaiting != null && awaiting.startsWith("reroll:");
+        String awaitingCell = awaitingReroll ? "personal:" + awaiting.substring("reroll:".length()) : awaiting;
         for (ShopEntryPayload entry : payload.entries()) {
             JsonObject cell = new JsonObject();
             cell.addProperty("id", entry.id());
+            boolean awaited = entry.id().equals(awaitingCell);
+            cell.addProperty("confirm", awaited && !awaitingReroll);
+            cell.addProperty("confirmReroll", awaited && awaitingReroll);
             cell.addProperty("cost", entry.cost());
             cell.addProperty("pokemon", entry.pokemon());
             cell.addProperty("count", entry.count());

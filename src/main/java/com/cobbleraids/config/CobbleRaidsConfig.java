@@ -22,6 +22,7 @@ public record CobbleRaidsConfig(
         BossMovement bossMovement,
         Renown renown,
         ReconnectGrace reconnectGrace,
+        DuelRaid duelRaid,
         boolean debugLogging
 ) {
     public static final int VALIDATED_MAX_HUMAN_PLAYERS = 4;
@@ -700,6 +701,26 @@ public record CobbleRaidsConfig(
         public static ReconnectGrace defaults() { return new ReconnectGrace(true, 300); }
     }
 
+    /**
+     * The two clocks of a raid, which is fought as duels: how long one duel against a copy of the boss may run
+     * before its player is moved on to a fresh one, and how long the whole group has to empty the shared pool.
+     * When the raid's time is up the raid is lost and the boss leaves.
+     */
+    public record DuelRaid(int duelTimeLimitSeconds, int raidTimeLimitSeconds) {
+        public DuelRaid {
+            if (duelTimeLimitSeconds < 30 || duelTimeLimitSeconds > 3600)
+                throw new IllegalArgumentException("duel_raid.duel_time_limit_seconds must be 30..3600");
+            if (raidTimeLimitSeconds < 60 || raidTimeLimitSeconds > 7200)
+                throw new IllegalArgumentException("duel_raid.raid_time_limit_seconds must be 60..7200");
+            if (duelTimeLimitSeconds > raidTimeLimitSeconds)
+                throw new IllegalArgumentException("duel_raid.duel_time_limit_seconds must not exceed raid_time_limit_seconds");
+        }
+
+        public static DuelRaid defaults() {
+            return new DuelRaid(com.cobbleraids.duel.RaidDuelRules.DUEL_LIMIT_SECONDS, com.cobbleraids.duel.RaidDuelRules.WINDOW_SECONDS);
+        }
+    }
+
     public record TierMultipliers(double health, double timeLimit, double reward) {
         public TierMultipliers {
             if (health < 0.1 || health > 10.0)
@@ -760,6 +781,7 @@ public record CobbleRaidsConfig(
                 BossMovement.defaults(),
                 Renown.defaults(),
                 ReconnectGrace.defaults(),
+                DuelRaid.defaults(),
                 false
         );
     }

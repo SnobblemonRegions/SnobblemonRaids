@@ -84,6 +84,12 @@ public final class RaidDuelService {
         final long startedTick;
         final String renownTitle;
         final String renownBoon;
+        /** The stat a renowned boss's epithet focuses, or null; every copy is given the same focus. */
+        final com.cobbleraids.renown.RenownBoon statFocus;
+        /** Both clocks, read once at the start so a config reload cannot move a raid's deadline under its players. */
+        final long windowTicks;
+        final long duelLimitTicks;
+        boolean lastMinuteWarned;
         boolean finished;
 
         DuelRaid(RaidDefinition definition, PokemonEntity boss, List<ServerPlayer> players, long startedTick) {
@@ -93,7 +99,12 @@ public final class RaidDuelService {
             this.players = new LinkedHashSet<>(players.stream().map(ServerPlayer::getUUID).toList());
             this.startedTick = startedTick;
             this.lastTick = startedTick;
+            var clocks = com.cobbleraids.config.CobbleRaidsConfigManager.get().duelRaid();
+            this.windowTicks = clocks.raidTimeLimitSeconds() * (long) SECOND;
+            this.duelLimitTicks = clocks.duelTimeLimitSeconds() * (long) SECOND;
             var renown = com.cobbleraids.renown.RaidRenownMarker.read(boss);
+            this.statFocus = renown.map(com.cobbleraids.renown.RaidRenown::boon)
+                    .filter(b -> b.kind() == com.cobbleraids.renown.RenownBoon.Kind.STAT_FOCUS).orElse(null);
             // A renowned boss has a larger shared pool, and a larger one again with the hp_pool boon, as its party raid had.
             var renownConfig = com.cobbleraids.config.CobbleRaidsConfigManager.get().renown();
             long basePool = RaidDuelRules.poolFor(definition.rarityTier(), players.size());
@@ -169,6 +180,10 @@ public final class RaidDuelService {
             return "no duel could start";
         }
         RaidLog.info("Duel raid {} ({}): {} player(s), pool {}", raid.raidId, definition.id(), players.size(), raid.pool.max());
+        for (ServerPlayer player : players) {
+            if (!raid.out.contains(player.getUUID())) say(player, "The raid has begun. You have "
+                    + com.cobbleraids.presentation.CommandFormat.duration(raid.windowTicks / SECOND) + " to defeat the boss.", ChatFormatting.GOLD);
+        }
         return null;
     }
 
@@ -186,7 +201,7 @@ public final class RaidDuelService {
         AscensionLibArming.arm(self, raid.boss.getPokemon().getUuid());
         StartResult result;
         try {
-            result = EncounterService.start(request, LISTENER);
+            result = EncounterService.start(request, LISTENER, copy -> applyStatFocus(raid, copy));
         } catch (RuntimeException ex) {
             RaidLog.error("A duel of raid {} for {} could not start", raid.raidId, player.getGameProfile().getName(), ex);
             return "tell an administrator";
@@ -204,6 +219,19 @@ public final class RaidDuelService {
         raid.duelStarted.put(player.getUUID(), raid.boss.level().getGameTime());
         raid.pausedTicks.remove(player.getUUID());
         return null;
+    }
+
+    /**
+     * Gives a duel's copy the stat focus of the renowned boss it stands for. The copy is a fresh spawn of the definition, so without
+     * this the boss a player actually fights has none of the boon its title promises. Maximum IV, and the same EVs the raid boss was
+     * given at spawn, read from it rather than recomputed so the copy can never end up stronger than the boss it copies.
+     */
+    private static void applyStatFocus(DuelRaid raid, PokemonEntity copy) {
+        if (raid.statFocus == null) return;
+        var stat = com.cobbleraids.pokemon.PokemonStatNames.statFor(raid.statFocus.stat());
+        Pokemon pokemon = copy.getPokemon();
+        pokemon.setIV(stat, com.cobblemon.mod.common.pokemon.IVs.MAX_VALUE);
+        pokemon.setEV(stat, raid.boss.getPokemon().getEvs().getOrDefault(stat));
     }
 
     /**
@@ -268,9 +296,17 @@ public final class RaidDuelService {
         long now = server.overworld().getGameTime();
         for (DuelRaid raid : List.copyOf(RAIDS.values())) {
             if (raid.finished) continue;
-            if (bossDestroyed(raid.boss) || now - raid.startedTick > RaidDuelRules.WINDOW_SECONDS * (long) SECOND) {
+            long left = raid.windowTicks - (now - raid.startedTick);
+            if (bossDestroyed(raid.boss) || left < 0) {
                 finish(server, raid, false);
                 continue;
+            }
+            if (!raid.lastMinuteWarned && left <= 60L * SECOND && raid.windowTicks > 60L * SECOND) {
+                raid.lastMinuteWarned = true;
+                for (UUID id : raid.players) {
+                    ServerPlayer player = raid.out.contains(id) ? null : server.getPlayerList().getPlayer(id);
+                    if (player != null) say(player, "One minute left to defeat the raid boss!", ChatFormatting.RED);
+                }
             }
             long delta = Math.max(0L, now - raid.lastTick);
             raid.lastTick = now;
@@ -308,7 +344,7 @@ public final class RaidDuelService {
             return;
         }
         long used = now - raid.duelStarted.getOrDefault(playerId, now) - raid.pausedTicks.getOrDefault(playerId, 0L);
-        if (used > RaidDuelRules.DUEL_LIMIT_SECONDS * (long) SECOND) {
+        if (used > raid.duelLimitTicks) {
             raid.timedOut.add(playerId);
             say(player, "Your duel ran out of time. Your damage still counts; a fresh duel is coming.", ChatFormatting.YELLOW);
             EncounterService.abort(duel);

@@ -45,6 +45,16 @@ public final class EncounterService {
     private EncounterService() {}
 
     public static StartResult start(EncounterRequest request, EncounterListener listener) {
+        return start(request, listener, boss -> {});
+    }
+
+    /**
+     * As {@link #start(EncounterRequest, EncounterListener)}, letting the caller shape the boss's Pokemon before its
+     * level is applied and its battle built, which is the only point a change to its stats can still reach the fight.
+     * Internal: a duel raid uses it to give each copy what the raid boss it stands for was given.
+     */
+    public static StartResult start(EncounterRequest request, EncounterListener listener,
+                                    java.util.function.Consumer<PokemonEntity> prepareBoss) {
         Objects.requireNonNull(request, "request");
         Objects.requireNonNull(listener, "listener");
         requireServerThread(request.level().getServer());
@@ -74,6 +84,8 @@ public final class EncounterService {
             // Before anything can fail and before the battle exists, so the boss is never recruitable
             // even for an instant.
             RaidBossEntityMarker.markOwned(boss, request.owner());
+            // Its own barrier: a boss that could not be dressed up still fights as its definition made it.
+            RaidFaultBarrier.guard("encounter:prepare-boss", () -> prepareBoss.accept(boss));
             applyLevel(boss, definition, request.bossLevel());
             long derivedHealth = request.maxHealth().isPresent()
                     ? request.maxHealth().getAsLong()
