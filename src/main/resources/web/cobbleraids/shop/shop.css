@@ -27,6 +27,7 @@
 .pokemon .cell .pricerow .price { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .reroll { flex: none; padding: 0.15cqw 0.6cqw; border: 1px solid #ffd84a; color: #ffd84a; font: 700 var(--fs-s) var(--pix); background: rgba(40, 32, 6, 0.9); cursor: pointer; }
 .reroll:hover { background: #ffd84a; color: #221a02; }
+.pokemon .cell .leaves { color: #ffd84a; }
 /* Clicked once: the server is waiting for the second click before it spends anything. */
 .cell.confirm { outline: 2px solid #ffd84a; outline-offset: -2px; }
 .cell.confirm .price { color: #ffd84a; }

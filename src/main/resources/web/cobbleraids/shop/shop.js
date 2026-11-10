@@ -71,6 +71,7 @@ function cell(entry, pokemon) {
     const name = RC.el('div', 'name' + (entry.shiny ? ' shiny' : ''), (entry.shiny ? '★ ' : '') + RC.title(entry.species));
     body.append(name, RC.el('div', 'meta', 'Level ' + entry.level));
     if (entry.personal) body.appendChild(RC.el('div', 'meta', 'IV ' + entry.ivPercent + '%  EV ' + entry.evPercent + '%'));
+    if (entry.personal && entry.leavesInMillis >= 0) body.appendChild(RC.el('div', 'meta leaves', 'Leaves in ' + leavesIn(entry.leavesInMillis)));
     // The price and the reroll button share a row, so a long price can never run under the button.
     const priceRow = RC.el('div', 'pricerow');
     priceRow.appendChild(RC.el('div', 'price', price));
@@ -86,6 +87,13 @@ function cell(entry, pokemon) {
   el.addEventListener('click', () => send({ action: 'buy', page: page.pageIndex, id: entry.id }));
   tip.bind(el, () => tooltipFor(entry));
   return el;
+}
+
+// A saved boss stays a set number of days. Shown as days and hours, or hours and minutes on its last day.
+function leavesIn(millis) {
+  const minutes = Math.max(1, Math.ceil(millis / 60000));
+  const d = Math.floor(minutes / 1440), h = Math.floor(minutes / 60) % 24, m = minutes % 60;
+  return d > 0 ? d + 'd ' + h + 'h' : h > 0 ? h + 'h ' + m + 'm' : m + 'm';
 }
 
 function rerollButton(entry) {
@@ -109,6 +117,7 @@ function tooltipFor(entry) {
   if (entry.personal) {
     out.push(['IV ' + entry.ivPercent + '%   EV ' + entry.evPercent + '%', 'hi']);
     if (entry.canReroll) out.push(['Reroll (risky): ' + entry.rerollCost + ' RP', 'hi']);
+    if (entry.leavesInMillis >= 0) out.push(['Leaves your shop in ' + leavesIn(entry.leavesInMillis), entry.leavesInMillis < 86400000 ? 'bad' : 'mu']);
   }
   if (entry.confirm) out.push(['Click again to confirm', 'hi']);
   if (entry.confirmReroll) out.push(['Click REROLL again to confirm', 'hi']);

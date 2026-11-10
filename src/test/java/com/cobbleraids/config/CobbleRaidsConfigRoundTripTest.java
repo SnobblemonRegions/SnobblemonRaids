@@ -58,7 +58,7 @@ class CobbleRaidsConfigRoundTripTest {
                 new CobbleRaidsConfig.DynamicLevel(true, -5, 90),
                 new CobbleRaidsConfig.MegaPity(true, 20),
                 new CobbleRaidsConfig.RaidPoints(true, 10, 20, 30, 40),
-                new CobbleRaidsConfig.PersonalBossShop(false, 75, 15, 30, 60, 120),
+                new CobbleRaidsConfig.PersonalBossShop(false, 75, 15, 30, 60, 120, 3, 14),
                 CobbleRaidsConfig.defaults().tierScaling(),
                 CobbleRaidsConfig.defaults().bossGlow(),
                 CobbleRaidsConfig.defaults().bossMovement(),

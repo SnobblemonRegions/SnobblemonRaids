@@ -477,10 +477,26 @@ public record CobbleRaidsConfig(
      */
     public record PersonalBossShop(boolean enabled, int rerollCost,
                                    int buyCostStarter, int buyCostPowerhouse,
-                                   int buyCostLegendary, int buyCostMythical) {
+                                   int buyCostLegendary, int buyCostMythical,
+                                   int maxSlots, int keepDays) {
         private static final int MAX_COST = 100_000;
+        /** How many bosses a player may keep saved at once. */
+        public static final int DEFAULT_MAX_SLOTS = 5;
+        /** How many days a saved boss stays before it leaves; 0 keeps it for ever. */
+        public static final int DEFAULT_KEEP_DAYS = 7;
+
+        /** The shape before slots and the keep time existed, with their defaults. */
+        public PersonalBossShop(boolean enabled, int rerollCost, int buyCostStarter, int buyCostPowerhouse,
+                                int buyCostLegendary, int buyCostMythical) {
+            this(enabled, rerollCost, buyCostStarter, buyCostPowerhouse, buyCostLegendary, buyCostMythical,
+                    DEFAULT_MAX_SLOTS, DEFAULT_KEEP_DAYS);
+        }
 
         public PersonalBossShop {
+            if (maxSlots < 1 || maxSlots > 54)
+                throw new IllegalArgumentException("personal_boss_shop.max_slots must be 1..54");
+            if (keepDays < 0 || keepDays > 365)
+                throw new IllegalArgumentException("personal_boss_shop.keep_days must be 0..365 (0 keeps a saved boss for ever)");
             if (rerollCost < 0 || rerollCost > MAX_COST)
                 throw new IllegalArgumentException("personal_boss_shop.reroll_cost must be 0.." + MAX_COST);
             validateCost("buy_cost_starter", buyCostStarter);

@@ -250,6 +250,7 @@ public final class CobbleRaids implements ModInitializer {
             RaidFaultBarrier.guard("shutdown:rewards", RaidRewardService::onServerStopped);
             RaidFaultBarrier.guard("shutdown:web-sounds", com.cobbleraids.web.WebSounds::clear);
             RaidFaultBarrier.guard("shutdown:shop-confirmations", com.cobbleraids.shop.RaidShopGateway::onServerStopped);
+            RaidFaultBarrier.guard("shutdown:boss-shop-offers", com.cobbleraids.catching.BossShopOffers::onServerStopped);
             RaidFaultBarrier.guard("shutdown:capture-sessions", RaidCaptureSessionService::onServerStopped);
             RaidFaultBarrier.guard("shutdown:spawn-history", RaidSpawnHistory::onServerStopped);
             RaidFaultBarrier.guard("shutdown:player-records", RaidPlayerRecords::onServerStopped);

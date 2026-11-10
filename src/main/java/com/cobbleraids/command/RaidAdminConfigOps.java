@@ -147,6 +147,8 @@ final class RaidAdminConfigOps {
         setting(source, "buy_cost", tierValues(config.personalBossShop().buyCostStarter(),
                 config.personalBossShop().buyCostPowerhouse(), config.personalBossShop().buyCostLegendary(),
                 config.personalBossShop().buyCostMythical()));
+        setting(source, "max_slots", config.personalBossShop().maxSlots());
+        setting(source, "keep_days", config.personalBossShop().keepDays());
 
         section(source, "tier_scaling");
         setting(source, "enabled", config.tierScaling().enabled());

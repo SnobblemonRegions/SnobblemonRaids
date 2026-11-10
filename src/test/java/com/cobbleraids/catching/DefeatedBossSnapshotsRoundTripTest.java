@@ -130,4 +130,21 @@ class DefeatedBossSnapshotsRoundTripTest {
         assertEquals(1, result.size(), "the corrupted slot must not appear at all");
         assertTrue(result.containsKey(GARCHOMP), "the still-valid slot must survive");
     }
+
+    @Test
+    @DisplayName("a file from before saved bosses had a keep time starts every boss's time at load")
+    void untimedFileStartsItsClocksNow() {
+        UUID playerId = UUID.randomUUID();
+        DefeatedBossSnapshots store = new DefeatedBossSnapshots();
+        store.update(Map.of(playerId, Map.of(GARCHOMP, snapshot(GARCHOMP, RaidRarityTier.LEGENDARY, "old"))));
+        CompoundTag old = store.save(new CompoundTag(), null);
+        old.remove("timed");
+
+        long before = System.currentTimeMillis();
+        DefeatedBossSnapshots reloaded = DefeatedBossSnapshots.load(old, null);
+
+        assertTrue(reloaded.clocksRestarted(), "so the restarted dates are written back and counted from only once");
+        long savedAt = reloaded.take().get(playerId).get(GARCHOMP).capturedAtEpochMs();
+        assertTrue(savedAt >= before, "an old save date would have expired the boss on the spot");
+    }
 }

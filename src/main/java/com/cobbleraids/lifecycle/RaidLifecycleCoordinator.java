@@ -447,8 +447,9 @@ public final class RaidLifecycleCoordinator {
             for (UUID playerId : victors) {
                 ServerPlayer player = server.getPlayerList().getPlayer(playerId);
                 if (player == null) continue;
-                RaidFaultBarrier.guard("boss-snapshot", () ->
-                        BossSnapshotService.snapshot(server, playerId, definition.rarityTier(), bossPokemon));
+                // Offered, not saved: slots are few, so which bosses fill them is the player's choice.
+                RaidFaultBarrier.guard("boss-snapshot", () -> com.cobbleraids.catching.BossShopOffers.offer(
+                        server, player, BossSnapshotService.build(server, definition.rarityTier(), bossPokemon)));
             }
         }
         if (bossPokemon == null) return;

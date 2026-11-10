@@ -25,6 +25,11 @@ public final class BossSnapshotService {
     private BossSnapshotService() {}
 
     public static void snapshot(MinecraftServer server, UUID playerId, RaidRarityTier tier, Pokemon bossPokemon) {
+        DefeatedBossSnapshots.put(server, playerId, build(server, tier, bossPokemon));
+    }
+
+    /** The snapshot itself, not yet saved for anybody: what a victor is offered and may decline. */
+    public static BossSnapshot build(MinecraftServer server, RaidRarityTier tier, Pokemon bossPokemon) {
         Pokemon copy = bossPokemon.clone(true, server.registryAccess());
         // Uncatchable belongs to the boss standing in the world, not to a snapshot a player will
         // eventually buy back.
@@ -34,9 +39,9 @@ public final class BossSnapshotService {
         int evPercent = percentOf(copy.getEvs().total(), 510);
         CompoundTag tag = copy.saveToNBT(server.registryAccess(), new CompoundTag());
 
-        DefeatedBossSnapshots.put(server, playerId, new BossSnapshot(
+        return new BossSnapshot(
                 copy.getSpecies().getResourceIdentifier(), copy.getLevel(), copy.getShiny(),
-                ivPercent, evPercent, tier, tag, System.currentTimeMillis()));
+                ivPercent, evPercent, tier, tag, System.currentTimeMillis());
     }
 
     /**

@@ -148,11 +148,18 @@ final class CobbleRaidsConfigCodec {
                 Json.integer(personalBossShopObject, "buy_cost_powerhouse", pbs.buyCostPowerhouse()),
                 Json.integer(personalBossShopObject, "buy_cost_legendary", pbs.buyCostLegendary()),
                 Json.integer(personalBossShopObject, "buy_cost_mythical", pbs.buyCostMythical()));
+        int bossShopSlots = Json.integer(personalBossShopObject, "max_slots", pbs.maxSlots());
+        int bossShopKeepDays = Json.integer(personalBossShopObject, "keep_days", pbs.keepDays());
         // A block still holding the old shipped prices was never tuned, so it moves to the new ones.
         if (personalBossShop.equals(CobbleRaidsConfig.PersonalBossShop.supersededDefaults())
                 || personalBossShop.equals(CobbleRaidsConfig.PersonalBossShop.previousDefaults())) {
             personalBossShop = pbs;
         }
+        // The price block above is compared whole against old shipped prices, so the two newer settings are
+        // read apart from it and put back afterwards; otherwise that migration would reset them too.
+        personalBossShop = new CobbleRaidsConfig.PersonalBossShop(personalBossShop.enabled(), personalBossShop.rerollCost(),
+                personalBossShop.buyCostStarter(), personalBossShop.buyCostPowerhouse(), personalBossShop.buyCostLegendary(),
+                personalBossShop.buyCostMythical(), bossShopSlots, bossShopKeepDays);
 
         JsonObject tierScalingObject = Json.object(root, "tier_scaling");
         CobbleRaidsConfig.TierScaling ts = defaults.tierScaling();
@@ -359,6 +366,8 @@ final class CobbleRaidsConfigCodec {
         personalBossShopJson.addProperty("buy_cost_powerhouse", personalBossShop.buyCostPowerhouse());
         personalBossShopJson.addProperty("buy_cost_legendary", personalBossShop.buyCostLegendary());
         personalBossShopJson.addProperty("buy_cost_mythical", personalBossShop.buyCostMythical());
+        personalBossShopJson.addProperty("max_slots", personalBossShop.maxSlots());
+        personalBossShopJson.addProperty("keep_days", personalBossShop.keepDays());
         root.add("personal_boss_shop", personalBossShopJson);
 
         CobbleRaidsConfig.TierScaling tierScaling = config.tierScaling();

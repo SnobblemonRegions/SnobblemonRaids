@@ -36,9 +36,15 @@ import net.minecraft.world.level.saveddata.SavedData;
  */
 public final class DefeatedBossSnapshots extends SavedData {
     private static final String FILE_ID = "cobbleraids_boss_snapshots";
+    /** Present once the file's save dates are ones the keep time may count from; see {@link #load}. */
+    private static final String TIMED_KEY = "timed";
     private static final Map<UUID, Map<ResourceLocation, BossSnapshot>> LIVE = new ConcurrentHashMap<>();
 
     private Map<UUID, Map<ResourceLocation, BossSnapshot>> loaded = new LinkedHashMap<>();
+    /** True when this was read from a file older than the keep time, whose save dates were restarted at load. */
+    private boolean clocksRestarted;
+
+    boolean clocksRestarted() { return clocksRestarted; }
 
     // ---------------------------------------------------------------- live access
 
@@ -67,6 +73,25 @@ public final class DefeatedBossSnapshots extends SavedData {
         // clutter in LIVE for the life of the server otherwise.
         if (perPlayer.isEmpty()) LIVE.remove(playerId, perPlayer);
         persist(server);
+    }
+
+    /**
+     * Drops this player's saved bosses that have been kept their {@code keepDays}, and says which.
+     * Called wherever the saved bosses are about to be shown or used, so nothing has to sweep every
+     * player on a timer and an expired boss can never be bought in the moment before a sweep.
+     */
+    public static java.util.List<ResourceLocation> pruneExpired(MinecraftServer server, UUID playerId, long now, int keepDays) {
+        Map<ResourceLocation, BossSnapshot> perPlayer = LIVE.get(playerId);
+        if (perPlayer == null || keepDays <= 0) return java.util.List.of();
+        java.util.List<ResourceLocation> gone = new java.util.ArrayList<>();
+        for (BossSnapshot snapshot : java.util.List.copyOf(perPlayer.values())) {
+            if (!BossShopSlots.expired(snapshot.capturedAtEpochMs(), now, keepDays)) continue;
+            if (perPlayer.remove(snapshot.species(), snapshot)) gone.add(snapshot.species());
+        }
+        if (gone.isEmpty()) return gone;
+        if (perPlayer.isEmpty()) LIVE.remove(playerId, perPlayer);
+        persist(server);
+        return gone;
     }
 
     private static void persist(MinecraftServer server) {
@@ -100,7 +125,13 @@ public final class DefeatedBossSnapshots extends SavedData {
 
     public static void onServerStarted(MinecraftServer server) {
         LIVE.clear();
-        LIVE.putAll(get(server).take());
+        DefeatedBossSnapshots store = get(server);
+        LIVE.putAll(store.take());
+        if (store.clocksRestarted) {
+            store.clocksRestarted = false;
+            persist(server);
+            RaidLog.info("Saved bosses now leave after a set number of days; every boss already saved starts its time today.");
+        }
         if (!LIVE.isEmpty()) {
             RaidLog.info("Restored defeated-boss snapshots for " + LIVE.size() + " player(s).");
         }
@@ -142,6 +173,14 @@ public final class DefeatedBossSnapshots extends SavedData {
     // itself is written and read back opaquely: this class never interprets it.
     static DefeatedBossSnapshots load(CompoundTag tag, HolderLookup.Provider registries) {
         DefeatedBossSnapshots store = new DefeatedBossSnapshots();
+        // A file written before saved bosses had a keep time carries save dates nobody was counting from,
+        // some of them months old. Every boss in such a file starts its time now, once, so no player loses
+        // what they had the moment the timer is introduced.
+        boolean timed = tag.getBoolean(TIMED_KEY);
+        long loadedAt = System.currentTimeMillis();
+        // Not marked dirty here: take() empties this object until the first update(), so a save in between
+        // would write an empty file. onServerStarted writes the restarted dates back once LIVE holds them.
+        store.clocksRestarted = !timed && !tag.getList("players", Tag.TAG_COMPOUND).isEmpty();
         ListTag players = tag.getList("players", Tag.TAG_COMPOUND);
         for (int i = 0; i < players.size(); i++) {
             CompoundTag playerTag = players.getCompound(i);
@@ -161,7 +200,7 @@ public final class DefeatedBossSnapshots extends SavedData {
                 perPlayer.put(species, new BossSnapshot(
                         species, row.getInt("level"), row.getBoolean("shiny"),
                         row.getInt("iv_pct"), row.getInt("ev_pct"), tier,
-                        row.getCompound("pokemon"), row.getLong("captured_at")));
+                        row.getCompound("pokemon"), timed ? row.getLong("captured_at") : loadedAt));
             }
             if (!perPlayer.isEmpty()) store.loaded.put(playerId, perPlayer);
         }
@@ -192,6 +231,7 @@ public final class DefeatedBossSnapshots extends SavedData {
             players.add(playerTag);
         }
         tag.put("players", players);
+        tag.putBoolean(TIMED_KEY, true);
         return tag;
     }
 }

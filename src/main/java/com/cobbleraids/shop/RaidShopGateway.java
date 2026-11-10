@@ -130,6 +130,7 @@ public final class RaidShopGateway {
 
     private static void sendPage(ServerPlayer player, int requestedPage) {
         List<ShopPageView> catalogPages = listablePages(ShopCatalogManager.pages());
+        com.cobbleraids.catching.BossShopOffers.pruneExpired(player);
         Map<ResourceLocation, BossSnapshot> personal = DefeatedBossSnapshots.forPlayer(player.getUUID());
         boolean hasPersonalPage = !personal.isEmpty();
         List<ShopRotation.Listing> rotating = ShopRotationService.current(Instant.now(), player.getUUID());

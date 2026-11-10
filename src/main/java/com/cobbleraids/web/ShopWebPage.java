@@ -79,6 +79,9 @@ public final class ShopWebPage {
             boolean awaited = entry.id().equals(awaitingCell);
             cell.addProperty("confirm", awaited && !awaitingReroll);
             cell.addProperty("confirmReroll", awaited && awaitingReroll);
+            // A saved boss leaves after its days are up; -1 when the server keeps them for ever.
+            if (entry.personal()) cell.addProperty("leavesInMillis",
+                    com.cobbleraids.catching.BossShopOffers.millisLeft(player, entry.id()));
             cell.addProperty("cost", entry.cost());
             cell.addProperty("pokemon", entry.pokemon());
             cell.addProperty("count", entry.count());
