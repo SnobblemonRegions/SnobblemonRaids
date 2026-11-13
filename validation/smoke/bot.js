@@ -5,6 +5,7 @@
 // mineflayer client's view of a Cobblemon entity is not dependable enough to build assertions on.
 // See validation/smoke/README.md.
 const mineflayer = require('mineflayer');
+const { SKIP_RECIPES } = require('./protocol_overrides');
 
 const [, , username, host, port] = process.argv;
 if (!username) {
@@ -21,6 +22,7 @@ const bot = mineflayer.createBot({
   // Cobblemon's custom entity metadata makes vanilla-protocol parsing noisy; the test does not read
   // the world model, so the errors below are logged and ignored rather than treated as failures.
   checkTimeoutInterval: 120 * 1000,
+  customPackets: SKIP_RECIPES,   // see protocol_overrides.js: without it the bot never spawns
 });
 
 const tag = `[${username}]`;

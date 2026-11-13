@@ -45,6 +45,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import subprocess
@@ -75,7 +76,7 @@ SOLO_PARTY = ("glaceon", 100)
 SETTLE_SECONDS = 4.0
 OP_BOTS = False
 BOSS = "decidueye"
-BOSS_AT = (0, 132, 0)
+BOSS_XZ = (0, 0)   # the y comes from the ground there: see Rig.ground_at
 
 
 class BotProcess:
@@ -175,9 +176,20 @@ class Rig:
                 self.command(f"op {bot.name}")
         time.sleep(SETTLE_SECONDS)
 
+    def ground_at(self, bot: BotProcess, x: int, z: int) -> float:
+        """Put the player on the surface at (x, z) and return its y. A fixed y is wrong on some rig:
+        both rigs are superflat (ground y=-60), and a tp to the old y=132 killed the bot on landing,
+        so it respawned away from the boss and the lobby cancelled."""
+        self.command(f"spreadplayers {x} {z} 0 1 false {bot.name}")
+        reply = self.command(f"data get entity {bot.name} Pos[1]")
+        match = re.search(r"(-?\d+(?:\.\d+)?)d", reply)
+        assert match, f"could not read {bot.name}'s y: {reply.strip()[:120]}"
+        return float(match.group(1))
+
     def start_raid(self, players: list[BotProcess]) -> None:
-        x, y, z = BOSS_AT
+        x, z = BOSS_XZ
         self.command("cobbleraids despawn all")
+        y = math.floor(self.ground_at(players[0], x + 2, z + 2))
         self.command(f"cobbleraids spawn {BOSS} {x} {y} {z}")
         for bot in players:
             self.command(f"tp {bot.name} {x + 2} {y} {z + 2}")
@@ -620,14 +632,7 @@ def scenario_teleport_lock(rig: Rig) -> list[Result]:
     solo = rig.bot("Tele")
     rig.settle([solo])
     rig.give(solo, *SOLO_PARTY)
-    # The default boss site is at y=132 over a flat world whose ground is y=-60: the bot falls, and
-    # either dies (the lobby cancels) or lands far from the boss, which says nothing about teleports.
-    global BOSS_AT
-    saved, BOSS_AT = BOSS_AT, (0, -59, 0)
-    try:
-        rig.start_raid([solo])
-    finally:
-        BOSS_AT = saved
+    rig.start_raid([solo])   # spawns the boss on the ground (Rig.ground_at), so the bot cannot die in a fall
     if not solo.wait_for("BATTLE_INIT", 120):
         check("the player is in a started battle", False, "the lobby never became a battle")
         return results

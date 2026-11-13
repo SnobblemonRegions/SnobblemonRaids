@@ -23,7 +23,7 @@
 // DEFAULT (2) was seen to be silently ignored by the server, so this only ever sends MOVE.
 
 const mineflayer = require('mineflayer');
-const SKIP_RECIPES = { '1.21': { play: { toClient: { types: { packet_declare_recipes: 'restBuffer' } } } } };
+const { SKIP_RECIPES } = require('./protocol_overrides');
 const readline = require('readline');
 
 const [, , username, host, port] = process.argv;

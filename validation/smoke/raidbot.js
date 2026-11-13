@@ -24,6 +24,7 @@
 
 const mineflayer = require('mineflayer');
 const readline = require('readline');
+const { SKIP_RECIPES } = require('./protocol_overrides');
 
 const [, , username, host, port] = process.argv;
 if (!username) {
@@ -41,6 +42,7 @@ const bot = mineflayer.createBot({
   version: '1.21.1',
   auth: 'offline',
   checkTimeoutInterval: 120 * 1000,
+  customPackets: SKIP_RECIPES,   // see protocol_overrides.js: without it the bot never spawns
 });
 
 let battleId = null;
