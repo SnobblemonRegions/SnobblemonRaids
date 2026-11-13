@@ -20,6 +20,11 @@ import net.minecraft.resources.ResourceLocation;
  * is both what the reward screen shows and what makes the claim pay renown's multipliers.
  * {@code renownBoon} is that boss's {@link com.cobbleraids.renown.RenownBoon#encode()}, along for
  * the same reason -- it is what lets the reveal screen pick a stat icon for the title banner.
+ *
+ * <p>{@code points} is the claim's Raid Points, fixed and counted against the daily cap on the day of the win, so
+ * holding claims for later days cannot get around the cap, and a Raid Core handed to the party just before claiming
+ * adds nothing. {@link #POINTS_AT_CLAIM} marks a claim saved before this existed: it is priced at claim time, as it
+ * always was.
  */
 public record PendingRaidReward(
         UUID raidId,
@@ -32,9 +37,14 @@ public record PendingRaidReward(
         int participantCount,
         long rewardSeed,
         String renownTitle,
-        String renownBoon
+        String renownBoon,
+        int points
 ) {
+    /** A claim saved before its points were fixed at victory. */
+    public static final int POINTS_AT_CLAIM = -1;
+
     public PendingRaidReward {
+        points = Math.max(POINTS_AT_CLAIM, points);
         renownTitle = renownTitle == null ? "" : renownTitle;
         renownBoon = renownBoon == null ? "" : renownBoon;
     }

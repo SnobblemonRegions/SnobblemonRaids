@@ -405,10 +405,14 @@ public final class RaidDuelService {
                 raid.definition.id(), raid.boss.getPokemon().getSpecies().getResourceIdentifier().toString(), raid.bossLevel, reason,
                 raid.players, raid.players.size() - raid.out.size(), elapsed / SECOND, (int) (raid.windowTicks / SECOND),
                 raid.pool.current(), raid.pool.max(), damage));
-        // A win is recorded for the players it pays; a loss for everybody who joined.
-        RaidFaultBarrier.guard("duel-raid:stats", () -> com.cobbleraids.stats.RaidStats.onDuelRaidEnd(server, raid.definition.id(), won,
-                won ? victors : raid.players, damage, elapsed / SECOND, !raid.renownTitle.isEmpty()));
+        boolean calledOff = RaidDuelRules.isCalledOff(reason);
+        // A win is recorded for the players it pays; a loss for everybody whose duel began. A raid called off (server stop,
+        // operator abort) is nobody's loss.
+        if (!calledOff) RaidFaultBarrier.guard("duel-raid:stats", () -> com.cobbleraids.stats.RaidStats.onDuelRaidEnd(server,
+                raid.definition.id(), won, won ? victors : RaidDuelRules.losers(raid.players, raid.fought), damage, elapsed / SECOND,
+                !raid.renownTitle.isEmpty()));
         if (won) RaidFaultBarrier.guard("duel-raid:victory", () -> payVictory(server, raid, victors, damage, elapsed));
+        else if (calledOff) RaidFaultBarrier.guard("duel-raid:charge-refund", () -> refundCalledOff(server, raid));
         else for (UUID id : raid.players) {
             ServerPlayer player = server.getPlayerList().getPlayer(id);
             if (player != null) say(player, "The raid boss got away.", ChatFormatting.RED);
@@ -417,6 +421,18 @@ public final class RaidDuelService {
         // Explicitly, as every party raid's cleanup does: the discard below releases the slot only while the boss is loaded.
         com.cobbleraids.spawn.RaidSpawnScheduler.forget(raid.boss.getUUID());
         if (!raid.boss.isRemoved()) raid.boss.discard();
+    }
+
+    /** Gives back the raid charge of everybody still in a raid that was called off, and tells those online. */
+    private static void refundCalledOff(MinecraftServer server, DuelRaid raid) {
+        Set<UUID> refunded = RaidDuelRules.refundedWhenCalledOff(raid.players, raid.fought, raid.forfeited);
+        com.cobbleraids.charges.RaidChargeStore.get(server).refund(server, refunded);
+        for (UUID id : raid.players) {
+            ServerPlayer player = server.getPlayerList().getPlayer(id);
+            if (player == null) continue;
+            say(player, refunded.contains(id) ? "The raid was called off. Your raid charge was given back."
+                    : "The raid was called off.", ChatFormatting.YELLOW);
+        }
     }
 
     /** What a won party raid pays, from the shared pool's contributions. */

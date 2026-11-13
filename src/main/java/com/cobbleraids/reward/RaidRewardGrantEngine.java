@@ -88,17 +88,10 @@ public final class RaidRewardGrantEngine {
      * the reason a player loses loot they won.
      */
     private static int awardPoints(ServerPlayer player, PendingRaidReward pending) {
-        CobbleRaidsConfig.RaidPoints config = CobbleRaidsConfigManager.get().raidPoints();
-        int computed = 0;
-        if (config.enabled() && !config.isNoOp()) {
-            int base = config.pointsFor(pending.rarityTier());
-            int amount = pending.renowned()
-                    ? RenownRewards.points(base, CobbleRaidsConfigManager.get().renown().pointsMultiplier())
-                    : base;
-            computed = Math.max(0, carryingRaidCore(player)
-                    ? RenownRewards.points(amount, RAID_CORE_POINTS_MULTIPLIER) : amount);
-        }
-        final int finalAmount = computed;
+        // Fixed at victory (and already counted against that day's cap) unless the claim predates that.
+        boolean fixedAtVictory = pending.points() != PendingRaidReward.POINTS_AT_CLAIM;
+        final int finalAmount = fixedAtVictory ? pending.points()
+                : pointsFor(pending.rarityTier(), pending.renowned(), carryingRaidCore(player));
 
         // Always checked, even when RaidPoints itself is off (finalAmount 0): a waiting capture
         // session has no other event to promote it on, and skipping this call whenever there is
@@ -111,6 +104,15 @@ public final class RaidRewardGrantEngine {
         if (finalAmount <= 0) return 0;
 
         int[] awarded = { 0 };
+        if (fixedAtVictory) {
+            RaidFaultBarrier.guard("reward:raid-points", () -> {
+                RaidPlayerRecords.addPoints(player.getServer(), player.getUUID(), finalAmount);
+                awarded[0] = finalAmount;
+                RaidFaultBarrier.guard("stats:points", () ->
+                        com.cobbleraids.stats.RaidStats.onPointsEarned(player.getServer(), player.getUUID(), finalAmount));
+            });
+            return awarded[0];
+        }
         RaidFaultBarrier.guard("reward:raid-points", () -> {
             int credited = RaidPointsStore.awardCapped(player.getServer(), player.getUUID(), finalAmount,
                     com.cobbleraids.reward.points.RaidPointsSource.RAID);
@@ -123,6 +125,36 @@ public final class RaidRewardGrantEngine {
                     com.cobbleraids.reward.points.RaidPointsSource.RAID, finalAmount, credited);
         });
         return awarded[0];
+    }
+
+    /** What a claim of this tier pays in Raid Points before the daily cap; 0 when Raid Points are off. */
+    private static int pointsFor(com.cobbleraids.config.RaidRarityTier tier, boolean renowned, boolean raidCore) {
+        CobbleRaidsConfig.RaidPoints config = CobbleRaidsConfigManager.get().raidPoints();
+        if (!config.enabled() || config.isNoOp()) return 0;
+        int base = config.pointsFor(tier);
+        int amount = renowned ? RenownRewards.points(base, CobbleRaidsConfigManager.get().renown().pointsMultiplier()) : base;
+        return Math.max(0, raidCore ? RenownRewards.points(amount, RAID_CORE_POINTS_MULTIPLIER) : amount);
+    }
+
+    /**
+     * Fixes a won claim's Raid Points at victory: priced with what the player's party holds now (Raid Core), and counted
+     * against today's daily cap without being credited yet (that happens on claim). Returns what the claim will pay.
+     * Guarded: a failure here pays the claim no points rather than costing it its items.
+     */
+    public static int reservePoints(net.minecraft.server.MinecraftServer server, java.util.UUID playerId,
+                                    com.cobbleraids.config.RaidRarityTier tier, boolean renowned) {
+        int[] reserved = { 0 };
+        RaidFaultBarrier.guard("reward:raid-points-reserve", () -> {
+            ServerPlayer online = server.getPlayerList().getPlayer(playerId);
+            int amount = pointsFor(tier, renowned, online != null && carryingRaidCore(online));
+            if (amount <= 0) return;
+            int cap = CobbleRaidsConfigManager.get().raidPoints().dailyCapFor(com.cobbleraids.reward.points.RaidPointsSource.RAID);
+            reserved[0] = RaidPlayerRecords.reserveCappedPoints(server, playerId, amount,
+                    com.cobbleraids.reward.points.RaidPointsSource.RAID, cap, RaidPointsStore.today());
+            if (online != null) com.cobbleraids.reward.points.RaidPointsCapNotice.tell(online,
+                    com.cobbleraids.reward.points.RaidPointsSource.RAID, amount, reserved[0]);
+        });
+        return reserved[0];
     }
 
     /** Raid Core's whole effect: a flat bonus on the points a claim was already going to pay. */

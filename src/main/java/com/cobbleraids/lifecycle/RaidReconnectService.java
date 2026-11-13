@@ -89,13 +89,34 @@ public final class RaidReconnectService {
             battle.writeShowdownAction(">raidhold " + actor.getShowdownId());
         }
 
-        long deadline = server.getTickCount() + (long) config.graceSeconds() * 20L;
+        int graceSeconds = graceSecondsFor(raid, config.graceSeconds());
+        long deadline = server.getTickCount() + (long) graceSeconds * 20L;
         HOLDS.put(playerId, new GraceHold(raid.getId(), deadline, othersStillActive));
         RaidLog.info("Holding " + player.getGameProfile().getName() + "'s raid slot for "
-                + config.graceSeconds() + "s after a disconnect.");
+                + graceSeconds + "s after a disconnect.");
         announceOthers(server, raid, playerId, Component.literal(player.getGameProfile().getName()
-                + " lost connection. Holding their raid slot for " + config.graceSeconds() + "s.")
+                + " lost connection. Holding their raid slot for " + graceSeconds + "s.")
                 .withStyle(ChatFormatting.YELLOW));
+    }
+
+    /** How much longer than the configured grace a raid another mod owns holds a slot. */
+    static final int OWNED_GRACE_MARGIN_SECONDS = 60;
+
+    /**
+     * The grace for this raid. A raid another mod runs (a CobbleTowers boss floor) sits inside that mod's own reconnect
+     * window, which is the same 5 minutes but is checked on a 30 s sweep: with equal graces the raid could drop a player
+     * the tower still says may come back. Holding the slot a minute longer lets the owner's window decide. Duel-raid
+     * copies are CobbleRaids' own and keep the configured grace.
+     */
+    static int graceSecondsFor(RaidSession raid, int configured) {
+        RaidSession.Ownership ownership = raid.getOwnership();
+        return graceSecondsFor(ownership == null ? null : ownership.owner(), configured);
+    }
+
+    /** As above, from the raid's owner ({@code null} for an ordinary raid). */
+    static int graceSecondsFor(net.minecraft.resources.ResourceLocation owner, int configured) {
+        boolean foreignOwner = owner != null && !"cobbleraids".equals(owner.getNamespace());
+        return foreignOwner ? configured + OWNED_GRACE_MARGIN_SECONDS : configured;
     }
 
     /** Entry point for the JOIN event. A no-op for any player without a pending hold. */
