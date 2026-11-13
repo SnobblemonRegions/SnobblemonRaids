@@ -21,6 +21,12 @@ public record RaidChargeAccount(int available, long nextRefillAt) {
         return new RaidChargeAccount(current.available - 1,
                 current.available == CAPACITY ? now + REFILL_MILLIS : current.nextRefillAt);
     }
+    /** One charge given back (a raid that was called off); never above capacity, and the refill clock keeps running. */
+    public RaidChargeAccount refund(long now) {
+        RaidChargeAccount current = at(now);
+        if (current.available >= CAPACITY - 1) return FULL;
+        return new RaidChargeAccount(current.available + 1, current.nextRefillAt);
+    }
     public long secondsToNext(long now) {
         RaidChargeAccount current = at(now);
         return current.available == CAPACITY ? 0 : Math.max(0, (current.nextRefillAt - now + 999) / 1000);

@@ -166,6 +166,23 @@ public final class RaidPlayerRecords extends SavedData {
     }
 
     /**
+     * Counts Raid Points against {@code source}'s daily cap without crediting them: a won raid's claim fixes its points
+     * on the day of the win and pays them when claimed. Returns how much of {@code amount} the cap allowed.
+     */
+    public static int reserveCappedPoints(MinecraftServer server, UUID playerId, int amount,
+                                          com.cobbleraids.reward.points.RaidPointsSource source, int cap, long today) {
+        int[] allowed = { 0 };
+        LIVE.compute(playerId, (ignored, existing) -> {
+            RaidPlayerRecord current = existing == null ? RaidPlayerRecord.EMPTY : existing;
+            allowed[0] = com.cobbleraids.reward.points.RaidPointsDailyCap.allowance(
+                    current.pointsEarnedOn(source, today), cap, amount);
+            return allowed[0] <= 0 ? current : current.withPointsEarned(source, today, allowed[0]);
+        });
+        if (allowed[0] > 0) persist(server);
+        return allowed[0];
+    }
+
+    /**
      * Remembers a once-per-player purchase, and flushes immediately.
      *
      * <p>Flushed rather than merely marked dirty, for the reason consuming a reward claim is: a

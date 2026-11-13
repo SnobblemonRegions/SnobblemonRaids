@@ -46,6 +46,17 @@ public final class RaidChargeStore extends SavedData {
         catch (RuntimeException failure) { restore(before); throw failure; }
         return new Reservation(server, before);
     }
+    /** Gives one charge back to each player, after the raid that spent it was called off. Written at once. */
+    public void refund(MinecraftServer server, Collection<UUID> ids) {
+        if (ids.isEmpty()) return;
+        long now = System.currentTimeMillis();
+        for (UUID id : new LinkedHashSet<>(ids)) accounts.put(id, status(id, now).refund(now));
+        try { persist(server); }
+        catch (RuntimeException failure) {
+            // Left dirty: the world save writes it a moment later; nothing to undo, a refund only adds.
+            com.cobbleraids.RaidLog.warn("Could not write raid charge refunds at once: {}", failure.getMessage());
+        }
+    }
     private void restore(Map<UUID, RaidChargeAccount> before) {
         before.forEach((id, account) -> { if (account == null) accounts.remove(id); else accounts.put(id, account); });
         setDirty();

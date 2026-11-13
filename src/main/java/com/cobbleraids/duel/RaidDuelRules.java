@@ -62,6 +62,31 @@ public final class RaidDuelRules {
         return victors;
     }
 
+    /**
+     * Whether a duel raid ending this way is called off rather than lost: a server stop or an operator abort is nobody's
+     * defeat, so it records no loss and gives back the charges it took.
+     */
+    public static boolean isCalledOff(com.cobbleraids.telemetry.RaidEndReason reason) {
+        return reason == com.cobbleraids.telemetry.RaidEndReason.SERVER_STOP
+                || reason == com.cobbleraids.telemetry.RaidEndReason.ABORTED;
+    }
+
+    /**
+     * Who gets their charge back when a raid is called off: everybody whose duel began and who had not walked away. A
+     * player whose duel never started was refunded at the start.
+     */
+    public static java.util.Set<java.util.UUID> refundedWhenCalledOff(java.util.Collection<java.util.UUID> players,
+            java.util.Set<java.util.UUID> fought, java.util.Set<java.util.UUID> forfeited) {
+        return victors(players, fought, forfeited);
+    }
+
+    /** Who a lost duel raid records a loss for: only the players whose duel began. */
+    public static java.util.Set<java.util.UUID> losers(java.util.Collection<java.util.UUID> players, java.util.Set<java.util.UUID> fought) {
+        java.util.Set<java.util.UUID> losers = new java.util.LinkedHashSet<>();
+        for (java.util.UUID player : players) if (fought.contains(player)) losers.add(player);
+        return losers;
+    }
+
     /** Whether one more player may join a duel raid that has {@code current} already. */
     public static boolean hasRoom(int current) {
         return current < MAX_PLAYERS;

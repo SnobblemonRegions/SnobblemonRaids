@@ -45,6 +45,11 @@ public final class PendingRewardStore extends SavedData {
     private static final String QUEUE = "queue";
 
     private Map<UUID, ArrayDeque<PendingRaidReward>> loaded = new LinkedHashMap<>();
+    /**
+     * Saved claims that could not be read at load (their raid definition is not loaded: a renamed, removed or failed
+     * datapack). Kept as written and saved back, so one bad load does not erase them; they are read again next start.
+     */
+    private final Map<UUID, List<CompoundTag>> unreadable = new LinkedHashMap<>();
 
     public static SavedData.Factory<PendingRewardStore> factory() {
         return new SavedData.Factory<>(PendingRewardStore::new, PendingRewardStore::load, DataFixTypes.LEVEL);
@@ -87,14 +92,17 @@ public final class PendingRewardStore extends SavedData {
             ListTag entries = playerTag.getList(QUEUE, Tag.TAG_COMPOUND);
             for (int j = 0; j < entries.size(); j++) {
                 PendingRaidReward pending = readEntry(entries.getCompound(j));
-                if (pending == null) dropped++;
-                else queue.addLast(pending);
+                if (pending == null) {
+                    dropped++;
+                    store.unreadable.computeIfAbsent(playerId, ignored -> new ArrayList<>()).add(entries.getCompound(j).copy());
+                } else queue.addLast(pending);
             }
             if (!queue.isEmpty()) store.loaded.put(playerId, queue);
         }
         if (dropped > 0) {
-            RaidLog.error("Dropped " + dropped
-                    + " saved reward claim(s) whose raid definition is no longer loaded.");
+            RaidLog.error("Kept back " + dropped
+                    + " saved reward claim(s) whose raid definition is not loaded; they are saved as they were and"
+                    + " become claimable again once that raid is loaded.");
         }
         return store;
     }
@@ -127,17 +135,22 @@ public final class PendingRewardStore extends SavedData {
                 // Absent on every claim saved before renown existed, which reads as "" -- an ordinary boss.
                 tag.getString("renown"),
                 // Absent on every claim saved before the boon icon existed, same "" fallback.
-                tag.getString("renown_boon"));
+                tag.getString("renown_boon"),
+                // Absent on every claim saved before points were fixed at victory: priced at claim, as before.
+                tag.contains("points") ? tag.getInt("points") : PendingRaidReward.POINTS_AT_CLAIM);
     }
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         ListTag players = new ListTag();
-        for (Map.Entry<UUID, ArrayDeque<PendingRaidReward>> entry : loaded.entrySet()) {
+        java.util.Set<UUID> ids = new java.util.LinkedHashSet<>(loaded.keySet());
+        ids.addAll(unreadable.keySet());
+        for (UUID id : ids) {
             CompoundTag playerTag = new CompoundTag();
-            playerTag.putUUID(PLAYER_ID, entry.getKey());
+            playerTag.putUUID(PLAYER_ID, id);
             ListTag entries = new ListTag();
-            for (PendingRaidReward pending : entry.getValue()) entries.add(writeEntry(pending));
+            for (PendingRaidReward pending : loaded.getOrDefault(id, new ArrayDeque<>())) entries.add(writeEntry(pending));
+            for (CompoundTag kept : unreadable.getOrDefault(id, List.of())) entries.add(kept.copy());
             playerTag.put(QUEUE, entries);
             players.add(playerTag);
         }
@@ -159,6 +172,7 @@ public final class PendingRewardStore extends SavedData {
             tag.putString("renown", pending.renownTitle());
             tag.putString("renown_boon", pending.renownBoon());
         }
+        tag.putInt("points", pending.points());
         return tag;
     }
 

@@ -451,20 +451,22 @@ public final class RaidCaptureSessionService {
      * was banked, so crediting it is just a balance update, not a re-resolution of anything.
      */
     private static RaidCaptureSession settleDecline(MinecraftServer server, ArrayDeque<RaidCaptureSession> queue, RaidCaptureSession resolved) {
-        if (resolved.bankedRaidPoints() > 0) {
-            RaidFaultBarrier.guard("capture-decline:raid-points", () -> {
-                // Counted against the raid cap on the day it is credited, not the day the raid was won:
-                // the cap limits what reaches a balance, and a banked claim has not reached it yet.
-                int credited = RaidPointsStore.awardCapped(server, resolved.playerId(), resolved.bankedRaidPoints(),
-                        com.cobbleraids.reward.points.RaidPointsSource.RAID);
-                if (credited > 0) com.cobbleraids.stats.RaidStats.onPointsEarned(server, resolved.playerId(), credited);
-                com.cobbleraids.reward.points.RaidPointsCapNotice.tell(server.getPlayerList().getPlayer(resolved.playerId()),
-                        com.cobbleraids.reward.points.RaidPointsSource.RAID, resolved.bankedRaidPoints(), credited);
-            });
-        }
+        creditBankedPoints(server, resolved, "capture-decline:raid-points");
         removeFromQueue(queue, resolved);
         persistNow(server);
         return resolved;
+    }
+
+    /**
+     * Credits a session's withheld Raid Points. Not capped again: a claim's points are fixed and counted against the
+     * daily cap on the day of the win (see {@code PendingRaidReward#points}), so this only moves them to the balance.
+     */
+    private static void creditBankedPoints(MinecraftServer server, RaidCaptureSession resolved, String guard) {
+        if (resolved.bankedRaidPoints() <= 0) return;
+        RaidFaultBarrier.guard(guard, () -> {
+            RaidPlayerRecords.addPoints(server, resolved.playerId(), resolved.bankedRaidPoints());
+            com.cobbleraids.stats.RaidStats.onPointsEarned(server, resolved.playerId(), resolved.bankedRaidPoints());
+        });
     }
 
     private static RaidCaptureSession settleCapture(MinecraftServer server, ArrayDeque<RaidCaptureSession> queue, RaidCaptureSession resolved) {
@@ -481,6 +483,12 @@ public final class RaidCaptureSessionService {
         } catch (RuntimeException ex) {
             RaidLog.error("Capture session for " + player.getGameProfile().getName() + " ("
                     + resolved.species() + ") failed to deserialize its rolled Pokemon", ex);
+            // The catch cannot be delivered, so the Raid Points it was wagered against go back rather than with it.
+            creditBankedPoints(server, resolved, "capture-fault:raid-points");
+            player.sendSystemMessage(Component.literal("Your caught raid boss could not be delivered because of a server "
+                    + "error. " + (resolved.bankedRaidPoints() > 0 ? "The " + resolved.bankedRaidPoints()
+                    + " Raid Points it held were given back. " : "") + "Please tell a moderator.")
+                    .withStyle(ChatFormatting.RED));
             removeFromQueue(queue, resolved);
             persistNow(server);
             return resolved;
