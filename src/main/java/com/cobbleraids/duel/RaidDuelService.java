@@ -253,7 +253,7 @@ public final class RaidDuelService {
             raid.pool.strike(playerId, applied);
             if (raid.pool.current() <= 0f && raid.pool.claimDefeat()) {
                 MinecraftServer server = raid.boss.getServer();
-                if (server != null) server.execute(() -> finish(server, raid, true));
+                if (server != null) server.execute(() -> finish(server, raid, com.cobbleraids.telemetry.RaidEndReason.VICTORY));
             }
         }
 
@@ -298,7 +298,7 @@ public final class RaidDuelService {
             if (raid.finished) continue;
             long left = raid.windowTicks - (now - raid.startedTick);
             if (bossDestroyed(raid.boss) || left < 0) {
-                finish(server, raid, false);
+                finish(server, raid, bossDestroyed(raid.boss) ? com.cobbleraids.telemetry.RaidEndReason.ABORTED : com.cobbleraids.telemetry.RaidEndReason.TIMEOUT);
                 continue;
             }
             if (!raid.lastMinuteWarned && left <= 60L * SECOND && raid.windowTicks > 60L * SECOND) {
@@ -321,7 +321,7 @@ public final class RaidDuelService {
                     if (player != null) say(player, "Your next duel could not start: " + why, ChatFormatting.YELLOW);
                 }
             }
-            if (raid.duelOfPlayer.isEmpty() && raid.chainAt.isEmpty()) finish(server, raid, false);
+            if (raid.duelOfPlayer.isEmpty() && raid.chainAt.isEmpty()) finish(server, raid, com.cobbleraids.telemetry.RaidEndReason.WIPE);
         }
     }
 
@@ -370,9 +370,10 @@ public final class RaidDuelService {
         return bossId != null && FACES.contains(bossId);
     }
 
-    private static void finish(MinecraftServer server, DuelRaid raid, boolean won) {
+    private static void finish(MinecraftServer server, DuelRaid raid, com.cobbleraids.telemetry.RaidEndReason reason) {
         if (raid.finished) return;
         raid.finished = true;
+        boolean won = reason == com.cobbleraids.telemetry.RaidEndReason.VICTORY;
         RAIDS.remove(raid.raidId);
         FACES.remove(raid.boss.getUUID());
         for (UUID duel : List.copyOf(raid.duelOfPlayer.values())) EncounterService.abort(duel);
@@ -382,6 +383,10 @@ public final class RaidDuelService {
         RaidLog.info("Duel raid {} ({}) {} after {}s: {} of {} pool dealt", raid.raidId, raid.definition.id(),
                 won ? "won" : "lost", elapsed / SECOND, raid.pool.max() - raid.pool.current(), raid.pool.max());
         Set<UUID> victors = RaidDuelRules.victors(raid.players, raid.fought, raid.forfeited);
+        RaidFaultBarrier.guard("duel-raid:telemetry", () -> com.cobbleraids.telemetry.RaidTelemetry.duelEnded(raid.boss.getPokemon().getUuid(),
+                raid.definition.id(), raid.boss.getPokemon().getSpecies().getResourceIdentifier().toString(), raid.bossLevel, reason,
+                raid.players, raid.players.size() - raid.out.size(), elapsed / SECOND, (int) (raid.windowTicks / SECOND),
+                raid.pool.current(), raid.pool.max(), damage));
         // A win is recorded for the players it pays; a loss for everybody who joined.
         RaidFaultBarrier.guard("duel-raid:stats", () -> com.cobbleraids.stats.RaidStats.onDuelRaidEnd(server, raid.definition.id(), won,
                 won ? victors : raid.players, damage, elapsed / SECOND, !raid.renownTitle.isEmpty()));
@@ -428,7 +433,7 @@ public final class RaidDuelService {
 
     /** Ends every raid without paying (server stopping). */
     public static void abortAll(MinecraftServer server) {
-        for (DuelRaid raid : List.copyOf(RAIDS.values())) finish(server, raid, false);
+        for (DuelRaid raid : List.copyOf(RAIDS.values())) finish(server, raid, com.cobbleraids.telemetry.RaidEndReason.SERVER_STOP);
     }
 
     /** Whether this player is in a duel raid right now (for commands and the lobby). */

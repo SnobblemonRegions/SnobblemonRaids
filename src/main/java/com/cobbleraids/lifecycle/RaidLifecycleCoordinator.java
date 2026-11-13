@@ -13,6 +13,8 @@ import com.cobbleraids.catching.LegendEntry;
 import com.cobbleraids.catching.RaidCaptureSessionService;
 import com.cobbleraids.catching.RaidPlayerRecords;
 import com.cobbleraids.stats.RaidStats;
+import com.cobbleraids.telemetry.RaidEndReason;
+import com.cobbleraids.telemetry.RaidTelemetry;
 import com.cobbleraids.catching.TrophyLedger;
 import com.cobbleraids.config.CobbleRaidsConfig;
 import com.cobbleraids.config.CobbleRaidsConfigManager;
@@ -84,7 +86,7 @@ public final class RaidLifecycleCoordinator {
         // after every non-withdrawn player side is exhausted.
         boolean bossWon = event.getWinners().stream().anyMatch(actor -> raid.getBossActorId().equals(actor.getUuid()));
         if (bossWon) {
-            if (raid.fail()) finalizeAfterBattleEnded(raid);
+            if (raid.fail()) finalizeAfterBattleEnded(raid, RaidEndReason.WIPE);
             return;
         }
 
@@ -99,7 +101,7 @@ public final class RaidLifecycleCoordinator {
             // Empty winners is a mutual whiteout -- e.g. Perish Song/Perish Body fainting everyone
             // on the same turn. Nobody defeated the boss, but the battle has genuinely ended, so
             // finalize as a loss rather than leaving the session (and the battle UI) hanging.
-            if (raid.fail()) finalizeAfterBattleEnded(raid);
+            if (raid.fail()) finalizeAfterBattleEnded(raid, RaidEndReason.WIPE);
         }
     }
 
@@ -114,7 +116,8 @@ public final class RaidLifecycleCoordinator {
     }
 
     /** A player left for good, by their own choice or because their connection did not come back. */
-    private static void recordLeft(RaidSession raid, UUID playerId) {
+    private static void recordLeft(RaidSession raid, UUID playerId, LeaveReason why) {
+        RaidFaultBarrier.guard("telemetry:raid-left", () -> RaidTelemetry.playerLeft(raid, playerId, why));
         RaidFaultBarrier.guard("stats:left", () -> {
             var level = raid.getBossEntity() == null ? null : raid.getBossEntity().level();
             if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
@@ -131,9 +134,9 @@ public final class RaidLifecycleCoordinator {
         // this call removed them: a player who already withdrew has been reported once.
         if (raid.removeParticipant(playerId)) {
             EncounterService.notifyLeft(raid, playerId, LeaveReason.FLED);
-            recordLeft(raid, playerId);
+            recordLeft(raid, playerId, LeaveReason.FLED);
         }
-        if (raid.failIfNoActiveParticipants()) finalizeNonVictory(raid);
+        if (raid.failIfNoActiveParticipants()) finalizeNonVictory(raid, RaidEndReason.FLED);
     }
 
     /**
@@ -147,7 +150,7 @@ public final class RaidLifecycleCoordinator {
         if (raid == null || player == null || raid.getStatus() != RaidSession.Status.ACTIVE) return false;
         UUID playerId = player.getUUID();
         if (!raid.removeParticipant(playerId)) return false;
-        recordLeft(raid, playerId);
+        recordLeft(raid, playerId, LeaveReason.WITHDREW);
 
         PokemonBattle battle = raid.getBattle();
         BattleActor actor = battle.getActor(player);
@@ -165,7 +168,7 @@ public final class RaidLifecycleCoordinator {
         EncounterService.notifyLeft(raid, playerId, LeaveReason.WITHDREW);
 
         if (raid.failIfNoActiveParticipants()) {
-            finalizeNonVictory(raid);
+            finalizeNonVictory(raid, RaidEndReason.WITHDREW);
             return true;
         }
         if (actor != null && actor.getShowdownId() != null && !battle.getEnded()) {
@@ -180,7 +183,7 @@ public final class RaidLifecycleCoordinator {
     public static void onPlayerDisconnected(RaidSession raid, UUID playerId) {
         if (raid == null || playerId == null || raid.getStatus() != RaidSession.Status.ACTIVE) return;
         if (!raid.removeParticipant(playerId)) return;
-        recordLeft(raid, playerId);
+        recordLeft(raid, playerId, LeaveReason.DISCONNECTED);
         PokemonBattle battle = raid.getBattle();
         BattleActor actor = battle.getActor(playerId);
         if (actor != null) {
@@ -190,7 +193,7 @@ public final class RaidLifecycleCoordinator {
         }
         EncounterService.notifyLeft(raid, playerId, LeaveReason.DISCONNECTED);
         if (raid.failIfNoActiveParticipants()) {
-            finalizeNonVictory(raid);
+            finalizeNonVictory(raid, RaidEndReason.DISCONNECT);
             return;
         }
         if (actor != null && actor.getShowdownId() != null && !battle.getEnded()) {
@@ -206,7 +209,7 @@ public final class RaidLifecycleCoordinator {
             if (player != null) player.sendSystemMessage(
                     Component.literal("Time expired. The raid was lost.").withStyle(ChatFormatting.RED));
         }
-        finalizeNonVictory(raid);
+        finalizeNonVictory(raid, RaidEndReason.TIMEOUT);
     }
 
     public static void onBattleFainted(PokemonBattle battle) {
@@ -222,8 +225,12 @@ public final class RaidLifecycleCoordinator {
      * /cobbleraids despawn silently do nothing to exactly the bosses an operator most wants gone.
      */
     public static void abort(RaidSession raid) {
+        abort(raid, RaidEndReason.ABORTED);
+    }
+
+    private static void abort(RaidSession raid, RaidEndReason reason) {
         if (raid == null || !raid.abort()) return;
-        finalizeNonVictory(raid, false);
+        finalizeNonVictory(raid, false, reason);
     }
 
     /**
@@ -245,11 +252,11 @@ public final class RaidLifecycleCoordinator {
     public static void abortAll() {
         for (RaidSession raid : RaidRegistry.all()) {
             RaidFaultBarrier.guard("shutdown:abort-raid", () -> {
-                abort(raid);
+                abort(raid, RaidEndReason.SERVER_STOP);
                 // abort() refuses a raid already in a terminal state, and one that is won but still
                 // waiting on its victory is exactly that. It has no later tick to be finalized on, so
                 // its battle and boss are cleaned up here rather than saved with the world.
-                if (RaidRegistry.get(raid.getBattle()) == raid) finalizeNonVictory(raid, false);
+                if (RaidRegistry.get(raid.getBattle()) == raid) finalizeNonVictory(raid, false, RaidEndReason.SERVER_STOP);
             });
         }
     }
@@ -292,7 +299,7 @@ public final class RaidLifecycleCoordinator {
             // gets here is recorded as the same victory rather than as a stopped battle.
             RaidFaultBarrier.guard("stranded-raid:winners", () -> declareWinners(raid));
             finalizeVictory(raid);
-        } else finalizeNonVictory(raid, raid.getStatus() == RaidSession.Status.FAILED);
+        } else finalizeNonVictory(raid, raid.getStatus() == RaidSession.Status.FAILED, RaidEndReason.STRANDED);
     }
 
     private static void declareWinners(RaidSession raid) {
@@ -322,6 +329,7 @@ public final class RaidLifecycleCoordinator {
         // existed. An owned encounter has only the ones its owner asked for.
         EncounterPolicy policy = raid.isOwned() ? raid.getOwnership().policy() : null;
         FINALIZATION.finalizeOnce(raid.getId(), () -> {
+            RaidFaultBarrier.guard("telemetry:raid-end", () -> RaidTelemetry.raidEnded(raid, RaidEndReason.VICTORY));
             // Its own barrier, first: a statistic that cannot be recorded must not be the reason a
             // reward is not paid, and nothing below depends on it having run.
             RaidFaultBarrier.guard("stats:victory", () -> RaidStats.onVictory(server, raid));
@@ -461,12 +469,13 @@ public final class RaidLifecycleCoordinator {
     }
 
     /** Used when Cobblemon/Showdown already ended the battle and then emitted BATTLE_VICTORY. */
-    private static void finalizeAfterBattleEnded(RaidSession raid) {
+    private static void finalizeAfterBattleEnded(RaidSession raid, RaidEndReason reason) {
         RaidCombatRuleService.forget(raid.getId());
         FINALIZATION.finalizeOnce(raid.getId(),
                 // The ordinary way a raid is lost -- the boss wins in Showdown -- so this is where most
                 // losses are recorded; finalizeNonVictory below only sees timeouts and withdrawals.
                 () -> {
+                    RaidFaultBarrier.guard("telemetry:raid-end", () -> RaidTelemetry.raidEnded(raid, reason));
                     recordLoss(raid);
                     RaidBattleStateCarryover.apply(raid);
                 },
@@ -478,17 +487,19 @@ public final class RaidLifecycleCoordinator {
     }
 
     /** Every ordinary way a raid is lost: the players failed, so the boss records the attempt. */
-    private static void finalizeNonVictory(RaidSession raid) {
-        finalizeNonVictory(raid, true);
+    private static void finalizeNonVictory(RaidSession raid, RaidEndReason reason) {
+        finalizeNonVictory(raid, true, reason);
     }
 
     /** Used for timeout/flee/abort paths where no normal Showdown win packet is guaranteed. */
-    private static void finalizeNonVictory(RaidSession raid, boolean countsAsFailedAttempt) {
+    private static void finalizeNonVictory(RaidSession raid, boolean countsAsFailedAttempt, RaidEndReason reason) {
         RaidCombatRuleService.forget(raid.getId());
         PokemonBattle battle = raid.getBattle();
         FINALIZATION.finalizeOnce(raid.getId(),
                 // Read the clones before end(), which retires the actors this walks.
                 () -> {
+                    // Every ending, an operator's abort included: the reason tells them apart.
+                    RaidFaultBarrier.guard("telemetry:raid-end", () -> RaidTelemetry.raidEnded(raid, reason));
                     // An administrative abort is not a loss: it counts for nobody, like it costs the boss
                     // no failed attempt. Recorded before the actors are retired, while the participants
                     // who were still in the raid can be told apart from those who left.
