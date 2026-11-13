@@ -28,6 +28,16 @@ public enum RaidEndReason {
 
     public String id() { return name().toLowerCase(Locale.ROOT); }
 
+    /**
+     * A duel raid's reason when nobody is left fighting. {@code departures} lists, in the order they went out, how each player
+     * left: {@link #WIPE} for one knocked out (or whose next duel could not start), {@link #WITHDREW}, {@link #FLED} (also walking
+     * away from the boss) or {@link #DISCONNECT} for one who gave the raid up. It can be empty (no duel ever started).
+     * The last one out decides, as in a party raid; with nobody ever in, nobody's result: {@link #ABORTED}.
+     */
+    public static RaidEndReason whenNobodyIsLeft(java.util.List<RaidEndReason> departures) {
+        return departures.isEmpty() ? ABORTED : departures.get(departures.size() - 1);
+    }
+
     /** {@code victory}, {@code defeat} (the players lost or gave up) or {@code aborted} (nobody's result). */
     public String outcome() {
         return switch (this) {

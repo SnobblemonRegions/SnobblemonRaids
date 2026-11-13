@@ -78,4 +78,14 @@ class RaidEndTest {
         assertEquals(2, f.get("stillIn"));
         assertEquals(A, f.get("player"));
     }
+
+    @Test void aDuelRaidWithNobodyLeftTakesTheLastOneOutsReason() {
+        // Seen on the rig: a solo player who withdrew was logged as a wipe.
+        assertEquals(RaidEndReason.WITHDREW, RaidEndReason.whenNobodyIsLeft(List.of(RaidEndReason.WITHDREW)));
+        assertEquals(RaidEndReason.WIPE, RaidEndReason.whenNobodyIsLeft(List.of(RaidEndReason.WIPE, RaidEndReason.WIPE)));
+        assertEquals(RaidEndReason.DISCONNECT,
+                RaidEndReason.whenNobodyIsLeft(List.of(RaidEndReason.WIPE, RaidEndReason.FLED, RaidEndReason.DISCONNECT)));
+        assertEquals(RaidEndReason.WIPE, RaidEndReason.whenNobodyIsLeft(List.of(RaidEndReason.WITHDREW, RaidEndReason.WIPE)));
+        assertEquals(RaidEndReason.ABORTED, RaidEndReason.whenNobodyIsLeft(List.of()));
+    }
 }

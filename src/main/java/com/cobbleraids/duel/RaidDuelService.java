@@ -73,6 +73,9 @@ public final class RaidDuelService {
         /** Players who had at least one duel start, and players who gave the raid up; see {@link RaidDuelRules#victors}. */
         final Set<UUID> fought = ConcurrentHashMap.newKeySet();
         final Set<UUID> forfeited = ConcurrentHashMap.newKeySet();
+        /** How each player who gave the raid up did so, and, in order, how each player went out: the raid_end reason when nobody is left. */
+        final Map<UUID, com.cobbleraids.telemetry.RaidEndReason> gaveUp = new ConcurrentHashMap<>();
+        final List<com.cobbleraids.telemetry.RaidEndReason> departures = java.util.Collections.synchronizedList(new ArrayList<>());
         final Map<UUID, UUID> duelOfPlayer = new ConcurrentHashMap<>();
         final Map<UUID, Long> chainAt = new ConcurrentHashMap<>();
         /** Game tick each live duel began, and the ticks its player spent offline (reconnect grace), which do not count against it. */
@@ -261,7 +264,13 @@ public final class RaidDuelService {
         public void onParticipantLeft(UUID encounterId, UUID playerId, com.cobbleraids.api.encounter.LeaveReason reason) {
             // Withdrew, fled, or never came back from a disconnect: all three give the raid up, as they did a party raid.
             DuelRaid raid = BY_DUEL.get(encounterId);
-            if (raid != null) raid.forfeited.add(playerId);
+            if (raid == null) return;
+            raid.forfeited.add(playerId);
+            raid.gaveUp.put(playerId, switch (reason) {
+                case WITHDREW -> com.cobbleraids.telemetry.RaidEndReason.WITHDREW;
+                case FLED -> com.cobbleraids.telemetry.RaidEndReason.FLED;
+                case DISCONNECTED -> com.cobbleraids.telemetry.RaidEndReason.DISCONNECT;
+            });
         }
 
         @Override
@@ -281,6 +290,7 @@ public final class RaidDuelService {
                 raid.chainAt.put(playerId, server.overworld().getGameTime() + CHAIN_DELAY_TICKS);
             } else {
                 raid.out.add(playerId);
+                raid.departures.add(raid.gaveUp.getOrDefault(playerId, com.cobbleraids.telemetry.RaidEndReason.WIPE));
                 ServerPlayer player = server.getPlayerList().getPlayer(playerId);
                 // A player who gave the raid up has already been told so, and their damage earns them nothing.
                 if (player != null && !raid.forfeited.contains(playerId)) {
@@ -318,10 +328,11 @@ public final class RaidDuelService {
                 String why = player == null ? "offline" : startDuel(raid, player);
                 if (why != null) {
                     raid.out.add(entry.getKey());
+                    raid.departures.add(player == null ? com.cobbleraids.telemetry.RaidEndReason.DISCONNECT : com.cobbleraids.telemetry.RaidEndReason.WIPE);
                     if (player != null) say(player, "Your next duel could not start: " + why, ChatFormatting.YELLOW);
                 }
             }
-            if (raid.duelOfPlayer.isEmpty() && raid.chainAt.isEmpty()) finish(server, raid, com.cobbleraids.telemetry.RaidEndReason.WIPE);
+            if (raid.duelOfPlayer.isEmpty() && raid.chainAt.isEmpty()) finish(server, raid, com.cobbleraids.telemetry.RaidEndReason.whenNobodyIsLeft(List.copyOf(raid.departures)));
         }
     }
 
@@ -340,6 +351,7 @@ public final class RaidDuelService {
         if (player.level() != raid.boss.level() || player.distanceToSqr(raid.boss) > RaidDuelRules.LEASH_BLOCKS * RaidDuelRules.LEASH_BLOCKS) {
             say(player, "You walked away from the raid and forfeited its rewards.", ChatFormatting.YELLOW);
             raid.forfeited.add(playerId);
+            raid.gaveUp.put(playerId, com.cobbleraids.telemetry.RaidEndReason.FLED);
             EncounterService.abort(duel);
             return;
         }
