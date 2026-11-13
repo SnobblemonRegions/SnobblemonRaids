@@ -228,7 +228,7 @@ public final class RaidLifecycleCoordinator {
         abort(raid, RaidEndReason.ABORTED);
     }
 
-    private static void abort(RaidSession raid, RaidEndReason reason) {
+    public static void abort(RaidSession raid, RaidEndReason reason) {
         if (raid == null || !raid.abort()) return;
         finalizeNonVictory(raid, false, reason);
     }

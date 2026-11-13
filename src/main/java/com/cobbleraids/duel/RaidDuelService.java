@@ -124,6 +124,12 @@ public final class RaidDuelService {
     private static final Set<UUID> FACES = ConcurrentHashMap.newKeySet();
     /** Duel encounter id to its raid. */
     private static final Map<UUID, DuelRaid> BY_DUEL = new ConcurrentHashMap<>();
+
+    /** The per-duel time limit of the duel raid that owns this copy, for telemetry; empty when it is not a duel copy. */
+    public static java.util.OptionalInt duelLimitSeconds(UUID encounterId) {
+        DuelRaid raid = encounterId == null ? null : BY_DUEL.get(encounterId);
+        return raid == null ? java.util.OptionalInt.empty() : java.util.OptionalInt.of((int) (raid.duelLimitTicks / SECOND));
+    }
     /** Duel encounter id to its player. */
     private static final Map<UUID, UUID> DUEL_PLAYER = new ConcurrentHashMap<>();
 
@@ -359,7 +365,7 @@ public final class RaidDuelService {
         if (used > raid.duelLimitTicks) {
             raid.timedOut.add(playerId);
             say(player, "Your duel ran out of time. Your damage still counts; a fresh duel is coming.", ChatFormatting.YELLOW);
-            EncounterService.abort(duel);
+            EncounterService.abort(duel, com.cobbleraids.telemetry.RaidEndReason.TIMEOUT);
         }
     }
 

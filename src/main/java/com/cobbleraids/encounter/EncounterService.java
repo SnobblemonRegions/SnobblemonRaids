@@ -128,10 +128,15 @@ public final class EncounterService {
     }
 
     public static boolean abort(UUID encounterId) {
+        return abort(encounterId, com.cobbleraids.telemetry.RaidEndReason.ABORTED);
+    }
+
+    /** Ends an owned encounter early; {@code reason} is what its {@code raid_end} records (a duel copy out of time: TIMEOUT). */
+    public static boolean abort(UUID encounterId, com.cobbleraids.telemetry.RaidEndReason reason) {
         RaidSession session = encounterId == null ? null : ACTIVE.get(encounterId);
         if (session == null) return false;
         requireServerThread(session.getBossEntity().getServer());
-        RaidLifecycleCoordinator.abort(session);
+        RaidLifecycleCoordinator.abort(session, reason);
         return true;
     }
 

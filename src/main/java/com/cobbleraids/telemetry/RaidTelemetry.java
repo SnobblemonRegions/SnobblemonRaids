@@ -55,9 +55,12 @@ public final class RaidTelemetry {
             level = boss.getPokemon().getLevel();
         }
         var owner = raid.isOwned() ? raid.getOwnership().owner().toString() : null;
+        // A duel copy's own session keeps the raid's general limit as a fallback; the duel raid enforces its shorter per-duel limit.
+        int timeLimit = raid.isTimed() ? raid.getTimeLimitTicks() / 20 : 0;
+        if (raid.isOwned()) timeLimit = com.cobbleraids.duel.RaidDuelService.duelLimitSeconds(raid.getOwnership().encounterId()).orElse(timeLimit);
         return new RaidEnd(encounterId(bossId(raid)), raid.isOwned() ? "owned" : "party", owner, String.valueOf(raid.getDefinitionId()),
                 tierOf(definition), raid.isOwned() ? 0 : threatOf(definition), species, level, reason, raid.getParticipants().size(),
-                raid.getActiveParticipants().size(), raid.getElapsedCombatTicks() / 20, raid.isTimed() ? raid.getTimeLimitTicks() / 20 : 0,
+                raid.getActiveParticipants().size(), raid.getElapsedCombatTicks() / 20, timeLimit,
                 RaidEnd.fraction(raid.getCurrentHealth(), raid.getMaxHealth()), dealers(raid.getContributionSnapshot()),
                 new ArrayList<>(raid.getParticipants()));
     }
