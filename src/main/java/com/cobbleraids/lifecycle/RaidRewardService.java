@@ -205,6 +205,36 @@ public final class RaidRewardService {
         }
     }
 
+    /** Five minutes between reminders of an unclaimed raid reward; checked once a second. */
+    private static final com.cobbleraids.reward.RewardReminderSchedule REMINDERS = new com.cobbleraids.reward.RewardReminderSchedule(5 * 60 * 20);
+    private static long reminderTicks;
+
+    /**
+     * Reminds each online player who has an unclaimed raid reward, with a click that reopens the reward screen. See
+     * {@link com.cobbleraids.reward.RewardReminderSchedule} for why and when.
+     */
+    public static void remindTick(MinecraftServer server) {
+        if (++reminderTicks % 20 != 0) return;
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID id = player.getUUID();
+            boolean pending = hasPending(id);
+            if (!REMINDERS.due(id, reminderTicks, pending, pending && com.cobbleraids.duel.RaidDuelService.isInRaid(id))) continue;
+            int waiting = PENDING.getOrDefault(id, new ArrayDeque<>()).size();
+            player.sendSystemMessage(Component.literal("You have " + (waiting == 1 ? "an unclaimed raid reward" : waiting + " unclaimed raid rewards") + ". ")
+                    .withStyle(net.minecraft.ChatFormatting.GOLD)
+                    .append(Component.literal("[Open reward]").withStyle(style -> style
+                            .withColor(net.minecraft.ChatFormatting.GREEN).withUnderlined(true)
+                            .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/cobbleraids reward"))
+                            .withHoverEvent(new net.minecraft.network.chat.HoverEvent(net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT,
+                                    Component.literal("Choose your reward"))))));
+        }
+    }
+
+    /** Drops a leaving player from the reminder schedule. */
+    public static void forgetReminder(UUID playerId) {
+        REMINDERS.forget(playerId);
+    }
+
     public static boolean hasPending(UUID playerId) {
         ArrayDeque<PendingRaidReward> queue = PENDING.get(playerId);
         return queue != null && !queue.isEmpty();
