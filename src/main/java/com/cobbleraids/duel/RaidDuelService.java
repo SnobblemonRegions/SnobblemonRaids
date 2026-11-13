@@ -73,6 +73,9 @@ public final class RaidDuelService {
         /** Players who had at least one duel start, and players who gave the raid up; see {@link RaidDuelRules#victors}. */
         final Set<UUID> fought = ConcurrentHashMap.newKeySet();
         final Set<UUID> forfeited = ConcurrentHashMap.newKeySet();
+        /** How each player who gave the raid up did so, and, in order, how each player went out: the raid_end reason when nobody is left. */
+        final Map<UUID, com.cobbleraids.telemetry.RaidEndReason> gaveUp = new ConcurrentHashMap<>();
+        final List<com.cobbleraids.telemetry.RaidEndReason> departures = java.util.Collections.synchronizedList(new ArrayList<>());
         final Map<UUID, UUID> duelOfPlayer = new ConcurrentHashMap<>();
         final Map<UUID, Long> chainAt = new ConcurrentHashMap<>();
         /** Game tick each live duel began, and the ticks its player spent offline (reconnect grace), which do not count against it. */
@@ -253,7 +256,7 @@ public final class RaidDuelService {
             raid.pool.strike(playerId, applied);
             if (raid.pool.current() <= 0f && raid.pool.claimDefeat()) {
                 MinecraftServer server = raid.boss.getServer();
-                if (server != null) server.execute(() -> finish(server, raid, true));
+                if (server != null) server.execute(() -> finish(server, raid, com.cobbleraids.telemetry.RaidEndReason.VICTORY));
             }
         }
 
@@ -261,7 +264,13 @@ public final class RaidDuelService {
         public void onParticipantLeft(UUID encounterId, UUID playerId, com.cobbleraids.api.encounter.LeaveReason reason) {
             // Withdrew, fled, or never came back from a disconnect: all three give the raid up, as they did a party raid.
             DuelRaid raid = BY_DUEL.get(encounterId);
-            if (raid != null) raid.forfeited.add(playerId);
+            if (raid == null) return;
+            raid.forfeited.add(playerId);
+            raid.gaveUp.put(playerId, switch (reason) {
+                case WITHDREW -> com.cobbleraids.telemetry.RaidEndReason.WITHDREW;
+                case FLED -> com.cobbleraids.telemetry.RaidEndReason.FLED;
+                case DISCONNECTED -> com.cobbleraids.telemetry.RaidEndReason.DISCONNECT;
+            });
         }
 
         @Override
@@ -281,6 +290,7 @@ public final class RaidDuelService {
                 raid.chainAt.put(playerId, server.overworld().getGameTime() + CHAIN_DELAY_TICKS);
             } else {
                 raid.out.add(playerId);
+                raid.departures.add(raid.gaveUp.getOrDefault(playerId, com.cobbleraids.telemetry.RaidEndReason.WIPE));
                 ServerPlayer player = server.getPlayerList().getPlayer(playerId);
                 // A player who gave the raid up has already been told so, and their damage earns them nothing.
                 if (player != null && !raid.forfeited.contains(playerId)) {
@@ -298,7 +308,7 @@ public final class RaidDuelService {
             if (raid.finished) continue;
             long left = raid.windowTicks - (now - raid.startedTick);
             if (bossDestroyed(raid.boss) || left < 0) {
-                finish(server, raid, false);
+                finish(server, raid, bossDestroyed(raid.boss) ? com.cobbleraids.telemetry.RaidEndReason.ABORTED : com.cobbleraids.telemetry.RaidEndReason.TIMEOUT);
                 continue;
             }
             if (!raid.lastMinuteWarned && left <= 60L * SECOND && raid.windowTicks > 60L * SECOND) {
@@ -318,10 +328,11 @@ public final class RaidDuelService {
                 String why = player == null ? "offline" : startDuel(raid, player);
                 if (why != null) {
                     raid.out.add(entry.getKey());
+                    raid.departures.add(player == null ? com.cobbleraids.telemetry.RaidEndReason.DISCONNECT : com.cobbleraids.telemetry.RaidEndReason.WIPE);
                     if (player != null) say(player, "Your next duel could not start: " + why, ChatFormatting.YELLOW);
                 }
             }
-            if (raid.duelOfPlayer.isEmpty() && raid.chainAt.isEmpty()) finish(server, raid, false);
+            if (raid.duelOfPlayer.isEmpty() && raid.chainAt.isEmpty()) finish(server, raid, com.cobbleraids.telemetry.RaidEndReason.whenNobodyIsLeft(List.copyOf(raid.departures)));
         }
     }
 
@@ -340,6 +351,7 @@ public final class RaidDuelService {
         if (player.level() != raid.boss.level() || player.distanceToSqr(raid.boss) > RaidDuelRules.LEASH_BLOCKS * RaidDuelRules.LEASH_BLOCKS) {
             say(player, "You walked away from the raid and forfeited its rewards.", ChatFormatting.YELLOW);
             raid.forfeited.add(playerId);
+            raid.gaveUp.put(playerId, com.cobbleraids.telemetry.RaidEndReason.FLED);
             EncounterService.abort(duel);
             return;
         }
@@ -370,9 +382,10 @@ public final class RaidDuelService {
         return bossId != null && FACES.contains(bossId);
     }
 
-    private static void finish(MinecraftServer server, DuelRaid raid, boolean won) {
+    private static void finish(MinecraftServer server, DuelRaid raid, com.cobbleraids.telemetry.RaidEndReason reason) {
         if (raid.finished) return;
         raid.finished = true;
+        boolean won = reason == com.cobbleraids.telemetry.RaidEndReason.VICTORY;
         RAIDS.remove(raid.raidId);
         FACES.remove(raid.boss.getUUID());
         for (UUID duel : List.copyOf(raid.duelOfPlayer.values())) EncounterService.abort(duel);
@@ -382,6 +395,10 @@ public final class RaidDuelService {
         RaidLog.info("Duel raid {} ({}) {} after {}s: {} of {} pool dealt", raid.raidId, raid.definition.id(),
                 won ? "won" : "lost", elapsed / SECOND, raid.pool.max() - raid.pool.current(), raid.pool.max());
         Set<UUID> victors = RaidDuelRules.victors(raid.players, raid.fought, raid.forfeited);
+        RaidFaultBarrier.guard("duel-raid:telemetry", () -> com.cobbleraids.telemetry.RaidTelemetry.duelEnded(raid.boss.getPokemon().getUuid(),
+                raid.definition.id(), raid.boss.getPokemon().getSpecies().getResourceIdentifier().toString(), raid.bossLevel, reason,
+                raid.players, raid.players.size() - raid.out.size(), elapsed / SECOND, (int) (raid.windowTicks / SECOND),
+                raid.pool.current(), raid.pool.max(), damage));
         // A win is recorded for the players it pays; a loss for everybody who joined.
         RaidFaultBarrier.guard("duel-raid:stats", () -> com.cobbleraids.stats.RaidStats.onDuelRaidEnd(server, raid.definition.id(), won,
                 won ? victors : raid.players, damage, elapsed / SECOND, !raid.renownTitle.isEmpty()));
@@ -428,7 +445,7 @@ public final class RaidDuelService {
 
     /** Ends every raid without paying (server stopping). */
     public static void abortAll(MinecraftServer server) {
-        for (DuelRaid raid : List.copyOf(RAIDS.values())) finish(server, raid, false);
+        for (DuelRaid raid : List.copyOf(RAIDS.values())) finish(server, raid, com.cobbleraids.telemetry.RaidEndReason.SERVER_STOP);
     }
 
     /** Whether this player is in a duel raid right now (for commands and the lobby). */
