@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '0.8.204-mew-model-fix'
+version = '0.8.205-raid-fixes-boss-shop'
 group = 'com.cobbleraids'
 
 base {
