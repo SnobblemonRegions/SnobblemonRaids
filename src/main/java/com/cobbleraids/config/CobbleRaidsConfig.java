@@ -27,14 +27,20 @@ public record CobbleRaidsConfig(
 ) {
     public static final int VALIDATED_MAX_HUMAN_PLAYERS = 4;
 
-    /** How much location detail a natural-spawn announcement reveals to the whole server. */
+    /**
+     * What a natural-spawn announcement says to the whole server: the biome, or nothing. It never gives coordinates -- the Raidio is how a
+     * raid is found. {@code exact} and {@code nearest_hundred} used to exist, and a config that saved either one keeps loading, as
+     * {@code biome_only}, rather than failing to start the server or going on printing X and Z.
+     */
     public enum AnnouncementPrecision {
-        EXACT, NEAREST_HUNDRED, BIOME_ONLY, DISABLED;
+        BIOME_ONLY, DISABLED;
 
         public String serializedName() { return name().toLowerCase(Locale.ROOT); }
 
         public static AnnouncementPrecision parse(String value) {
-            return valueOf(value.trim().toUpperCase(Locale.ROOT));
+            String name = value.trim().toUpperCase(Locale.ROOT);
+            if (name.equals("EXACT") || name.equals("NEAREST_HUNDRED")) return BIOME_ONLY;
+            return valueOf(name);
         }
     }
 
