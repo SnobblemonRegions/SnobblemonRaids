@@ -177,7 +177,7 @@ public final class RaidSpawnScheduler {
         COOLDOWNS.start(selected.id(), schedulerTick, selected.spawn().cooldownSeconds());
 
         RaidSpawnAnnouncementService.naturalSpawn(
-                level.getServer(), entity, biomeId, dimensionId, pos, selected.rarityTier());
+                level.getServer(), entity, biomeId, dimensionId, selected.rarityTier());
         if (CobbleRaidsConfigManager.get().debugLogging()) {
             RaidLog.info("Natural raid spawned: " + selected.id() + " at " + pos
                     + " in " + dimensionId + " biome=" + biomeId + " tier="
