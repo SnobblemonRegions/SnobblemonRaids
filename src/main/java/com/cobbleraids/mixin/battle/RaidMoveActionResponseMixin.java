@@ -5,8 +5,10 @@ import com.cobbleraids.fault.RaidFaultBarrier;
 import com.cobbleraids.raid.RaidRegistry;
 import com.cobbleraids.raid.RaidSession;
 import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
+import com.cobblemon.mod.common.battles.InBattleGimmickMove;
 import com.cobblemon.mod.common.battles.InBattleMove;
 import com.cobblemon.mod.common.battles.MoveActionResponse;
+import com.cobblemon.mod.common.battles.MoveTarget;
 import com.cobblemon.mod.common.battles.ShowdownMoveset;
 import com.cobblemon.mod.common.battles.Targetable;
 import java.util.ArrayList;
@@ -59,11 +61,21 @@ public abstract class RaidMoveActionResponseMixin {
 
             MoveActionResponse response = (MoveActionResponse) (Object) this;
             String target = response.getTargetPnx();
-            if (target == null) return;
 
             List<String> opponents = new ArrayList<>();
             for (Targetable opponent : user.getAdjacentOpponents()) {
                 if (opponent instanceof ActiveBattlePokemon active) opponents.add(active.getPNX());
+            }
+
+            if (target == null) {
+                // The only place a missing target is filled. It used to live in the select-actions
+                // handler, gated on the raid being ACTIVE and on the boss being found by actor id;
+                // whenever either failed it did nothing and Cobblemon refused the move. Here it runs
+                // for every raid move at the moment Cobblemon validates it, whatever the raid's
+                // status, using the same target list Cobblemon is about to check against.
+                String filled = RaidMoveTargeting.missingTarget(cobbleRaids$legalTargets(user, moveset, response), opponents);
+                if (filled != null) response.setTargetPnx(filled);
+                return;
             }
             // The decision itself lives in RaidMoveTargeting, where it can be tested without a
             // battle; this half only turns opponents into the slots they occupy.
@@ -74,6 +86,39 @@ public abstract class RaidMoveActionResponseMixin {
             // let a raid proceed on an unvalidated action.
             RaidFaultBarrier.report("mixin:isValid", ex);
         }
+    }
+
+    /**
+     * The slots this move may target, worked out exactly as MoveActionResponse.isValid does: the
+     * gimmick move's target when a usable gimmick was chosen, the base move's otherwise. Null when
+     * the move is not in the moveset (Cobblemon refuses that on its own) or needs no target.
+     */
+    private static List<String> cobbleRaids$legalTargets(ActiveBattlePokemon user, ShowdownMoveset moveset,
+                                                         MoveActionResponse response) {
+        if (moveset == null) return null;
+        InBattleMove selected = null;
+        for (InBattleMove candidate : moveset.getMoves()) {
+            if (candidate.getId().equals(response.getMoveName())) {
+                selected = candidate;
+                break;
+            }
+        }
+        if (selected == null) return null;
+
+        MoveTarget targetType = selected.getTarget();
+        InBattleGimmickMove gimmick = selected.getGimmickMove();
+        if (response.getGimmickID() != null && gimmick != null && !gimmick.getDisabled()) {
+            targetType = gimmick.getTarget();
+        }
+        if (targetType == null) return null;
+
+        List<Targetable> legal = targetType.getTargetList().invoke(user);
+        if (legal == null) return null;
+        List<String> pnxs = new ArrayList<>();
+        for (Targetable candidate : legal) {
+            if (candidate instanceof ActiveBattlePokemon active) pnxs.add(active.getPNX());
+        }
+        return pnxs;
     }
 
     @Inject(method = "toShowdownString", at = @At("HEAD"), cancellable = true)
