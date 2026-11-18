@@ -3,6 +3,7 @@ package com.cobbleraids.mixin.battle;
 import com.cobbleraids.perf.RaidPerf;
 import com.cobbleraids.fault.RaidFaultBarrier;
 import com.cobbleraids.api.encounter.EncounterRules;
+import com.cobbleraids.battle.RaidBannedGimmicks;
 import com.cobbleraids.battle.RaidBannedMoves;
 import com.cobbleraids.battle.RaidSwitchRules;
 import com.cobbleraids.lifecycle.RaidLifecycleCoordinator;
@@ -95,6 +96,8 @@ public abstract class RaidBattleSelectActionsMixin {
                     refusal = RaidBannedMoves.displayName(id) + " is banned in raid battles and cannot be used.";
                 } else if (rules.bans(id)) {
                     refusal = RaidBannedMoves.displayName(id) + " is not allowed in this battle.";
+                } else if (RaidBannedGimmicks.isBanned(move.getGimmickID())) {
+                    refusal = "Z-Moves are banned in raid battles and cannot be used.";
                 }
             } else if (response instanceof FleeAttemptActionResponse) {
                 // The 1.8 client's Run button, shown because the boss actor is WILD. Cobblemon would
