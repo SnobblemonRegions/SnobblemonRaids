@@ -11,6 +11,7 @@ import com.cobbleraids.api.encounter.EncounterRules;
 import com.cobbleraids.api.encounter.StartResult;
 import com.cobbleraids.api.points.CobbleRaidsPoints;
 import com.cobbleraids.api.worldboss.WorldBossListener;
+import com.cobbleraids.config.CobbleRaidsConfigManager;
 import com.cobbleraids.config.RaidDefinition;
 import com.cobbleraids.config.RaidDefinitionRegistry;
 import com.cobbleraids.encounter.EncounterService;
@@ -18,6 +19,7 @@ import com.cobbleraids.fault.RaidFaultBarrier;
 import com.cobbleraids.renown.RenownRequest;
 import com.cobbleraids.spawn.RaidBossSpawner;
 import com.cobbleraids.spawn.RaidSpawnAnnouncementService;
+import com.cobbleraids.spawn.claim.LandClaimGuard;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
@@ -314,7 +316,8 @@ public final class WorldBossService {
             ServerPlayer anchor = near != null && near.level() == level ? near : randomPlayerIn(level);
             if (anchor == null) return "nobody is online in " + config.spawnDimension() + " to place the boss around";
             spot = findLand(level, anchor.blockPosition(), config);
-            if (spot == null) return "no suitable surface was found after " + config.spawnAttempts() + " attempts";
+            if (spot == null) return "no suitable surface" + (LandClaimGuard.active() && CobbleRaidsConfigManager.get().landClaims().avoid() ? " outside land claims" : "")
+                    + " was found after " + config.spawnAttempts() + " attempts";
         }
 
         long now = System.currentTimeMillis();
@@ -928,7 +931,10 @@ public final class WorldBossService {
             level.getChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z),
                     ChunkStatus.FULL, true);
             BlockPos candidate = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
-            if (isSimpleSurface(level, candidate)) return candidate;
+            if (!isSimpleSurface(level, candidate)) continue;
+            // A boss inside a land claim cannot be fought by players the claim does not trust.
+            if (LandClaimGuard.blocks(level, candidate, CobbleRaidsConfigManager.get().landClaims())) continue;
+            return candidate;
         }
         return null;
     }

@@ -1,5 +1,6 @@
 package com.cobbleraids.command;
 
+import com.cobbleraids.spawn.claim.LandClaimGuard;
 import com.cobbleraids.config.CobbleRaidsConfig;
 import com.cobbleraids.config.CobbleRaidsConfigManager;
 import com.cobbleraids.config.RaidRarityTier;
@@ -173,6 +174,10 @@ final class RaidAdminConfigOps {
         setting(source, "enabled", config.reconnectGrace().enabled());
         setting(source, "grace_seconds", config.reconnectGrace().graceSeconds());
 
+        section(source, "land_claims");
+        setting(source, "avoid", config.landClaims().avoid()
+                + (LandClaimGuard.active() ? " (Flan detected)" : " (no supported claim mod)"));
+        setting(source, "buffer_blocks", config.landClaims().bufferBlocks());
         section(source, "other");
         setting(source, "debug_logging", config.debugLogging());
         return 1;

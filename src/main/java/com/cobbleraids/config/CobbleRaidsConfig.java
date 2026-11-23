@@ -23,6 +23,7 @@ public record CobbleRaidsConfig(
         Renown renown,
         ReconnectGrace reconnectGrace,
         DuelRaid duelRaid,
+        LandClaims landClaims,
         boolean debugLogging
 ) {
     public static final int VALIDATED_MAX_HUMAN_PLAYERS = 4;
@@ -743,6 +744,21 @@ public record CobbleRaidsConfig(
         }
     }
 
+    /**
+     * Keeps wild raids and surface World Bosses out of land claims (Flan), where players outside the claim cannot fight them.
+     * {@code bufferBlocks} is how far from any claim the boss must stand. Has no effect on a server without a supported claim mod.
+     */
+    public record LandClaims(boolean avoid, int bufferBlocks) {
+        public LandClaims {
+            if (bufferBlocks < 0 || bufferBlocks > com.cobbleraids.spawn.claim.ClaimFootprint.MAX_BUFFER)
+                throw new IllegalArgumentException("land_claims.buffer_blocks must be 0.." + com.cobbleraids.spawn.claim.ClaimFootprint.MAX_BUFFER);
+        }
+
+        public static LandClaims defaults() {
+            return new LandClaims(true, 8);
+        }
+    }
+
     public record TierMultipliers(double health, double timeLimit, double reward) {
         public TierMultipliers {
             if (health < 0.1 || health > 10.0)
@@ -804,6 +820,7 @@ public record CobbleRaidsConfig(
                 Renown.defaults(),
                 ReconnectGrace.defaults(),
                 DuelRaid.defaults(),
+                LandClaims.defaults(),
                 false
         );
     }

@@ -9,6 +9,7 @@ import com.cobbleraids.config.RaidDefinitionRegistry;
 import com.cobbleraids.lobby.RaidLobbyManager;
 import com.cobbleraids.presentation.CommandFormat;
 import com.cobbleraids.showdown.ShowdownIntegrationInstaller;
+import com.cobbleraids.spawn.claim.LandClaimGuard;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import java.util.ArrayList;
@@ -89,10 +90,12 @@ public final class RaidSpawnScheduler {
             return;
         }
 
-        Optional<BlockPos> position = RaidSpawnPositionFinder.findLand(level, player, config);
+        CobbleRaidsConfig.LandClaims claims = CobbleRaidsConfigManager.get().landClaims();
+        Optional<BlockPos> position = RaidSpawnPositionFinder.findLand(level, player, config, claims);
         if (position.isEmpty()) {
             RaidSpawnHistory.record(schedulerTick, playerName, dimensionId, RaidSpawnHistory.Outcome.NO_VALID_TERRAIN,
-                    "no valid surface position found in " + config.locationAttempts() + " attempts");
+                    "no valid surface position" + (claims.avoid() && LandClaimGuard.active() ? " outside land claims" : "")
+                            + " found in " + config.locationAttempts() + " attempts");
             return;
         }
         BlockPos pos = position.get();

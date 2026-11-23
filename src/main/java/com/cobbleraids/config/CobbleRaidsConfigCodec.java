@@ -218,9 +218,15 @@ final class CobbleRaidsConfigCodec {
                 Json.integer(duelRaidObject, "duel_time_limit_seconds", dr.duelTimeLimitSeconds()),
                 Json.integer(duelRaidObject, "raid_time_limit_seconds", dr.raidTimeLimitSeconds()));
 
+        JsonObject landClaimsObject = Json.object(root, "land_claims");
+        CobbleRaidsConfig.LandClaims lc = defaults.landClaims();
+        CobbleRaidsConfig.LandClaims landClaims = new CobbleRaidsConfig.LandClaims(
+                Json.bool(landClaimsObject, "avoid", lc.avoid()),
+                Json.integer(landClaimsObject, "buffer_blocks", lc.bufferBlocks()));
+
         return new CobbleRaidsConfig(naturalSpawning, recruitmentDefaults, combatDefaults, battleCarryover,
                 bossTraits, catching, currency, dynamicLevel, megaPity, raidPoints, personalBossShop, tierScaling,
-                bossGlow, bossMovement, renown, reconnectGrace, duelRaid, Json.bool(root, "debug_logging", defaults.debugLogging()));
+                bossGlow, bossMovement, renown, reconnectGrace, duelRaid, landClaims, Json.bool(root, "debug_logging", defaults.debugLogging()));
     }
 
     private static CobbleRaidsConfig.TierMultipliers readTierMultipliers(
@@ -419,6 +425,10 @@ final class CobbleRaidsConfigCodec {
         duelRaidJson.addProperty("duel_time_limit_seconds", config.duelRaid().duelTimeLimitSeconds());
         duelRaidJson.addProperty("raid_time_limit_seconds", config.duelRaid().raidTimeLimitSeconds());
         root.add("duel_raid", duelRaidJson);
+        JsonObject landClaimsJson = new JsonObject();
+        landClaimsJson.addProperty("avoid", config.landClaims().avoid());
+        landClaimsJson.addProperty("buffer_blocks", config.landClaims().bufferBlocks());
+        root.add("land_claims", landClaimsJson);
 
         root.addProperty("debug_logging", config.debugLogging());
         return root;

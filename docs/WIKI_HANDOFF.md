@@ -601,6 +601,7 @@ reloaded with `/cobbleraids reload`. Values below are the shipped defaults.
 | `boss_movement` | `slowness_enabled`, `slowness_amplifier`, `prevent_knockback` | true, 6, true | |
 | `renown` | `enabled`, `chance` per tier, `health_bonus`, `stat_focus_evs`, `points_multiplier`, `currency_multiplier`, `level_bonus`, `base_health_bonus` | true, 5/7/10/12%, 0.15, 200, 1.25, 1.25, 10, 0.30 | |
 | `reconnect_grace` | `enabled`, `grace_seconds` | true, 300 | |
+| `land_claims` | `avoid`, `buffer_blocks` | true, 8 | Wild raids and surface World Bosses never spawn inside a Flan land claim or within `buffer_blocks` of one. No effect without Flan. Range 0..64. |
 | (root) | `debug_logging` | false | |
 
 Other config files: `shop.json` (catalogue, `per_page`, `limits`, `sections`, `rotation`),
