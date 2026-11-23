@@ -65,4 +65,28 @@ class RaidMoveTargetingTest {
         // Showdown resolves these itself, and raid-patch.js aims them at the boss regardless.
         assertNull(RaidMoveTargeting.correctedTarget(null, BOSS_ONLY));
     }
+
+    @Test
+    @DisplayName("a move sent with no target is aimed at the boss when the boss is a legal target")
+    void missingTargetFillsBoss() {
+        assertEquals("p4a", RaidMoveTargeting.missingTarget(List.of("p2b", "p4a"), BOSS_ONLY));
+        assertEquals("p4a", RaidMoveTargeting.missingTarget(BOSS_ONLY, BOSS_ONLY));
+    }
+
+    @Test
+    @DisplayName("a no-target move that cannot hit the boss still gets a legal target instead of a refusal")
+    void missingTargetFallsBackToFirstLegal() {
+        // An ally-only move (Helping Hand style): Cobblemon would refuse it untargeted.
+        assertEquals("p2b", RaidMoveTargeting.missingTarget(List.of("p2b", "p3c"), BOSS_ONLY));
+        // Opponents unknown (geometry failed): any legal slot beats the red error.
+        assertEquals("p4a", RaidMoveTargeting.missingTarget(BOSS_ONLY, List.of()));
+        assertEquals("p4a", RaidMoveTargeting.missingTarget(BOSS_ONLY, null));
+    }
+
+    @Test
+    @DisplayName("a move that needs no target is left untargeted")
+    void missingTargetLeavesUntargetedMovesAlone() {
+        assertNull(RaidMoveTargeting.missingTarget(null, BOSS_ONLY));
+        assertNull(RaidMoveTargeting.missingTarget(List.of(), BOSS_ONLY));
+    }
 }

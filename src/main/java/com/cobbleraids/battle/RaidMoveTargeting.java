@@ -40,4 +40,26 @@ public final class RaidMoveTargeting {
         if (opponentPnxs.contains(submitted)) return null;
         return opponentPnxs.get(0);
     }
+
+    /**
+     * The target to give a raid move the client sent without one, or null to leave it untargeted.
+     *
+     * <p>Cobblemon refuses a move with no target whenever that move's target list is non-empty, and
+     * the player sees a red "Invalid action choice". A raid offers no choice of foe, so the fill
+     * only has to be legal: an opponent (the boss) when the move may hit one, otherwise the first
+     * slot the move may hit at all. A move whose list is empty or absent (self, field, spread)
+     * needs no target and gets none.
+     *
+     * @param legalTargetPnxs the slots Cobblemon's own target list allows for this move, in order
+     * @param opponentPnxs legal opponents, in battle order
+     */
+    public static String missingTarget(List<String> legalTargetPnxs, List<String> opponentPnxs) {
+        if (legalTargetPnxs == null || legalTargetPnxs.isEmpty()) return null;
+        if (opponentPnxs != null) {
+            for (String opponent : opponentPnxs) {
+                if (legalTargetPnxs.contains(opponent)) return opponent;
+            }
+        }
+        return legalTargetPnxs.get(0);
+    }
 }
