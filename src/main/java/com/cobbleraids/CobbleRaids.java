@@ -93,6 +93,7 @@ public final class CobbleRaids implements ModInitializer {
             RaidFaultBarrier.safeTick("raidio", server, com.cobbleraids.raidio.RaidioService::tick);
             RaidFaultBarrier.safeTick("deferred-discard", server, com.cobbleraids.spawn.RaidDeferredDiscard::tick);
             RaidFaultBarrier.safeTick("rewards", server, RaidRewardService::tick);
+            RaidFaultBarrier.safeTick("reward-reminders", server, RaidRewardService::remindTick);
             RaidFaultBarrier.safeTick("world-boss", server, com.cobbleraids.worldboss.WorldBossService::tick);
             RaidFaultBarrier.safeTick("duel-raids", server, com.cobbleraids.duel.RaidDuelService::tick);
             RaidFaultBarrier.safeTick("capture-sessions", server, RaidCaptureSessionService::tick);
@@ -191,6 +192,7 @@ public final class CobbleRaids implements ModInitializer {
                     TrophyRoomGateway.forget(handler.getPlayer().getUUID());
                     LegendRoomGateway.forget(handler.getPlayer().getUUID());
                     RaidCaptureSessionService.forgetLogThrottle(handler.getPlayer().getUUID());
+                    RaidRewardService.forgetReminder(handler.getPlayer().getUUID());
                 }));
         // Resumes a raid a player was mid-disconnect-grace on -- see RaidReconnectService.
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
