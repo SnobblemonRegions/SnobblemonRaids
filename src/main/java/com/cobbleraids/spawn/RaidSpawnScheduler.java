@@ -9,7 +9,6 @@ import com.cobbleraids.config.RaidDefinitionRegistry;
 import com.cobbleraids.lobby.RaidLobbyManager;
 import com.cobbleraids.presentation.CommandFormat;
 import com.cobbleraids.showdown.ShowdownIntegrationInstaller;
-import com.cobbleraids.spawn.claim.LandClaimGuard;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import java.util.ArrayList;
@@ -55,23 +54,39 @@ public final class RaidSpawnScheduler {
         if (TRACKER.size() >= config.maxActiveRaids()) return;
 
         List<ServerPlayer> candidates = new ArrayList<>(server.getPlayerList().getPlayers());
-        candidates.removeIf(RaidSpawnScheduler::shouldSkipPlayer);
+        long now = net.minecraft.Util.getMillis();
+        candidates.removeIf(player -> skipReason(player, config, now) != RaidSpawnRules.Skip.NONE);
         Collections.shuffle(candidates);
 
-        int attempts = Math.min(config.attemptsPerCheck(), candidates.size());
-        for (int i = 0; i < attempts && TRACKER.size() < config.maxActiveRaids(); i++) {
+        // Each wanted spawn is tried around one player. A failure about where the boss could stand (a claim, a miner under the
+        // surface, a roof) passes it on to the next player instead of costing the whole server its raid; any other outcome,
+        // a spawn included, uses it up. players_tried_per_check bounds the work.
+        int wanted = config.attemptsPerCheck();
+        int tried = 0;
+        for (ServerPlayer player : candidates) {
+            if (wanted <= 0 || tried >= config.playersTriedPerCheck() || TRACKER.size() >= config.maxActiveRaids()) break;
+            tried++;
             long started = RaidPerf.start();
-            attemptForPlayer(candidates.get(i), config);
+            RaidSpawnHistory.Outcome outcome = attemptForPlayer(player, config);
             RaidPerf.stop("spawn:attempt", started);
+            if (!RaidSpawnRules.tryAnotherPlayer(outcome)) wanted--;
         }
     }
 
-    private static boolean shouldSkipPlayer(ServerPlayer player) {
-        if (!player.isAlive() || player.isSpectator()) return true;
-        return Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player) != null;
+    static RaidSpawnRules.Skip skipReason(ServerPlayer player, CobbleRaidsConfig.NaturalSpawning config, long nowMillis) {
+        ResourceLocation dimension = player.level().dimension().location();
+        return RaidSpawnRules.skipReason(new RaidSpawnRules.PlayerState(
+                player.isAlive(),
+                player.isSpectator(),
+                player.isCreative(),
+                Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player) != null,
+                com.cobbleraids.duel.RaidDuelService.isInRaid(player.getUUID()) || RaidLobbyManager.isInLobby(player.getUUID()),
+                Math.max(0L, nowMillis - player.getLastActionTime()),
+                RaidDefinitionRegistry.all().stream().anyMatch(d -> d.spawn().enabled() && d.spawn().allowsDimension(dimension))),
+                config.afkSeconds());
     }
 
-    private static void attemptForPlayer(ServerPlayer player, CobbleRaidsConfig.NaturalSpawning config) {
+    private static RaidSpawnHistory.Outcome attemptForPlayer(ServerPlayer player, CobbleRaidsConfig.NaturalSpawning config) {
         ServerLevel level = (ServerLevel) player.level();
         ResourceLocation dimensionId = level.dimension().location();
         String playerName = player.getGameProfile().getName();
@@ -80,30 +95,30 @@ public final class RaidSpawnScheduler {
             RaidSpawnHistory.record(schedulerTick, playerName, dimensionId,
                     RaidSpawnHistory.Outcome.SHOWDOWN_INTEGRATION_FAILED,
                     "CobbleRaids' Showdown edits are not installed; see the server log at startup");
-            return;
+            return RaidSpawnHistory.Outcome.SHOWDOWN_INTEGRATION_FAILED;
         }
 
         int activeHere = trackedInDimension(dimensionId);
         if (activeHere >= config.maxActiveRaidsPerDimension()) {
             RaidSpawnHistory.record(schedulerTick, playerName, dimensionId, RaidSpawnHistory.Outcome.PER_DIMENSION_CAP,
                     activeHere + "/" + config.maxActiveRaidsPerDimension() + " active in dimension");
-            return;
+            return RaidSpawnHistory.Outcome.PER_DIMENSION_CAP;
         }
 
         CobbleRaidsConfig.LandClaims claims = CobbleRaidsConfigManager.get().landClaims();
-        Optional<BlockPos> position = RaidSpawnPositionFinder.findLand(level, player, config, claims);
-        if (position.isEmpty()) {
+        RaidSpawnPositionFinder.Search search = RaidSpawnPositionFinder.findLand(level, player, config, claims);
+        if (search.position().isEmpty()) {
+            String why = RaidSpawnRules.summarize(search.rejections());
             RaidSpawnHistory.record(schedulerTick, playerName, dimensionId, RaidSpawnHistory.Outcome.NO_VALID_TERRAIN,
-                    "no valid surface position" + (claims.avoid() && LandClaimGuard.active() ? " outside land claims" : "")
-                            + " found in " + config.locationAttempts() + " attempts");
-            return;
+                    "no valid surface position in " + config.locationAttempts() + " attempts" + (why.isEmpty() ? "" : ": " + why));
+            return RaidSpawnHistory.Outcome.NO_VALID_TERRAIN;
         }
-        BlockPos pos = position.get();
+        BlockPos pos = search.position().get();
         if (tooCloseToAnotherRaid(level, pos, config.minDistanceBetweenRaids())) {
             RaidSpawnHistory.record(schedulerTick, playerName, dimensionId, RaidSpawnHistory.Outcome.TOO_CLOSE_TO_EXISTING,
                     "candidate " + pos.toShortString() + " within " + config.minDistanceBetweenRaids()
                             + " blocks of an active raid");
-            return;
+            return RaidSpawnHistory.Outcome.TOO_CLOSE_TO_EXISTING;
         }
 
         Holder<Biome> biomeHolder = level.getBiome(pos);
@@ -118,7 +133,7 @@ public final class RaidSpawnScheduler {
         if (eligible.isEmpty()) {
             RaidSpawnHistory.record(schedulerTick, playerName, dimensionId, RaidSpawnHistory.Outcome.NO_ELIGIBLE_DEFINITIONS,
                     "no definition matched biome=" + biomeId + " and was off cooldown/below its concurrent cap");
-            return;
+            return RaidSpawnHistory.Outcome.NO_ELIGIBLE_DEFINITIONS;
         }
 
         RaidDefinition selected = RaidTierSelector.select(
@@ -131,7 +146,7 @@ public final class RaidSpawnScheduler {
         if (selected == null) {
             RaidSpawnHistory.record(schedulerTick, playerName, dimensionId, RaidSpawnHistory.Outcome.TIER_SELECTION_FAILED,
                     eligible.size() + " eligible definition(s) but tier selection returned none");
-            return;
+            return RaidSpawnHistory.Outcome.TIER_SELECTION_FAILED;
         }
 
         // Deliberately after tier selection and deliberately terminal: a failed roll means no raid
@@ -143,12 +158,23 @@ public final class RaidSpawnScheduler {
             RaidSpawnHistory.record(schedulerTick, playerName, dimensionId, RaidSpawnHistory.Outcome.TIER_CHANCE_SKIPPED,
                     selected.rarityTier().serializedName() + " selected but skipped by tier_spawn_chance "
                             + CommandFormat.percent(tierChance * 100.0));
-            return;
+            return RaidSpawnHistory.Outcome.TIER_CHANCE_SKIPPED;
         }
+
+        // Only now is the species known, and so its size: a large boss on a spot cleared for two blocks would stand inside an
+        // overhang or a tree. Look close by for room; failing that, the spawn passes on to another player.
+        Optional<BlockPos> room = RaidSpawnPositionFinder.roomFor(level, player, pos, RaidBossSpawner.sizeOf(selected), config, claims);
+        if (room.isEmpty()) {
+            RaidSpawnHistory.record(schedulerTick, playerName, dimensionId, RaidSpawnHistory.Outcome.NO_ROOM_FOR_BOSS,
+                    CommandFormat.shortId(selected.id()) + " does not fit at or near " + pos.toShortString());
+            return RaidSpawnHistory.Outcome.NO_ROOM_FOR_BOSS;
+        }
+        pos = room.get();
 
         spawnTracked(level, pos, biomeId, dimensionId, selected);
         RaidSpawnHistory.record(schedulerTick, playerName, dimensionId, RaidSpawnHistory.Outcome.SUCCESS,
                 CommandFormat.shortId(selected.id()) + " (" + selected.rarityTier().serializedName() + ")");
+        return RaidSpawnHistory.Outcome.SUCCESS;
     }
 
     static PokemonEntity spawnTracked(

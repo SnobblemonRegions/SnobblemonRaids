@@ -16,6 +16,7 @@ public final class RaidSpawnHistory {
         PER_DIMENSION_CAP,
         NO_VALID_TERRAIN,
         TOO_CLOSE_TO_EXISTING,
+        NO_ROOM_FOR_BOSS,
         NO_ELIGIBLE_DEFINITIONS,
         TIER_SELECTION_FAILED,
         TIER_CHANCE_SKIPPED,

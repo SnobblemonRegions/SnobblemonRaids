@@ -63,7 +63,11 @@ public record CobbleRaidsConfig(
             int defaultDefinitionCooldownSeconds,
             RaidTierWeights tierWeights,
             RaidTierSpawnChance tierSpawnChance,
-            AnnouncementPrecision announcementPrecision
+            AnnouncementPrecision announcementPrecision,
+            double maxHeightDifference,
+            boolean naturalGroundOnly,
+            int afkSeconds,
+            int playersTriedPerCheck
     ) {
         public NaturalSpawning {
             if (checkIntervalTicks < 20 || checkIntervalTicks > 72_000)
@@ -113,6 +117,13 @@ public record CobbleRaidsConfig(
                 throw new IllegalArgumentException("natural_spawning.tier_spawn_chance cannot be null");
             if (announcementPrecision == null)
                 throw new IllegalArgumentException("natural_spawning.announcement_precision cannot be null");
+            // 0 turns the height rule off. A miner 100 blocks under the surface cannot reach a raid spawned up on it.
+            if (!(maxHeightDifference >= 0.0) || maxHeightDifference > 384.0)
+                throw new IllegalArgumentException("natural_spawning.max_height_difference must be 0..384");
+            if (afkSeconds < 0 || afkSeconds > 86_400)
+                throw new IllegalArgumentException("natural_spawning.afk_seconds must be 0..86400");
+            if (playersTriedPerCheck < 1 || playersTriedPerCheck > 64)
+                throw new IllegalArgumentException("natural_spawning.players_tried_per_check must be 1..64");
         }
     }
 
@@ -823,7 +834,11 @@ public record CobbleRaidsConfig(
                         1800,           // default_definition_cooldown_seconds
                         RaidTierWeights.defaults(),
                         RaidTierSpawnChance.defaults(),
-                        AnnouncementPrecision.BIOME_ONLY   // players find the raid with a Raidio
+                        AnnouncementPrecision.BIOME_ONLY,  // players find the raid with a Raidio
+                        24.0,           // max_height_difference: no surface raid 100 blocks over a miner
+                        true,           // natural_ground_only: no raids on roofs, farms or paths
+                        300,            // afk_seconds: no raids spawned for players idle 5 minutes
+                        8               // players_tried_per_check: a spot failure passes the spawn on
                 ),
                 new RecruitmentDefaults(20, 10.0, VALIDATED_MAX_HUMAN_PLAYERS),
                 new CombatDefaults(900, false, 3),

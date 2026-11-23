@@ -52,7 +52,11 @@ final class CobbleRaidsConfigCodec {
                 tierSpawnChance,
                 natural.has("announcement_precision")
                         ? CobbleRaidsConfig.AnnouncementPrecision.parse(natural.get("announcement_precision").getAsString())
-                        : nd.announcementPrecision()
+                        : nd.announcementPrecision(),
+                Json.decimal(natural, "max_height_difference", nd.maxHeightDifference()),
+                Json.bool(natural, "natural_ground_only", nd.naturalGroundOnly()),
+                Json.integer(natural, "afk_seconds", nd.afkSeconds()),
+                Json.integer(natural, "players_tried_per_check", nd.playersTriedPerCheck())
         );
 
         JsonObject recruitment = Json.object(root, "recruitment_defaults");
@@ -281,6 +285,10 @@ final class CobbleRaidsConfigCodec {
         natural.addProperty("default_despawn_seconds", naturalSpawning.defaultDespawnSeconds());
         natural.addProperty("default_max_lifetime_seconds", naturalSpawning.defaultMaxLifetimeSeconds());
         natural.addProperty("default_definition_cooldown_seconds", naturalSpawning.defaultDefinitionCooldownSeconds());
+        natural.addProperty("max_height_difference", naturalSpawning.maxHeightDifference());
+        natural.addProperty("natural_ground_only", naturalSpawning.naturalGroundOnly());
+        natural.addProperty("afk_seconds", naturalSpawning.afkSeconds());
+        natural.addProperty("players_tried_per_check", naturalSpawning.playersTriedPerCheck());
         JsonObject tierWeights = new JsonObject();
         tierWeights.addProperty("starter", naturalSpawning.tierWeights().starter());
         tierWeights.addProperty("powerhouse", naturalSpawning.tierWeights().powerhouse());
