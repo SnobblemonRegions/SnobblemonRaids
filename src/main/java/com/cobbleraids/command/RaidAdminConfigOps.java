@@ -178,6 +178,11 @@ final class RaidAdminConfigOps {
         setting(source, "avoid", config.landClaims().avoid()
                 + (LandClaimGuard.active() ? " (Flan detected)" : " (no supported claim mod)"));
         setting(source, "buffer_blocks", config.landClaims().bufferBlocks());
+        section(source, "raid_edge");
+        setting(source, "enabled", config.raidEdge().enabled());
+        setting(source, "show_within_blocks", config.raidEdge().showWithinBlocks());
+        setting(source, "warn_within_blocks", config.raidEdge().warnWithinBlocks());
+        setting(source, "particle_spacing", config.raidEdge().particleSpacing());
         section(source, "other");
         setting(source, "debug_logging", config.debugLogging());
         return 1;

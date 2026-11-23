@@ -66,6 +66,7 @@ class CobbleRaidsConfigRoundTripTest {
                 new CobbleRaidsConfig.ReconnectGrace(false, 120),
                 new CobbleRaidsConfig.DuelRaid(180, 900),
                 new CobbleRaidsConfig.LandClaims(false, 32),
+                new CobbleRaidsConfig.RaidEdge(false, 20.0, 4.0, 2.0),
                 true);
 
         CobbleRaidsConfig reparsed = CobbleRaidsConfig.fromJson(custom.toJson());
