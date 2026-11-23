@@ -1,6 +1,7 @@
 package com.cobbleraids.spawn;
 
 import com.cobbleraids.config.CobbleRaidsConfig;
+import com.cobbleraids.spawn.claim.LandClaimGuard;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ServerLevel;
@@ -14,7 +15,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class RaidSpawnPositionFinder {
     private RaidSpawnPositionFinder() {}
 
-    public static Optional<BlockPos> findLand(ServerLevel level, ServerPlayer player, CobbleRaidsConfig.NaturalSpawning config) {
+    public static Optional<BlockPos> findLand(ServerLevel level, ServerPlayer player, CobbleRaidsConfig.NaturalSpawning config,
+                                             CobbleRaidsConfig.LandClaims claims) {
         BlockPos center = player.blockPosition();
         ThreadLocalRandom random = ThreadLocalRandom.current();
         double min = config.minDistanceFromPlayer();
@@ -32,6 +34,8 @@ public final class RaidSpawnPositionFinder {
 
             if (!level.getWorldBorder().isWithinBounds(candidate)) continue;
             if (!isSimpleSurfaceSpawn(level, candidate)) continue;
+            // Inside a claim, players not trusted on it cannot fight the boss; the next attempt may land outside it.
+            if (LandClaimGuard.blocks(level, candidate, claims)) continue;
             return Optional.of(candidate);
         }
         return Optional.empty();

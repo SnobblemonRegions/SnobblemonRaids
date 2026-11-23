@@ -470,6 +470,19 @@ public final class RaidDuelService {
         for (DuelRaid raid : List.copyOf(RAIDS.values())) finish(server, raid, com.cobbleraids.telemetry.RaidEndReason.SERVER_STOP);
     }
 
+    /** The leash ring of each raid being fought, for the players still in it (not out, not forfeited). Read-only, server thread. */
+    public static List<com.cobbleraids.presentation.RaidEdgeService.Ring> edgeRings() {
+        if (RAIDS.isEmpty()) return List.of();
+        List<com.cobbleraids.presentation.RaidEdgeService.Ring> rings = new ArrayList<>();
+        for (DuelRaid raid : RAIDS.values()) {
+            if (raid.finished) continue;
+            List<UUID> in = raid.players.stream().filter(id -> !raid.out.contains(id) && !raid.forfeited.contains(id)).toList();
+            if (!in.isEmpty()) rings.add(new com.cobbleraids.presentation.RaidEdgeService.Ring(
+                    raid.boss, raid.definition.rarityTier(), RaidDuelRules.LEASH_BLOCKS, in));
+        }
+        return rings;
+    }
+
     /** Whether this player is in a duel raid right now (for commands and the lobby). */
     public static boolean isInRaid(UUID player) {
         for (DuelRaid raid : RAIDS.values()) if (raid.players.contains(player) && !raid.out.contains(player)) return true;

@@ -218,9 +218,23 @@ final class CobbleRaidsConfigCodec {
                 Json.integer(duelRaidObject, "duel_time_limit_seconds", dr.duelTimeLimitSeconds()),
                 Json.integer(duelRaidObject, "raid_time_limit_seconds", dr.raidTimeLimitSeconds()));
 
+        JsonObject landClaimsObject = Json.object(root, "land_claims");
+        CobbleRaidsConfig.LandClaims lc = defaults.landClaims();
+        CobbleRaidsConfig.LandClaims landClaims = new CobbleRaidsConfig.LandClaims(
+                Json.bool(landClaimsObject, "avoid", lc.avoid()),
+                Json.integer(landClaimsObject, "buffer_blocks", lc.bufferBlocks()));
+
+        JsonObject raidEdgeObject = Json.object(root, "raid_edge");
+        CobbleRaidsConfig.RaidEdge re = defaults.raidEdge();
+        CobbleRaidsConfig.RaidEdge raidEdge = new CobbleRaidsConfig.RaidEdge(
+                Json.bool(raidEdgeObject, "enabled", re.enabled()),
+                Json.decimal(raidEdgeObject, "show_within_blocks", re.showWithinBlocks()),
+                Json.decimal(raidEdgeObject, "warn_within_blocks", re.warnWithinBlocks()),
+                Json.decimal(raidEdgeObject, "particle_spacing", re.particleSpacing()));
+
         return new CobbleRaidsConfig(naturalSpawning, recruitmentDefaults, combatDefaults, battleCarryover,
                 bossTraits, catching, currency, dynamicLevel, megaPity, raidPoints, personalBossShop, tierScaling,
-                bossGlow, bossMovement, renown, reconnectGrace, duelRaid, Json.bool(root, "debug_logging", defaults.debugLogging()));
+                bossGlow, bossMovement, renown, reconnectGrace, duelRaid, landClaims, raidEdge, Json.bool(root, "debug_logging", defaults.debugLogging()));
     }
 
     private static CobbleRaidsConfig.TierMultipliers readTierMultipliers(
@@ -419,6 +433,16 @@ final class CobbleRaidsConfigCodec {
         duelRaidJson.addProperty("duel_time_limit_seconds", config.duelRaid().duelTimeLimitSeconds());
         duelRaidJson.addProperty("raid_time_limit_seconds", config.duelRaid().raidTimeLimitSeconds());
         root.add("duel_raid", duelRaidJson);
+        JsonObject landClaimsJson = new JsonObject();
+        landClaimsJson.addProperty("avoid", config.landClaims().avoid());
+        landClaimsJson.addProperty("buffer_blocks", config.landClaims().bufferBlocks());
+        root.add("land_claims", landClaimsJson);
+        JsonObject raidEdgeJson = new JsonObject();
+        raidEdgeJson.addProperty("enabled", config.raidEdge().enabled());
+        raidEdgeJson.addProperty("show_within_blocks", config.raidEdge().showWithinBlocks());
+        raidEdgeJson.addProperty("warn_within_blocks", config.raidEdge().warnWithinBlocks());
+        raidEdgeJson.addProperty("particle_spacing", config.raidEdge().particleSpacing());
+        root.add("raid_edge", raidEdgeJson);
 
         root.addProperty("debug_logging", config.debugLogging());
         return root;

@@ -114,6 +114,19 @@ public final class RaidLobbyManager {
         return created ? JoinResult.STARTED_RECRUITMENT : JoinResult.JOINED;
     }
 
+    /** The recruitment ring of each open Lobby, for the players who joined it. Read-only, server thread. */
+    public static List<com.cobbleraids.presentation.RaidEdgeService.Ring> edgeRings() {
+        if (BY_BOSS.isEmpty()) return List.of();
+        List<com.cobbleraids.presentation.RaidEdgeService.Ring> rings = new ArrayList<>();
+        for (RaidLobby lobby : BY_BOSS.values()) {
+            if (lobby.status() != RaidRecruitmentRoster.Status.RECRUITING || lobby.boss().isRemoved()) continue;
+            List<UUID> joined = List.copyOf(lobby.optedIn());
+            if (!joined.isEmpty()) rings.add(new com.cobbleraids.presentation.RaidEdgeService.Ring(
+                    lobby.boss(), lobby.definition().rarityTier(), lobby.definition().recruitment().radius(), joined));
+        }
+        return rings;
+    }
+
     public static void tick(MinecraftServer server) {
         // Empty on almost every tick outside an active recruitment window; skip the defensive
         // copy entirely rather than allocating one 20x/second at idle.

@@ -23,6 +23,8 @@ public record CobbleRaidsConfig(
         Renown renown,
         ReconnectGrace reconnectGrace,
         DuelRaid duelRaid,
+        LandClaims landClaims,
+        RaidEdge raidEdge,
         boolean debugLogging
 ) {
     public static final int VALIDATED_MAX_HUMAN_PLAYERS = 4;
@@ -743,6 +745,41 @@ public record CobbleRaidsConfig(
         }
     }
 
+    /**
+     * Keeps wild raids and surface World Bosses out of land claims (Flan), where players outside the claim cannot fight them.
+     * {@code bufferBlocks} is how far from any claim the boss must stand. Has no effect on a server without a supported claim mod.
+     */
+    public record LandClaims(boolean avoid, int bufferBlocks) {
+        public LandClaims {
+            if (bufferBlocks < 0 || bufferBlocks > com.cobbleraids.spawn.claim.ClaimFootprint.MAX_BUFFER)
+                throw new IllegalArgumentException("land_claims.buffer_blocks must be 0.." + com.cobbleraids.spawn.claim.ClaimFootprint.MAX_BUFFER);
+        }
+
+        public static LandClaims defaults() {
+            return new LandClaims(true, 8);
+        }
+    }
+
+    /**
+     * The particle ring at a raid's edge, shown only to that raid's players: the 48-block leash while it is fought, with a warning
+     * before the step that forfeits, and the recruitment radius to players who joined its Lobby. Vanilla particles, no client mod.
+     */
+    public record RaidEdge(boolean enabled, double showWithinBlocks, double warnWithinBlocks, double particleSpacing) {
+        public RaidEdge {
+            double leash = com.cobbleraids.duel.RaidDuelRules.LEASH_BLOCKS;
+            if (!(showWithinBlocks >= 1.0) || showWithinBlocks > leash)
+                throw new IllegalArgumentException("raid_edge.show_within_blocks must be 1.." + (int) leash);
+            if (!(warnWithinBlocks >= 0.0) || warnWithinBlocks > showWithinBlocks)
+                throw new IllegalArgumentException("raid_edge.warn_within_blocks must be 0..show_within_blocks");
+            if (!(particleSpacing >= 0.5) || particleSpacing > 8.0)
+                throw new IllegalArgumentException("raid_edge.particle_spacing must be 0.5..8");
+        }
+
+        public static RaidEdge defaults() {
+            return new RaidEdge(true, 12.0, 8.0, 1.5);
+        }
+    }
+
     public record TierMultipliers(double health, double timeLimit, double reward) {
         public TierMultipliers {
             if (health < 0.1 || health > 10.0)
@@ -804,6 +841,8 @@ public record CobbleRaidsConfig(
                 Renown.defaults(),
                 ReconnectGrace.defaults(),
                 DuelRaid.defaults(),
+                LandClaims.defaults(),
+                RaidEdge.defaults(),
                 false
         );
     }
