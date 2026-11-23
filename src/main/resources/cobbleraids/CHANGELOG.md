@@ -1,5 +1,16 @@
 # CobbleRaids changelog
 
+## 0.8.207-spawn-safety (2026-11-23)
+
+### Changed
+- Wild raids only spawn on natural ground like grass, sand, stone and snow, never on roofs, farms or paths.
+- A wild raid spawns at about your height, so it no longer appears on the surface far above you while you mine.
+- No wild raids are spawned around players in creative mode, players already in a raid or its lobby, or players who have been idle for a few minutes.
+
+### Fixed
+- Big raid bosses no longer spawn stuck inside trees, overhangs or low ceilings.
+- When a raid cannot find a spot near one player, it spawns near another player instead, so raids keep turning up while many players are at home or underground.
+
 ## 0.8.206-flan-claims (2026-11-23)
 
 ### New

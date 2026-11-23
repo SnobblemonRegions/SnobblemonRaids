@@ -70,6 +70,10 @@ final class RaidAdminConfigOps {
         setting(source, "default_despawn_seconds", ns.defaultDespawnSeconds());
         setting(source, "default_max_lifetime_seconds", ns.defaultMaxLifetimeSeconds());
         setting(source, "default_definition_cooldown_seconds", ns.defaultDefinitionCooldownSeconds());
+        setting(source, "max_height_difference", ns.maxHeightDifference());
+        setting(source, "natural_ground_only", ns.naturalGroundOnly());
+        setting(source, "afk_seconds", ns.afkSeconds());
+        setting(source, "players_tried_per_check", ns.playersTriedPerCheck());
         // Printed together and in that order because they are the pair people confuse: weights pick
         // WHICH tier a spawn is, chances decide WHETHER it happens at all. Tuning the first to get
         // fewer common raids just hands those spawns to the rarer tiers.

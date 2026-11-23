@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '0.8.206-flan-claims'
+version = '0.8.207-spawn-safety'
 group = 'com.cobbleraids'
 
 base {

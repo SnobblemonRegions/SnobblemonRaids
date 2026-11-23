@@ -92,6 +92,18 @@ public final class RaidBossSpawner {
         for (Move move : kept) pokemon.getMoveSet().add(move);
     }
 
+    /**
+     * The size the boss of {@code definition} will be in the world, or null when its species is unknown. Computed as Cobblemon's
+     * PokemonEntity does (form hitbox times form base scale); a raid boss is never rescaled and is past the baby-size levels, so
+     * its effective scale is 1. Uses the species' standard form, so a boss given another form by its traits may differ a little.
+     */
+    public static net.minecraft.world.entity.EntityDimensions sizeOf(RaidDefinition definition) {
+        Species species = PokemonSpecies.getByIdentifier(definition.species());
+        if (species == null) return null;
+        var form = species.getStandardForm();
+        return form.getHitbox().scale(form.getBaseScale());
+    }
+
     public static PokemonEntity spawnAt(ServerLevel level, Vec3 position, RaidDefinition definition) {
         return spawnAt(level, position, definition, RenownRequest.ROLL);
     }

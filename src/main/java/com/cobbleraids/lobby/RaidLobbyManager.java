@@ -114,6 +114,14 @@ public final class RaidLobbyManager {
         return created ? JoinResult.STARTED_RECRUITMENT : JoinResult.JOINED;
     }
 
+    /** Whether this player has joined a Lobby that is still recruiting. */
+    public static boolean isInLobby(UUID player) {
+        for (RaidLobby lobby : BY_BOSS.values()) {
+            if (lobby.status() == RaidRecruitmentRoster.Status.RECRUITING && lobby.isOptedIn(player)) return true;
+        }
+        return false;
+    }
+
     /** The recruitment ring of each open Lobby, for the players who joined it. Read-only, server thread. */
     public static List<com.cobbleraids.presentation.RaidEdgeService.Ring> edgeRings() {
         if (BY_BOSS.isEmpty()) return List.of();
