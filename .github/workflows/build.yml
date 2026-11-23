@@ -40,6 +40,9 @@ jobs:
       - name: Validate reward reveal path and server-only boundary
         run: python3 validation/validate_reveal_screen.py
 
+      - name: Validate the player changelog
+        run: python3 validation/validate_changelog.py
+
       - name: Validate logging discipline
         run: python3 validation/validate_logging.py
 
@@ -101,6 +104,7 @@ jobs:
           python3 validation/validate_raid_integrity.py "$jar"
           python3 validation/validate_reward_visibility.py "$jar"
           python3 validation/validate_reveal_screen.py "$jar"
+          python3 validation/validate_changelog.py "$jar"
           python3 validation/validate_mixin_guards.py "$jar"
           python3 validation/validate_api_boundary.py "$jar"
 

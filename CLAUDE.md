@@ -25,7 +25,9 @@ memory of Minecraft/Cobblemon APIs is not a source; the decompiled 1.21.1 source
 - **Sides.** `radar-client` and anything under `net.minecraft.client` never loads on a dedicated
   server. `radar-shared` holds Minecraft-common value/codec types only: no client, no Cobblemon.
 - **Optional mods stay optional.** Text Placeholder API is `modCompileOnly`; guard every use so
-  the mod runs without it. Never promote a soft dependency to a hard one.
+  the mod runs without it. Flan (land claims) is not on the classpath at all: `LandClaimGuard`
+  reaches it by reflection, like the AscensionLib hooks, and switches itself off if its API fails.
+  Never promote a soft dependency to a hard one.
 - **Mixins.** Target the concrete class used at runtime, verified by decompiling, never a vanilla
   ancestor on faith (ADR 0004). Every mixin callback gets a fault barrier
   (`validation/validate_mixin_guards.py`). A mixin that compiles proves nothing — see Verification.
@@ -53,6 +55,14 @@ Say what was and was not verified in-game.
 
 Use the project skill `cobbleraids-dev` for any feature or fix: read domain docs → verify APIs
 against decompiled source → tests first for logic → implement → run the gate → review.
+
+## Releases
+
+A version bump in `build.gradle` needs a matching newest entry in
+`src/main/resources/cobbleraids/CHANGELOG.md`. It ships in the jar at `cobbleraids/CHANGELOG.md`
+to be shown to players in game, so write it for players (what they will notice, no config keys or
+class names) and keep to its four line kinds. `validation/validate_changelog.py` enforces both
+and runs in `ci_local.sh` and CI.
 
 ## Merging and backups
 

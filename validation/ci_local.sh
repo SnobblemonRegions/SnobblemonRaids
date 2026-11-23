@@ -51,6 +51,9 @@ for name in raid_integrity reward_visibility reveal_screen; do
   "$py" "validation/validate_$name.py"
 done
 
+step "Validate the player changelog (sources)"
+"$py" validation/validate_changelog.py
+
 step "Validate logging discipline"
 "$py" validation/validate_logging.py
 
@@ -116,6 +119,9 @@ for name in core_sources raid_integrity reward_visibility reveal_screen; do
   step "Validate $name (jar)"
   "$py" "validation/validate_$name.py" "$jar"
 done
+
+step "Validate the player changelog (jar)"
+"$py" validation/validate_changelog.py "$jar"
 
 step "Validate mixin fault barriers (jar)"
 "$py" validation/validate_mixin_guards.py "$jar"

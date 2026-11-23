@@ -84,3 +84,20 @@ rises as they close in. It gives a direction and a sense of nearness and never a
 still facing away. The item id stays `raid_radar`; `-Dcobbleraids.raidio=off` brings back the older hologram and
 flat-map display.
 _Avoid_: radar display, tracker, minimap
+
+**Raid Edge**:
+The boundary a raid player must stay inside: the 48-block leash around the boss while a raid is fought (crossing it forfeits at
+once), or the recruitment radius while its Lobby is open (outside it when the Lobby locks, a player is left out). Drawn as a ring
+of dust in the boss's Rarity Tier colour, sent only to that raid's or Lobby's own players, with an action-bar warning near it.
+Owned by `RaidEdgeService`; the thresholds are `RaidEdge`.
+_Avoid_: border, wall (the World Boss zone's particle wall is a different thing), arena
+
+**Land Claim**:
+An area a claim mod (Flan) protects for a player or the server. Wild raids and surface World Bosses never spawn inside one or
+within `land_claims.buffer_blocks` of it, because players the claim does not trust cannot fight a boss there. Checked by
+`LandClaimGuard`.
+_Avoid_: protected area, claim (alone -- it collides with claiming a Pending Reward)
+
+**Player Changelog**:
+The release notes shipped in the jar for players to read in game, one entry per version, newest first.
+_Avoid_: patch notes, release notes (the PR description is the developer-facing record)
