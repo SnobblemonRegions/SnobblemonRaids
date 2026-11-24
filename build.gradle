@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '0.8.207-spawn-safety'
+version = '0.8.207'
 group = 'com.cobbleraids'
 
 base {

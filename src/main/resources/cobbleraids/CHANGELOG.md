@@ -1,6 +1,6 @@
 # CobbleRaids changelog
 
-## 0.8.207-spawn-safety (2026-11-23)
+## 0.8.207 (2026-11-23)
 
 ### Changed
 - Wild raids only spawn on natural ground like grass, sand, stone and snow, never on roofs, farms or paths.
