@@ -9,7 +9,7 @@
 - A ring now surrounds the raid boss, so you can see when you are inside the raid radius.
 
 ### Fixed
-- Z-Moves are now banned in CobbleTowers until Mega Showdown updates with a fix.
+- Z-Moves are now banned in CobbleTowers and CobbleRaids until Mega Showdown updates with a fix.
 - Big raid bosses no longer spawn stuck inside trees, overhangs or low ceilings.
 - When a raid cannot find a spot near one player, it spawns near another player instead, so raids keep turning up while many players are at home or underground.
 
