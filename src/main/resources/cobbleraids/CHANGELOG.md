@@ -5,9 +5,11 @@
 ### Changed
 - Wild raids only spawn on natural ground like grass, sand, stone and snow, never on roofs, farms or paths.
 - A wild raid spawns at about your height, so it no longer appears on the surface far above you while you mine.
-- No wild raids are spawned around players in creative mode, players already in a raid or its lobby, or players who have been idle for a few minutes.
+- Raid bosses no longer spawn inside land claims, so every raid can be reached and fought.
+- A ring now surrounds the raid boss, so you can see when you are inside the raid radius.
 
 ### Fixed
+- Z-Moves are now banned in CobbleTowers until Mega Showdown updates with a fix for a bug they cause there.
 - Big raid bosses no longer spawn stuck inside trees, overhangs or low ceilings.
 - When a raid cannot find a spot near one player, it spawns near another player instead, so raids keep turning up while many players are at home or underground.
 
