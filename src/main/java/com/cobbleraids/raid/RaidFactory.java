@@ -110,6 +110,8 @@ public final class RaidFactory {
             );
             RaidRegistry.bind(session);
             session.activate();
+            // Before any choice can resolve: from here the boss's simulated HP mirrors the pool.
+            com.cobbleraids.showdown.RaidPoolSync.send(battle, session);
             if (charges != null) charges.commit();
             return session;
         }

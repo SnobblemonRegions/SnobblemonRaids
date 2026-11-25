@@ -8,11 +8,13 @@ Conditions.raidboss = {
   name: 'raidboss',
   onDamage(damage, target, source, effect) {
     if (target?.side?.battle?.gameType !== 'raid') return damage;
-    // Showdown still emits its ordinary -damage line when a Damage event returns 0.
-    // Because the simulator intentionally keeps the boss at full HP, that follow-up
-    // line says 100/100 and overwrites the authoritative shared raid percentage.
-    // raid-patch.js drops every boss -damage line; this marks the expected one.
+    // Showdown follows every Damage event with an ordinary -damage line carrying simulator
+    // health, which would overwrite the authoritative shared raid percentage on every client.
+    // raid-patch.js consumes exactly that one boss-health instruction.
     target.__cobbleRaidsSuppressVanillaDamageLog = true;
+    // raid-patch.js reports the full hit to the pool as -raiddamage and answers how much the
+    // simulator may take off its mirrored HP, so drain, recoil, Counter and Bide see the hit.
+    if (typeof this.raidBossDamage === 'function') return this.raidBossDamage(target, damage, source);
     if (source) this.add('-raiddamage', target, damage, source);
     else this.add('-raiddamage', target, damage);
     return 0;

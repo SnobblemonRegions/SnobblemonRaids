@@ -49,6 +49,9 @@ abstract class RaidPoolInstruction implements InterpreterInstruction {
         if (amount == null) return;
 
         applyToPool(raid, battle, amount);
+        // The simulator mirrors the pool's fraction as the boss's HP; correct its prediction now,
+        // not after the animation, so the next action in Showdown reads the pool Java applied.
+        RaidPoolSync.send(battle, raid);
         // Snapshot now: by the time the animation finishes, a later hit in the same batch may have
         // moved the pool again, and each bar update should show its own hit, not the final total.
         float healthAfter = raid.getCurrentHealth();

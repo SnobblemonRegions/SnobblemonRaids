@@ -196,8 +196,8 @@ function runBattle(seed, stats) {
   const stream = new BattleStream();
   stream.battle = sim;
 
-  // The Java side of the shared pool, as RaidPoolInstruction runs it: apply each -raiddamage / -raidheal
-  // line, and end the raid with >raidwin once the pool is empty.
+  // The Java side of the shared pool, as RaidPoolInstruction + RaidPoolSync run it: apply each -raiddamage /
+  // -raidheal line, answer with >raidpool, and end the raid with >raidwin once the pool is empty.
   const bossMon = sim.sides[playerCount].pokemon[0];
   const pool = {current: 0, max: Math.max(1, bossMon.maxhp * (playerCount + 1))};
   pool.current = pool.max;
@@ -220,6 +220,7 @@ function runBattle(seed, stats) {
       if (parts[1] === '-raidheal') { pool.current = Math.min(pool.max, pool.current + Number(parts[3])); moved = true; }
     }
     if (!moved || sim.ended) return;
+    stream._writeLine('raidpool', `${pool.current} ${pool.max}`);
     if (pool.current <= 0) stream._writeLine('raidwin', 'P1');
   }
 
@@ -347,6 +348,7 @@ function runBattle(seed, stats) {
 
   say('--- start');
   for (const side of sim.sides) if (sim.requestState === 'teampreview') sim.choose(side.id, 'team 1');
+  stream._writeLine('raidpool', `${pool.current} ${pool.max}`); // RaidFactory's first sync
   javaSide();
 
   for (let round = 1; round <= OPTIONS.turns && !sim.ended; round++) {
