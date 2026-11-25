@@ -193,7 +193,9 @@ public final class ShowdownIntegrationInstaller {
         try {
             String onDisk = Files.exists(file) ? Files.readString(file, StandardCharsets.UTF_8) : null;
             String bundled;
+            boolean bundleReadable;
             try (InputStream zip = ShowdownIntegrationInstaller.class.getResourceAsStream(COBBLEMON_SHOWDOWN_ZIP)) {
+                bundleReadable = zip != null;
                 bundled = ShowdownModMerge.bundledEntry(zip, "data/mods/cobblemon/" + name + ".js");
             }
             String template;
@@ -202,7 +204,9 @@ public final class ShowdownIntegrationInstaller {
                 if (in == null) throw new FileNotFoundException("merge-hook.js");
                 template = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             }
-            if (bundled == null && onDisk != null && onDisk.contains(target.legacySignature())) {
+            // Only when the bundle itself is unreadable. A readable bundle without the entry just means
+            // Cobblemon ships no such file (1.8.2 has no items.js), and the stub is exactly right.
+            if (!bundleReadable && onDisk != null && onDisk.contains(target.legacySignature())) {
                 RaidLog.warn("Cobblemon's own Showdown {}.js was overwritten by an older CobbleRaids install and its"
                         + " original could not be read from {}; Cobblemon's entries in it stay missing until Cobblemon"
                         + " re-unbundles Showdown.", name, COBBLEMON_SHOWDOWN_ZIP);
