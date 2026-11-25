@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -51,6 +52,28 @@ public final class WorldBossRules {
             if (nowMillis - started <= windowMillis) active++;
         }
         return active;
+    }
+
+    /**
+     * How many of the daily boss's players are still taking part: those last seen (online and in the zone, in a duel, or between chained
+     * duels) no longer than {@code graceMillis} ago. The grace covers a trip to heal and a reconnect.
+     */
+    public static int present(Set<UUID> participants, Map<UUID, Long> lastSeenMillis, long nowMillis, long graceMillis) {
+        int present = 0;
+        for (UUID player : participants) {
+            Long seen = lastSeenMillis.get(player);
+            if (seen != null && nowMillis - seen <= graceMillis) present++;
+        }
+        return present;
+    }
+
+    /**
+     * Whether a player may take part in a boss that admits at most {@code max} players: always for someone already counted, otherwise only while a
+     * place is free. A place is taken at the first join and kept for the whole fight, so leaving to heal never costs it. {@code max} of 0 or less
+     * means no cap (the event bosses).
+     */
+    public static boolean hasRoom(java.util.Set<UUID> participants, UUID player, int max) {
+        return max <= 0 || participants.contains(player) || participants.size() < max;
     }
 
     /**

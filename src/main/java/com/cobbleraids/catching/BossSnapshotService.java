@@ -3,6 +3,7 @@ package com.cobbleraids.catching;
 import com.cobbleraids.config.RaidDefinition;
 import com.cobbleraids.config.RaidDefinitionRegistry;
 import com.cobbleraids.config.RaidRarityTier;
+import com.cobbleraids.renown.RenownAffixData;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import java.util.ArrayList;
@@ -29,6 +30,8 @@ public final class BossSnapshotService {
         // Uncatchable belongs to the boss standing in the world, not to a snapshot a player will
         // eventually buy back.
         UncatchableProperty.INSTANCE.catchable().apply(copy);
+        // An affix only comes from catching a renowned boss in the raid, never from buying one back.
+        RenownAffixData.clear(copy);
 
         int ivPercent = percentOf(copy.getIvs().total(), 186);
         int evPercent = percentOf(copy.getEvs().total(), 510);

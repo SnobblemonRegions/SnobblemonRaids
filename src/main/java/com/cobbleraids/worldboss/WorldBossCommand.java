@@ -40,7 +40,8 @@ public final class WorldBossCommand {
                         .then(Commands.literal("me").executes(WorldBossCommand::me))
                         .then(Commands.literal("start")
                                 .requires(source -> source.hasPermission(ADMIN_PERMISSION_LEVEL))
-                                .executes(WorldBossCommand::start))
+                                .executes(WorldBossCommand::start)
+                                .then(Commands.literal("daily").executes(WorldBossCommand::startDaily)))
                         .then(Commands.literal("stop")
                                 .requires(source -> source.hasPermission(ADMIN_PERMISSION_LEVEL))
                                 .executes(WorldBossCommand::stop))
@@ -184,6 +185,17 @@ public final class WorldBossCommand {
                         ? "There is no World Boss right now." : "You have dealt " + share + ".")
                 .withStyle(ChatFormatting.YELLOW));
         return share == null ? 0 : 1;
+    }
+
+    /** Starts the daily renowned boss now, for testing; the scheduled one still comes at its time. */
+    private static int startDaily(CommandContext<CommandSourceStack> ctx) {
+        String problem = WorldBossService.startDaily(ctx.getSource().getServer(), ctx.getSource().getPlayer());
+        if (problem != null) {
+            ctx.getSource().sendFailure(Component.literal("Could not start the daily boss: " + problem));
+            return 0;
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal("Daily boss started (the scheduled one still comes at its time)."), true);
+        return 1;
     }
 
     private static int start(CommandContext<CommandSourceStack> ctx) {

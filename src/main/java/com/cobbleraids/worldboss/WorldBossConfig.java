@@ -58,6 +58,7 @@ import java.util.Optional;
  * @param arena                    the arena: when spawn marker blocks are placed, the boss starts at one of them and players can warp in
  * @param poolMax                  the most health the World Pool may ever have, however many players join (pool.max)
  * @param bossBannedMoves          Showdown move ids a World Boss duel's boss may not know, so it cannot heal itself back up (duel.boss_banned_moves)
+ * @param daily                    the daily renowned World Boss: when it appears, who may join, and which bosses it is drawn from
  */
 public record WorldBossConfig(
         boolean enabled,
@@ -99,7 +100,86 @@ public record WorldBossConfig(
         Night night,
         Arena arena,
         float poolMax,
-        List<String> bossBannedMoves) {
+        List<String> bossBannedMoves,
+        Daily daily) {
+
+    /**
+     * The daily renowned World Boss: once a day at a fixed local time, a renowned boss (name, epithet, boon and affix) appears for up to
+     * {@code maxPlayers} players. While it is on, ordinary wild raids are never renowned: renown is the daily boss's alone.
+     *
+     * @param enabled          run the daily boss (also needs the system's own {@code enabled})
+     * @param time             local time it appears, {@code HH:mm}
+     * @param zone             the time zone of {@code time}, an IANA id such as {@code America/New_York} (daylight saving is followed)
+     * @param lateStartMinutes how long after {@code time} it may still start, when the server was down or another boss was running; past it the day is skipped
+     * @param warningMinutes   minutes before {@code time} at which everyone online is told it is coming
+     * @param maxPlayers       the most players who may take part (a place is kept once taken); 0 for no cap
+     * @param raidDefinitions  raid definition ids it is drawn from; empty means every loaded definition of {@code tiers} that spawns in the wild
+     * @param tiers            rarity tiers used when {@code raidDefinitions} is empty
+     * @param duelLevel        level of each duel copy before renown's level bonus; 0 means the boss's own raid level (a legendary's 100)
+     * @param duelHealth       each duel copy's health, and so the most one duel takes off the World Pool
+     * @param winsPerPlayer    how many duel wins' worth of health each player adds to the World Pool, so the fight lasts about as long at any size
+     * @param minPlayers       the pool is never smaller than for this many players, so one or two players still have a real fight
+     * @param graceSeconds     how long a player who left the zone or disconnected still counts toward the pool; after it the pool shrinks
+     *                         (keeping its percentage) and grows back when they return
+     */
+    public record Daily(boolean enabled, String time, String zone, int lateStartMinutes, List<Integer> warningMinutes,
+                        int maxPlayers, List<String> raidDefinitions, List<String> tiers,
+                        int duelLevel, long duelHealth, float winsPerPlayer, int minPlayers, int graceSeconds) {
+        /** Schedule and roster only, with the default strength. */
+        public Daily(boolean enabled, String time, String zone, int lateStartMinutes, List<Integer> warningMinutes,
+                     int maxPlayers, List<String> raidDefinitions, List<String> tiers) {
+            this(enabled, time, zone, lateStartMinutes, warningMinutes, maxPlayers, raidDefinitions, tiers,
+                    DEFAULT_DUEL_LEVEL, DEFAULT_DUEL_HEALTH, DEFAULT_WINS_PER_PLAYER, DEFAULT_MIN_PLAYERS, DEFAULT_GRACE_SECONDS);
+        }
+
+        public static final int DEFAULT_DUEL_LEVEL = 0;
+        public static final long DEFAULT_DUEL_HEALTH = 5_000L;
+        public static final float DEFAULT_WINS_PER_PLAYER = 6f;
+        public static final int DEFAULT_MIN_PLAYERS = 3;
+        public static final int DEFAULT_GRACE_SECONDS = 180;
+
+        public Daily {
+            require(duelLevel >= 0 && duelLevel <= 100, "daily.duel_level", "must be 0 (the boss's own level) to 100");
+            require(duelHealth >= 100 && duelHealth <= 1_000_000, "daily.duel_health", "must be 100 to 1000000");
+            require(Float.isFinite(winsPerPlayer) && winsPerPlayer > 0f && winsPerPlayer <= 100f, "daily.wins_per_player", "must be above 0, at most 100");
+            require(minPlayers >= 1 && minPlayers <= 200, "daily.min_players", "must be 1 to 200");
+            require(graceSeconds >= 0 && graceSeconds <= 1800, "daily.grace_seconds", "must be 0 to 1800");
+            require(time != null && time.matches("([01][0-9]|2[0-3]):[0-5][0-9]"), "daily.time", "must be HH:mm, such as 19:00");
+            require(zone != null && validZone(zone), "daily.zone", "must be a time zone id such as America/New_York");
+            require(lateStartMinutes >= 1 && lateStartMinutes <= 720, "daily.late_start_minutes", "must be 1 to 720");
+            require(warningMinutes != null, "daily.warning_minutes", "must be a list");
+            for (Integer minutes : warningMinutes) {
+                require(minutes != null && minutes >= 1 && minutes <= 180, "daily.warning_minutes", "each must be 1 to 180");
+            }
+            warningMinutes = warningMinutes.stream().distinct().sorted(java.util.Comparator.reverseOrder()).toList();
+            require(maxPlayers >= 0 && maxPlayers <= 200, "daily.max_players", "must be 0 (no cap) to 200");
+            require(raidDefinitions != null, "daily.raid_definitions", "must be a list");
+            raidDefinitions = raidDefinitions.stream().filter(id -> id != null && !id.isBlank()).map(String::trim).toList();
+            require(tiers != null && !tiers.isEmpty(), "daily.tiers", "must name at least one tier");
+            tiers = tiers.stream().map(t -> t == null ? "" : t.trim().toLowerCase(java.util.Locale.ROOT)).distinct().toList();
+            for (String tier : tiers) {
+                require(List.of("starter", "powerhouse", "legendary", "mythical").contains(tier), "daily.tiers",
+                        "must be starter, powerhouse, legendary or mythical");
+            }
+        }
+
+        public static Daily defaults() {
+            return new Daily(true, "19:00", "America/New_York", 60, List.of(15, 5), 25, List.of(), List.of("legendary"));
+        }
+
+        public java.time.LocalTime localTime() { return java.time.LocalTime.parse(time); }
+
+        public java.time.ZoneId zoneId() { return java.time.ZoneId.of(zone); }
+
+        private static boolean validZone(String zone) {
+            try {
+                java.time.ZoneId.of(zone);
+                return true;
+            } catch (java.time.DateTimeException ex) {
+                return false;
+            }
+        }
+    }
 
     /**
      * When the boss may start by itself: only at night when {@code only} is set. A command start ignores this. A dimension with a fixed time
@@ -237,6 +317,7 @@ public record WorldBossConfig(
         require(duelBossScale >= 0.1f && duelBossScale <= 30f, "visual.duel_boss_scale", "must be 0.1 to 30");
         require(wallColor != null && wallColor.matches("#[0-9a-fA-F]{6}"), "visual.wall_color", "must look like #9A5CC6");
         require(wallOpacityPercent >= 0 && wallOpacityPercent <= 100, "visual.wall_opacity_percent", "must be 0 to 100");
+        if (daily == null) daily = Daily.defaults();
         if (windowStart.isPresent() && windowEnd.isPresent()) {
             require(windowEnd.get().isAfter(windowStart.get()), "window.end", "must be after window.start");
         }
@@ -260,7 +341,7 @@ public record WorldBossConfig(
                 70, 3_000L, 240, 30, 45, true, 128.0,
                 "minecraft:overworld", 300, 1500, 30, 30, true, 40, 60,
                 5f, 200, 0, true, 40, 8f, 3f, "#9A5CC6", 50, Music.defaults(), Dome.defaults(), Look.defaults(), Night.defaults(), Arena.defaults(),
-                150_000f, HEALING_MOVES);
+                150_000f, HEALING_MOVES, Daily.defaults());
     }
 
     /**
@@ -284,6 +365,9 @@ public record WorldBossConfig(
         return (alpha << 24) | rgb;
     }
 
+    /** Whether the daily renowned World Boss runs, and so owns renown: while true, wild raids are never renowned. */
+    public boolean dailyRenown() { return enabled && daily.enabled(); }
+
     /** The least a player may deal, as a fraction of the average per player who dealt any, to earn the defeat reward. */
     public float minOfAverage() { return minPercentOfAverage / 100f; }
 
@@ -302,6 +386,8 @@ public record WorldBossConfig(
         Dome dd = d.dome;
         Look dl = d.look;
         Night dn = d.night;
+        JsonObject dailyJson = obj(root, "daily");
+        Daily dy = d.daily;
         return new WorldBossConfig(
                 bool(root, "enabled", d.enabled),
                 definitions(root, d.raidDefinitions),
@@ -353,7 +439,20 @@ public record WorldBossConfig(
                         (int) num(spawn, "spawn.night_to_tick", dn.toTick)),
                 new Arena(bool(arenaJson, "arena.enabled", d.arena.enabled()), num(arenaJson, "arena.radius", (float) d.arena.radius())),
                 num(pool, "pool.max", d.poolMax),
-                idList(duel, "duel.boss_banned_moves", d.bossBannedMoves));
+                idList(duel, "duel.boss_banned_moves", d.bossBannedMoves),
+                new Daily(bool(dailyJson, "daily.enabled", dy.enabled()),
+                        str(dailyJson, "daily.time", dy.time()),
+                        str(dailyJson, "daily.zone", dy.zone()),
+                        (int) num(dailyJson, "daily.late_start_minutes", dy.lateStartMinutes()),
+                        intList(dailyJson, "daily.warning_minutes", dy.warningMinutes()),
+                        (int) num(dailyJson, "daily.max_players", dy.maxPlayers()),
+                        idList(dailyJson, "daily.raid_definitions", dy.raidDefinitions()),
+                        idList(dailyJson, "daily.tiers", dy.tiers()),
+                        (int) num(dailyJson, "daily.duel_level", dy.duelLevel()),
+                        (long) num(dailyJson, "daily.duel_health", dy.duelHealth()),
+                        num(dailyJson, "daily.wins_per_player", dy.winsPerPlayer()),
+                        (int) num(dailyJson, "daily.min_players", dy.minPlayers()),
+                        (int) num(dailyJson, "daily.grace_seconds", dy.graceSeconds())));
     }
 
     /** The defaults written back as JSON, with the keys in the same grouping the parser reads. */
@@ -433,6 +532,27 @@ public record WorldBossConfig(
         arenaOut.addProperty("enabled", arena.enabled());
         arenaOut.addProperty("radius", arena.radius());
         root.add("arena", arenaOut);
+        JsonObject dailyOut = new JsonObject();
+        dailyOut.addProperty("enabled", daily.enabled());
+        dailyOut.addProperty("time", daily.time());
+        dailyOut.addProperty("zone", daily.zone());
+        dailyOut.addProperty("late_start_minutes", daily.lateStartMinutes());
+        com.google.gson.JsonArray warningsOut = new com.google.gson.JsonArray();
+        daily.warningMinutes().forEach(warningsOut::add);
+        dailyOut.add("warning_minutes", warningsOut);
+        dailyOut.addProperty("max_players", daily.maxPlayers());
+        com.google.gson.JsonArray dailyIds = new com.google.gson.JsonArray();
+        daily.raidDefinitions().forEach(dailyIds::add);
+        dailyOut.add("raid_definitions", dailyIds);
+        com.google.gson.JsonArray tiersOut = new com.google.gson.JsonArray();
+        daily.tiers().forEach(tiersOut::add);
+        dailyOut.add("tiers", tiersOut);
+        dailyOut.addProperty("duel_level", daily.duelLevel());
+        dailyOut.addProperty("duel_health", daily.duelHealth());
+        dailyOut.addProperty("wins_per_player", daily.winsPerPlayer());
+        dailyOut.addProperty("min_players", daily.minPlayers());
+        dailyOut.addProperty("grace_seconds", daily.graceSeconds());
+        root.add("daily", dailyOut);
         return root;
     }
 
@@ -458,11 +578,27 @@ public record WorldBossConfig(
         return fallback;
     }
 
+    /** A list of whole numbers under {@code path}'s leaf key, or {@code fallback} when it is not there. */
+    private static List<Integer> intList(JsonObject parent, String path, List<Integer> fallback) {
+        String key = leaf(path);
+        if (parent == null || !parent.has(key) || parent.get(key).isJsonNull()) return fallback;
+        if (!parent.get(key).isJsonArray()) throw new IllegalArgumentException(path + " must be a list of numbers");
+        List<Integer> values = new ArrayList<>();
+        for (var element : parent.getAsJsonArray(key)) {
+            try {
+                values.add(element.getAsInt());
+            } catch (RuntimeException ex) {
+                throw new IllegalArgumentException(path + " must be a list of numbers");
+            }
+        }
+        return values;
+    }
+
     /** A list of text ids under {@code path}'s leaf key, or {@code fallback} when it is not there. */
     private static List<String> idList(JsonObject parent, String path, List<String> fallback) {
         String key = leaf(path);
         if (!parent.has(key) || parent.get(key).isJsonNull()) return fallback;
-        if (!parent.get(key).isJsonArray()) throw new IllegalArgumentException(path + " must be a list of move ids");
+        if (!parent.get(key).isJsonArray()) throw new IllegalArgumentException(path + " must be a list of ids");
         List<String> out = new ArrayList<>();
         for (var element : parent.getAsJsonArray(key)) {
             try {

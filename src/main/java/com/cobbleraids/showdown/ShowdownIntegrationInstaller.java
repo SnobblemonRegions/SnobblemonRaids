@@ -84,6 +84,8 @@ public final class ShowdownIntegrationInstaller {
     public static void install() {
         ready = false;
         copy("/assets/cobbleraids/showdown/raid-patch.js", Path.of("showdown/raid-patch.js"));
+        // Loaded by raid-patch.js itself, inside its own try/catch, so a fault in an affix can never cost the raids.
+        copy("/assets/cobbleraids/showdown/renown-affixes.js", Path.of("showdown/renown-affixes.js"));
         copy("/assets/cobbleraids/showdown/mods/conditions.js", Path.of("showdown/data/mods/cobblemon/conditions.js"));
         // Same mechanism as conditions.js above: a whole file this mod owns, dropped into Showdown's
         // own "cobblemon" format-mod folder so it merges into the item dex for every Cobblemon

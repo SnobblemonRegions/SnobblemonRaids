@@ -60,6 +60,8 @@ def main() -> None:
         with zipfile.ZipFile(io.BytesIO(bundle_bytes)) as bundle:
             bundle.extractall(tmp_path)
         shutil.copy(RAID_PATCH, tmp_path / "raid-patch.js")
+        # raid-patch.js loads it, as on a live server; without it the patch runs with affixes off.
+        shutil.copy(RAID_PATCH.with_name("renown-affixes.js"), tmp_path / "renown-affixes.js")
 
         result = subprocess.run(
             ["node", str(TEST_SCRIPT), str(tmp_path)],

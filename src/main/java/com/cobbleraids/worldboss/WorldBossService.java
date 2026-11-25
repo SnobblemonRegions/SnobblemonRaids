@@ -15,6 +15,17 @@ import com.cobbleraids.config.RaidDefinition;
 import com.cobbleraids.config.RaidDefinitionRegistry;
 import com.cobbleraids.encounter.EncounterService;
 import com.cobbleraids.fault.RaidFaultBarrier;
+import com.cobbleraids.catching.RaidCaptureSessionService;
+import com.cobbleraids.config.CobbleRaidsConfig;
+import com.cobbleraids.config.CobbleRaidsConfigManager;
+import com.cobbleraids.lifecycle.RaidOutcome;
+import com.cobbleraids.lifecycle.RaidRewardEligibility;
+import com.cobbleraids.lifecycle.RaidRewardService;
+import com.cobbleraids.renown.RaidRenown;
+import com.cobbleraids.renown.RaidRenownMarker;
+import com.cobbleraids.renown.RenownAffix;
+import com.cobbleraids.renown.RenownAffixData;
+import com.cobbleraids.renown.RenownBoon;
 import com.cobbleraids.renown.RenownRequest;
 import com.cobbleraids.spawn.RaidBossSpawner;
 import com.cobbleraids.spawn.RaidSpawnAnnouncementService;
@@ -25,7 +36,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -102,6 +115,14 @@ public final class WorldBossService {
     private static final Map<UUID, Long> GATHERED = new ConcurrentHashMap<>();
     /** Players last seen inside the zone, so crossing the wall can be announced once. Only touched on the server thread. */
     private static final Map<UUID, Boolean> LAST_INSIDE = new HashMap<>();
+    /** Daily warnings already broadcast ({@link WorldBossDaily.Warning#key}). In memory: a restart may repeat one warning, never more. */
+    private static final Set<String> DAILY_WARNED = ConcurrentHashMap.newKeySet();
+    /** When each daily boss player was last seen taking part (online and in the zone, in a duel, or between chained duels). */
+    private static final Map<UUID, Long> DAILY_SEEN = new ConcurrentHashMap<>();
+    /** How many were present at the last resize, so a change is logged once. */
+    private static int dailyPresentLogged = -1;
+    /** The last reason the daily boss could not start, so a retry every second logs it once rather than every time. */
+    private static volatile String lastDailyProblem;
 
     private static volatile MinecraftServer server;
     private static volatile WorldBossState state;
@@ -184,9 +205,13 @@ public final class WorldBossService {
     public static void onServerStopped() {
         DUELS.clear();
         DUEL_PLAYER.clear();
+        DAILY_SEEN.clear();
+        dailyPresentLogged = -1;
         CHAIN.clear();
         LAST_DUEL_START.clear();
         LAST_INSIDE.clear();
+        DAILY_WARNED.clear();
+        lastDailyProblem = null;
         WorldBossMusic.clear();
         WorldBossDome.reset();
         server = null;
@@ -218,6 +243,7 @@ public final class WorldBossService {
         WorldBossConfig config = WorldBossConfigManager.get();
         long now = System.currentTimeMillis();
         WorldBossState s = state;
+        tickDaily(current, config, s, now);
 
         if (!s.active()) {
             WorldBossMusic.stopAll(current);
@@ -241,7 +267,39 @@ public final class WorldBossService {
         openGathered(current, config);
         tickDuels(current, config);
         tickChains(current, config);
+        if (s.kind() == WorldBossKind.DAILY) tickDailyPresence(current, config, s, now);
         refreshBar(current);
+    }
+
+    /**
+     * The daily renowned boss: warns ahead of the slot, then starts it once the slot arrives. A boss already running (an event boss) is let finish;
+     * the daily one starts after it while the late start lasts. Night-only and the event window do not apply: the daily boss keeps its own clock.
+     */
+    private static void tickDaily(MinecraftServer current, WorldBossConfig config, WorldBossState s, long now) {
+        if (!config.dailyRenown()) return;
+        Instant instant = Instant.ofEpochMilli(now);
+        Optional<WorldBossDaily.Warning> warning = WorldBossDaily.warningDue(instant, config.daily(), s.dailyLastDay(), DAILY_WARNED);
+        if (warning.isPresent()) {
+            DAILY_WARNED.add(warning.get().key());
+            int minutes = warning.get().minutesLeft();
+            String cap = config.daily().maxPlayers() > 0 ? " Up to " + config.daily().maxPlayers() + " players can fight it together." : "";
+            broadcast(current, dailyPrefix().append(Component.literal("A renowned boss appears in " + minutes + " minute"
+                    + (minutes == 1 ? "" : "s") + "." + cap).withStyle(ChatFormatting.YELLOW)));
+        }
+        if (s.active()) return;
+        Optional<String> day = WorldBossDaily.dueDay(instant, config.daily(), s.dailyLastDay());
+        if (day.isEmpty()) return;
+        String problem = start(current, null, WorldBossKind.DAILY, day.get());
+        if (problem == null) {
+            lastDailyProblem = null;
+        } else if (!problem.equals(lastDailyProblem)) {
+            lastDailyProblem = problem;
+            RaidLog.warn("The daily World Boss for {} could not start yet (retrying until the late start runs out): {}", day.get(), problem);
+        }
+    }
+
+    private static net.minecraft.network.chat.MutableComponent dailyPrefix() {
+        return Component.literal("[Daily Boss] ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
     }
 
     /**
@@ -275,19 +333,39 @@ public final class WorldBossService {
      * @return null on success, otherwise why it did not start
      */
     public static String start(MinecraftServer current, ServerPlayer near) {
+        return start(current, near, WorldBossKind.EVENT, null);
+    }
+
+    /**
+     * Starts the daily renowned boss now, for an operator's test. It does not use up the day: the scheduled one still comes at its time.
+     *
+     * @return null on success, otherwise why it did not start
+     */
+    public static String startDaily(MinecraftServer current, ServerPlayer near) {
+        return start(current, near, WorldBossKind.DAILY, null);
+    }
+
+    /**
+     * @param dailyDay the day a scheduled daily boss is for, marked used just before it spawns; null for an event boss or an operator's start
+     */
+    private static String start(MinecraftServer current, ServerPlayer near, WorldBossKind kind, String dailyDay) {
         WorldBossConfig config = WorldBossConfigManager.get();
         if (!config.enabled()) return "the World Boss system is turned off (enabled=false in "
                 + WorldBossConfigManager.path().getFileName() + ")";
         if (state == null) return "the World Boss system has not started yet";
         if (state.active()) return "a World Boss is already active";
+        List<String> candidates = kind == WorldBossKind.DAILY ? dailyDefinitions(config) : config.raidDefinitions();
         List<String> loaded = new ArrayList<>();
-        for (String id : config.raidDefinitions()) {
+        for (String id : candidates) {
             ResourceLocation parsed = ResourceLocation.tryParse(id);
             if (parsed != null && RaidDefinitionRegistry.get(parsed) != null) loaded.add(id);
             else RaidLog.warn("World Boss config names raid definition {}, which is not loaded; skipping it.", id);
         }
         String pickedId = WorldBossRules.pickDefinition(loaded, state.definitionId(), ThreadLocalRandom.current());
-        if (pickedId == null) return "none of the configured raid definitions is loaded: " + config.raidDefinitions();
+        if (pickedId == null) return kind == WorldBossKind.DAILY
+                ? "no raid definition is loaded for the daily boss (daily.raid_definitions " + config.daily().raidDefinitions()
+                        + ", tiers " + config.daily().tiers() + ")"
+                : "none of the configured raid definitions is loaded: " + config.raidDefinitions();
         RaidDefinition definition = RaidDefinitionRegistry.get(ResourceLocation.parse(pickedId));
         // With spawn markers placed in an arena, the boss stands at one of them; otherwise it appears at a random surface spot near a player.
         ArenaPick arenaPick = config.arena().enabled() ? pickArena(current) : null;
@@ -312,26 +390,104 @@ public final class WorldBossService {
         float pool = WorldBossScaling.poolSize(config.poolBase(), config.damagePerPlayerMinute(), 1,
                 config.minutesPerPlayer(), config.maxMinutes(), config.poolMax());
         WorldBossState s = state;
-        s.begin(UUID.randomUUID(), definition.id().toString(), level.dimension().location().toString(),
+        // Before anything is spawned: a crash during the start must not let the same day run again after the restart.
+        if (dailyDay != null) s.markDailyDay(dailyDay);
+        s.begin(kind, UUID.randomUUID(), definition.id().toString(), level.dimension().location().toString(),
                 spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, now, WorldBossRules.endMillis(config, now),
                 new WorldBossPool(pool), arenaMode);
         DUELS.clear();
         DUEL_PLAYER.clear();
+        DAILY_SEEN.clear();
+        dailyPresentLogged = -1;
         CHAIN.clear();
         GATHERED.clear();
         LAST_DUEL_START.clear();
         flush(current);
         try {
-            spawnShowpiece(current);
+            spawnShowpiece(current, true);
         } catch (RuntimeException ex) {
             // The event still runs from its saved position; the boss just has no model until a restart.
             RaidLog.error("World Boss {} started but its showpiece could not be spawned", s.bossId(), ex);
         }
+        if (kind == WorldBossKind.DAILY) {
+            if (s.renown().isEmpty()) {
+                RaidLog.warn("Daily World Boss {} ({}) rolled no renown (no epithet fits it); it fights as an ordinary World Boss.", s.bossId(),
+                        definition.id());
+            }
+            // The renown's share is known only now, from what the standing boss rolled.
+            s.pool().growTo(targetPool(config, 1, s));
+            pool = s.pool().max();
+            flush(current);
+        }
         ensureBar(current);
-        announceStart(current, definition, level, spot, arenaMode);
+        announceStart(current, definition, level, spot, arenaMode, s);
         RaidLog.info("World Boss {} started{}: {} at {} {} {} in {}, pool {}", s.bossId(), arenaMode ? " at an arena marker" : "", definition.id(),
                 spot.getX(), spot.getY(), spot.getZ(), level.dimension().location(), Math.round(pool));
         return null;
+    }
+
+    /**
+     * The raid definitions the daily boss is drawn from: {@code daily.raid_definitions} when it names any, otherwise every loaded definition of
+     * {@code daily.tiers} that spawns in the wild (event-only definitions, which never spawn on their own, are left out).
+     */
+    private static List<String> dailyDefinitions(WorldBossConfig config) {
+        if (!config.daily().raidDefinitions().isEmpty()) return config.daily().raidDefinitions();
+        List<String> ids = new ArrayList<>();
+        for (RaidDefinition definition : RaidDefinitionRegistry.all()) {
+            if (definition.spawn().enabled() && config.daily().tiers().contains(definition.rarityTier().serializedName())) {
+                ids.add(definition.id().toString());
+            }
+        }
+        ids.sort(null);
+        return ids;
+    }
+
+    /**
+     * Fits the daily boss's pool to the players still taking part. Someone who left the zone or disconnected keeps counting for
+     * {@code daily.grace_seconds}; after that the pool shrinks, keeping its percentage, and grows back by their full share when they return.
+     */
+    private static void tickDailyPresence(MinecraftServer current, WorldBossConfig config, WorldBossState s, long now) {
+        if (s.pool() == null || s.pool().isDefeated()) return;
+        for (UUID id : s.participants()) {
+            ServerPlayer player = current.getPlayerList().getPlayer(id);
+            boolean taking = player != null && (DUELS.containsKey(id) || CHAIN.containsKey(id) || inRange(player, s, config));
+            if (taking) DAILY_SEEN.put(id, now);
+            else DAILY_SEEN.putIfAbsent(id, now);   // after a restart: everyone gets the grace to come back
+        }
+        float target = targetPool(config, 0, s);
+        float before = s.pool().max();
+        if (Math.abs(target - before) < 0.5f) return;
+        s.pool().resizeTo(target);
+        stateDirty = true;
+        barDirty = true;
+        int present = dailyPresent(s, config, now);
+        if (present != dailyPresentLogged) {
+            dailyPresentLogged = present;
+            RaidLog.info("Daily World Boss {}: {} of {} players present, pool {} -> {} (now {})", s.bossId(), present, s.participants().size(),
+                    Math.round(before), Math.round(s.pool().max()), Math.round(s.pool().current()));
+        }
+    }
+
+    private static int dailyPresent(WorldBossState s, WorldBossConfig config, long now) {
+        return WorldBossRules.present(s.participants(), DAILY_SEEN, now, config.daily().graceSeconds() * 1000L);
+    }
+
+    /** The World Pool for {@code active} players, made bigger by the boss's renown (a share of 1 for none). */
+    private static float targetPool(WorldBossConfig config, int active, WorldBossState s) {
+        if (s.kind() == WorldBossKind.DAILY) {
+            WorldBossConfig.Daily daily = config.daily();
+            return WorldBossScaling.renowned(WorldBossScaling.dailyPool(daily.duelHealth(), daily.winsPerPlayer(),
+                    dailyPresent(s, config, System.currentTimeMillis()),
+                    daily.minPlayers()), s.poolMultiplier());
+        }
+        return WorldBossScaling.renowned(WorldBossScaling.poolSize(config.poolBase(), config.damagePerPlayerMinute(), active,
+                config.minutesPerPlayer(), config.maxMinutes(), config.poolMax()), s.poolMultiplier());
+    }
+
+    /** How much bigger a renown makes the pool: the same shares a renowned raid boss gets on its raid pool. */
+    private static float renownMultiplier(RaidRenown renown) {
+        CobbleRaidsConfig.Renown config = CobbleRaidsConfigManager.get().renown();
+        return WorldBossScaling.renownMultiplier(config.baseHealthBonus(), config.healthBonus(), renown.boon().kind() == RenownBoon.Kind.HP_POOL);
     }
 
     /** What {@link #stop} did: whether an event was running, and how many leftover bosses it removed at the boss's last spot. */
@@ -388,8 +544,15 @@ public final class WorldBossService {
         if (s == null || !s.active() || s.pool() == null) return "There is no World Boss right now.";
         if (s.pool().isDefeated() || s.pool().current() <= 0f) return "The World Boss has already fallen.";
         if (DUELS.containsKey(player.getUUID())) return "You are already in a duel.";
+        int cap = s.kind() == WorldBossKind.DAILY ? config.daily().maxPlayers() : 0;
+        if (!WorldBossRules.hasRoom(s.participants(), player.getUUID(), cap)) {
+            return "The daily boss is full: " + cap + " players are already fighting it.";
+        }
         String why = cannotDuel(player, s, config);
         if (why != null) return why;
+        // The place is taken at the first join and kept, so leaving to heal never costs it.
+        if (s.addParticipant(player.getUUID())) stateDirty = true;
+        DAILY_SEEN.put(player.getUUID(), System.currentTimeMillis());
         CHAIN.remove(player.getUUID());
         int gatherLeft = joinSecondsLeft(s, config);
         if (gatherLeft > 0) {
@@ -443,8 +606,7 @@ public final class WorldBossService {
         long nowMillis = System.currentTimeMillis();
         LAST_DUEL_START.put(player.getUUID(), nowMillis);
         int active = WorldBossRules.activePlayers(LAST_DUEL_START, nowMillis, config.activeWindowSeconds() * 1000L);
-        s.pool().growTo(WorldBossScaling.poolSize(config.poolBase(), config.damagePerPlayerMinute(), active,
-                config.minutesPerPlayer(), config.maxMinutes(), config.poolMax()));
+        s.pool().growTo(targetPool(config, active, s));
         s.touch();
         stateDirty = true;
         barDirty = true;
@@ -453,13 +615,25 @@ public final class WorldBossService {
         Vec3 position = duelPosition(player);
         if (position == null) return "The duel cannot start from where you are standing.";
         EncounterPolicy policy = EncounterPolicy.none().withCarryover(true, true).withAscensionEffects(true);
+        // The daily boss fights at full strength: the boss's own level (renown adds its bonus on top) and its own duel health.
+        int duelLevel = config.duelBossLevel();
+        long duelHealth = config.duelBossHealth();
+        if (s.kind() == WorldBossKind.DAILY) {
+            RaidDefinition dailyDefinition = RaidDefinitionRegistry.get(definitionId);
+            duelLevel = WorldBossScaling.dailyDuelLevel(config.daily().duelLevel(), dailyDefinition == null ? duelLevel : dailyDefinition.level());
+            duelHealth = config.daily().duelHealth();
+        }
         EncounterRequest request = new EncounterRequest(OWNER, encounterId, List.of(player), definitionId,
-                player.serverLevel(), position, config.duelBossLevel(), OptionalLong.of(config.duelBossHealth()),
+                player.serverLevel(), position, duelLevel, OptionalLong.of(duelHealth),
                 policy, EncounterRules.none());
         StartResult result;
+        // The daily boss's duel copies carry its renown and affix, so every duel fights the boss that was announced.
+        RaidRenown renown = s.kind() == WorldBossKind.DAILY ? s.renown().orElse(null) : null;
+        RenownAffix affix = s.affix().orElse(null);
+        java.util.function.Supplier<StartResult> begin = () -> RaidBossSpawner.withoutMoves(config.bossBannedMoves(),
+                () -> EncounterService.start(request, DUEL_LISTENER));
         try {
-            result = com.cobbleraids.spawn.RaidBossSpawner.withoutMoves(config.bossBannedMoves(),
-                    () -> EncounterService.start(request, DUEL_LISTENER));
+            result = renown == null ? begin.get() : RaidBossSpawner.withRenown(renown, affix, begin);
         } catch (RuntimeException ex) {
             RaidLog.error("World Boss duel for {} could not start", player.getGameProfile().getName(), ex);
             return "The duel could not start. Tell an administrator.";
@@ -651,7 +825,9 @@ public final class WorldBossService {
         Map<UUID, Float> damage = pool.contributions();
         float total = pool.max();
 
-        if (!s.rewardsPaid()) {
+        if (!s.rewardsPaid() && s.kind() == WorldBossKind.DAILY) {
+            payDaily(current, s, damage);
+        } else if (!s.rewardsPaid()) {
             // Each player is marked paid and saved just before their own payment (at most once for them), and the whole step is marked done only
             // when the loop ends. A crash half way therefore costs the one player in flight, and the rerun after the restart pays the rest.
             int paid = 0;
@@ -711,6 +887,52 @@ public final class WorldBossService {
         CHAIN.clear();
     }
 
+    /**
+     * Pays the daily boss: everyone who dealt damage gets that boss's raid reward (renowned, so the renown payout multiplier applies) and a capture
+     * attempt at it, which is the only way its affix reaches a player. The capture choice appears when the reward is claimed, as after a raid,
+     * and a catch replaces that reward's Raid Points.
+     *
+     * <p>At most once: the paid flag is saved before anything is queued. Duels still running are ended first, so no reward screen opens over a
+     * battle; their hits could no longer count anyway.
+     */
+    private static void payDaily(MinecraftServer current, WorldBossState s, Map<UUID, Float> damage) {
+        Map<UUID, Float> fighters = new LinkedHashMap<>();
+        damage.forEach((id, amount) -> {
+            if (amount != null && amount > 0f) fighters.put(id, amount);
+        });
+        s.markRewardsPaid();
+        flush(current);
+        abortDuels();
+        CHAIN.clear();
+        ResourceLocation definitionId = ResourceLocation.tryParse(s.definitionId());
+        RaidDefinition definition = definitionId == null ? null : RaidDefinitionRegistry.get(definitionId);
+        if (definition == null || fighters.isEmpty()) {
+            RaidLog.warn("Daily World Boss {} defeated, but nothing was paid: {}", s.bossId(),
+                    definition == null ? "definition " + s.definitionId() + " is not loaded" : "nobody dealt damage");
+            return;
+        }
+        Optional<RaidRenown> renown = s.renown();
+        Optional<RenownAffix> affix = s.affix();
+        int level = definition.level() + (renown.isPresent() ? CobbleRaidsConfigManager.get().renown().levelBonus() : 0);
+        boolean[] capture = { false };
+        // Queued before the reward: the capture choice is shown when that reward is claimed, so it has to be waiting by then.
+        RaidFaultBarrier.guard("worldboss:daily-capture", () -> capture[0] = RaidCaptureSessionService.offer(current, definition,
+                definition.species(), null, Math.min(100, level), false, affix.map(RenownAffix::id).orElse(null), s.bossId(),
+                new LinkedHashSet<>(fighters.keySet())));
+        RaidFaultBarrier.guard("worldboss:daily-reward", () -> RaidRewardService.grant(new RaidRewardEligibility(s.bossId(), definition.id(),
+                RaidOutcome.VICTORY, fighters, new LinkedHashSet<>(fighters.keySet()), 0,
+                renown.map(RaidRenown::title).orElse(""), renown.map(r -> r.boon().encode()).orElse("")), current));
+        for (UUID playerId : fighters.keySet()) {
+            ServerPlayer online = current.getPlayerList().getPlayer(playerId);
+            if (online == null) continue;
+            String catchLine = !capture[0] ? "" : affix.map(found -> " Claim it for your chance to catch the boss, and its affix "
+                    + found.displayName() + ".").orElse(" Claim it for your chance to catch the boss.");
+            say(online, "Your reward for the daily boss is ready." + catchLine, ChatFormatting.GREEN);
+        }
+        RaidLog.info("Daily World Boss {} defeated: {} player(s) given a {} reward{}", s.bossId(), fighters.size(), definition.id(),
+                capture[0] ? " and a capture attempt" + affix.map(found -> " (affix " + found.id() + ")").orElse("") : "");
+    }
+
     private static void announceDefeat(MinecraftServer current, Map<UUID, Float> damage, float total) {
         List<Map.Entry<UUID, Float>> top = new ArrayList<>(damage.entrySet());
         top.sort(Map.Entry.<UUID, Float>comparingByValue(Comparator.reverseOrder()));
@@ -743,6 +965,11 @@ public final class WorldBossService {
     }
 
     private static void spawnShowpiece(MinecraftServer current) {
+        spawnShowpiece(current, false);
+    }
+
+    /** @param first the boss's first spawn, the only one that may draw a renown; a respawn after a restart only rebuilds the saved one */
+    private static void spawnShowpiece(MinecraftServer current, boolean first) {
         WorldBossState s = state;
         ResourceLocation definitionId = ResourceLocation.tryParse(s.definitionId());
         RaidDefinition definition = definitionId == null ? null : RaidDefinitionRegistry.get(definitionId);
@@ -754,11 +981,23 @@ public final class WorldBossService {
         level.getChunk(SectionPos.blockToSectionCoord((int) s.x()), SectionPos.blockToSectionCoord((int) s.z()),
                 ChunkStatus.FULL, true);
         PokemonEntity boss;
+        boolean daily = s.kind() == WorldBossKind.DAILY;
+        RaidRenown stored = s.renown().orElse(null);
+        Vec3 at = new Vec3(s.x(), s.y(), s.z());
         spawningShowpiece = true;
         try {
-            boss = RaidBossSpawner.spawnAt(level, new Vec3(s.x(), s.y(), s.z()), definition, RenownRequest.NONE);
+            // The daily boss draws its renown once, on this first spawn, and a restart rebuilds the same title, boon and affix from the state.
+            java.util.function.Supplier<PokemonEntity> spawn = () -> RaidBossSpawner.spawnAt(level, at, definition,
+                    daily && first ? RenownRequest.FORCE : RenownRequest.NONE);
+            boss = daily && stored != null ? RaidBossSpawner.withRenown(stored, s.affix().orElse(null), spawn) : spawn.get();
         } finally {
             spawningShowpiece = false;
+        }
+        if (daily && first && stored == null) {
+            RaidRenownMarker.read(boss).ifPresent(rolled -> {
+                s.setRenown(rolled, RenownAffixData.read(boss.getPokemon()).orElse(null), renownMultiplier(rolled));
+                stateDirty = true;
+            });
         }
         boss.addTag(SHOWPIECE_TAG);
         boss.getPokemon().setScaleModifier(WorldBossConfigManager.get().bossScale());
@@ -857,6 +1096,8 @@ public final class WorldBossService {
         for (Duel duel : List.copyOf(DUELS.values())) EncounterService.abort(duel.encounterId());
         DUELS.clear();
         DUEL_PLAYER.clear();
+        DAILY_SEEN.clear();
+        dailyPresentLogged = -1;
     }
 
     private static ServerPlayer randomPlayerIn(ServerLevel level) {
@@ -895,11 +1136,20 @@ public final class WorldBossService {
         return feet.getCollisionShape(level, pos).isEmpty() && head.getCollisionShape(level, above).isEmpty();
     }
 
-    private static void announceStart(MinecraftServer current, RaidDefinition definition, ServerLevel level, BlockPos spot, boolean arena) {
+    private static void announceStart(MinecraftServer current, RaidDefinition definition, ServerLevel level, BlockPos spot, boolean arena,
+                                      WorldBossState s) {
         var species = definition.species();
-        var message = Component.literal("[World Boss] ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
-                .append(Component.literal("A World Boss, ").withStyle(ChatFormatting.YELLOW))
-                .append(Component.literal(speciesName(species)).withStyle(ChatFormatting.LIGHT_PURPLE));
+        boolean daily = s.kind() == WorldBossKind.DAILY;
+        Optional<RaidRenown> renown = daily ? s.renown() : Optional.empty();
+        var message = daily ? dailyPrefix() : Component.literal("[World Boss] ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+        if (renown.isPresent()) {
+            message.append(Component.literal(renown.get().title()).withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD))
+                    .append(Component.literal(", a renowned ").withStyle(ChatFormatting.YELLOW))
+                    .append(Component.literal(speciesName(species)).withStyle(ChatFormatting.LIGHT_PURPLE));
+        } else {
+            message.append(Component.literal(daily ? "The daily boss, " : "A World Boss, ").withStyle(ChatFormatting.YELLOW))
+                    .append(Component.literal(speciesName(species)).withStyle(ChatFormatting.LIGHT_PURPLE));
+        }
         if (arena) {
             message.append(Component.literal(", has appeared in the arena! Warp in, right-click it to duel, together we bring it down. ")
                             .withStyle(ChatFormatting.YELLOW))
@@ -917,6 +1167,16 @@ public final class WorldBossService {
         if (countdown > 0) {
             message.append(Component.literal(" The fight opens in " + countdown + " s: join now and everyone goes in together.")
                     .withStyle(ChatFormatting.GREEN));
+        }
+        if (daily) {
+            int cap = WorldBossConfigManager.get().daily().maxPlayers();
+            if (cap > 0) message.append(Component.literal(" Up to " + cap + " players.").withStyle(ChatFormatting.YELLOW));
+            s.affix().ifPresent(found -> message
+                    .append(Component.literal(" Affix: ").withStyle(ChatFormatting.YELLOW))
+                    .append(Component.literal(found.displayName()).withStyle(style -> style
+                            .withColor(ChatFormatting.LIGHT_PURPLE)
+                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(found.description()
+                                    + "\nEveryone who deals damage gets a chance to catch it, and a caught one keeps its affix."))))));
         }
         broadcast(current, message);
     }
@@ -1012,7 +1272,8 @@ public final class WorldBossService {
     private static String bossName(WorldBossState s) {
         ResourceLocation id = ResourceLocation.parse(s.definitionId());
         RaidDefinition definition = RaidDefinitionRegistry.get(id);
-        return speciesName(definition != null ? definition.species() : id);
+        String species = speciesName(definition != null ? definition.species() : id);
+        return s.renown().map(renown -> renown.title() + " (" + species + ")").orElse(species);
     }
 
     private static String speciesName(ResourceLocation species) {
@@ -1160,13 +1421,27 @@ public final class WorldBossService {
         WorldBossConfig config = WorldBossConfigManager.get();
         lines.add("Enabled: " + config.enabled() + ", window: "
                 + WorldBossRules.window(config, Instant.now()).name().toLowerCase());
+        lines.add("Daily boss: " + (config.dailyRenown() ? "on, " + config.daily().time() + " " + config.daily().zone()
+                + ", last ran " + (s.dailyLastDay().isEmpty() ? "never" : s.dailyLastDay()) : "off"));
+        if (config.dailyRenown()) {
+            WorldBossConfig.Daily daily = config.daily();
+            lines.add("Daily strength: duels at level " + (daily.duelLevel() > 0 ? String.valueOf(daily.duelLevel()) : "of the boss")
+                    + " (+ renown), " + daily.duelHealth() + " HP each; pool " + daily.winsPerPlayer() + " duel wins per player, at least "
+                    + daily.minPlayers() + " players");
+        }
         if (!s.active() || s.pool() == null) {
             lines.add("No World Boss is active.");
             return lines;
         }
         WorldBossPool pool = s.pool();
         long minutesLeft = Math.max(0L, (s.endsAtMillis() - System.currentTimeMillis()) / 60_000L);
-        lines.add("Boss " + s.definitionId() + " (" + s.bossId() + ")");
+        lines.add("Boss " + s.definitionId() + " (" + s.bossId() + "), " + s.kind().serializedName());
+        if (s.kind() == WorldBossKind.DAILY) {
+            lines.add("Renown " + s.renown().map(RaidRenown::title).orElse("none") + ", affix "
+                    + s.affix().map(RenownAffix::displayName).orElse("none") + ", players " + dailyPresent(s, config, System.currentTimeMillis())
+                    + " present of " + s.participants().size()
+                    + (config.daily().maxPlayers() > 0 ? " / " + config.daily().maxPlayers() : ""));
+        }
         lines.add("Pool " + Math.round(pool.current()) + " / " + Math.round(pool.max()) + " ("
                 + percentLeft(pool) + "% left)");
         lines.add("At about X " + Math.round(s.x()) + ", Z " + Math.round(s.z()) + " in " + s.dimension()

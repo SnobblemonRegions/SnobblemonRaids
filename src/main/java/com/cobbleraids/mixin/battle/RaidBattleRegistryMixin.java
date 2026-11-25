@@ -120,14 +120,22 @@ public abstract class RaidBattleRegistryMixin {
      * throws: a failure here hands back the messages untouched, so the battle starts as it would have.
      */
     private static String[] cobbleRaids$withExtensionFields(PokemonBattle battle, String[] messages) {
+        String[] withExtensions = messages;
         try {
             List<java.util.UUID> players = new ArrayList<>();
             for (ServerPlayer player : battle.getPlayers()) players.add(player.getUUID());
-            return ShowdownFormatExtras.apply(messages, battle.getBattleId(), players,
+            withExtensions = ShowdownFormatExtras.apply(messages, battle.getBattleId(), players,
                     ShowdownExtensionRegistry.providers());
         } catch (Throwable ex) {
             RaidFaultBarrier.report("mixin:startShowdown:extensions", ex instanceof Exception e ? e : new RuntimeException(ex));
-            return messages;
+        }
+        // Its own barrier: a failure here costs this battle its renown affixes, never its extensions or its start.
+        try {
+            boolean raid = "raid".equals(battle.getFormat().getBattleType().getName());
+            return com.cobbleraids.renown.RenownAffixBattleFields.apply(battle, withExtensions, raid);
+        } catch (Throwable ex) {
+            RaidFaultBarrier.report("mixin:startShowdown:renown-affixes", ex instanceof Exception e ? e : new RuntimeException(ex));
+            return withExtensions;
         }
     }
 

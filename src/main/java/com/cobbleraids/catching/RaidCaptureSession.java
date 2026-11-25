@@ -53,7 +53,8 @@ public record RaidCaptureSession(
         boolean rollSucceeded,
         double finalChanceUsed,
         DeliveryState delivery,
-        CompoundTag pokemonNbt
+        CompoundTag pokemonNbt,
+        String affix
 ) {
     public enum CapturePhase { AWAITING_CLAIM, AWAITING_CHOICE, STABILIZING, AWAITING_THROW, RESOLVED }
 
@@ -69,9 +70,32 @@ public record RaidCaptureSession(
     public static RaidCaptureSession offer(UUID playerId, UUID raidId, ResourceLocation definitionId,
                                            RaidRarityTier tier, ResourceLocation species, String form,
                                            int level, boolean shiny) {
+        return offer(playerId, raidId, definitionId, tier, species, form, level, shiny, null);
+    }
+
+    /**
+     * As above, for a renowned boss: {@code affix} is its {@code RenownAffix} id, read from the boss at victory
+     * like the rest of the snapshot, and written onto the Pokemon this session builds if the roll succeeds.
+     */
+    public static RaidCaptureSession offer(UUID playerId, UUID raidId, ResourceLocation definitionId,
+                                           RaidRarityTier tier, ResourceLocation species, String form,
+                                           int level, boolean shiny, String affix) {
         return new RaidCaptureSession(playerId, raidId, definitionId, tier, species, form, level, shiny,
                 CapturePhase.AWAITING_CLAIM, 0, 0L, 0L, 0L,
-                0.0, 0.0, 0.0, 0, 0.0, false, false, 0.0, DeliveryState.NONE, null);
+                0.0, 0.0, 0.0, 0, 0.0, false, false, 0.0, DeliveryState.NONE, null, affix);
+    }
+
+    /** Without an affix: every session saved before affixes existed, and the callers that predate them. */
+    public RaidCaptureSession(UUID playerId, UUID raidId, ResourceLocation definitionId, RaidRarityTier tier,
+                              ResourceLocation species, String form, int level, boolean shiny, CapturePhase phase,
+                              int bankedRaidPoints, long choiceDeadlineEpochMs, long currentStepStartedAtEpochMs,
+                              long sequenceDeadlineEpochMs, double pulse1Score, double pulse2Score, double pulse3Score,
+                              int nextPulseIndex, double throwScore, boolean rolled, boolean rollSucceeded,
+                              double finalChanceUsed, DeliveryState delivery, CompoundTag pokemonNbt) {
+        this(playerId, raidId, definitionId, tier, species, form, level, shiny, phase, bankedRaidPoints,
+                choiceDeadlineEpochMs, currentStepStartedAtEpochMs, sequenceDeadlineEpochMs, pulse1Score, pulse2Score,
+                pulse3Score, nextPulseIndex, throwScore, rolled, rollSucceeded, finalChanceUsed, delivery, pokemonNbt,
+                null);
     }
 
     /**
@@ -84,7 +108,7 @@ public record RaidCaptureSession(
                 CapturePhase.AWAITING_CHOICE, raidPoints, nowEpochMs + choiceWindowSeconds * 1000L,
                 currentStepStartedAtEpochMs, sequenceDeadlineEpochMs,
                 pulse1Score, pulse2Score, pulse3Score, nextPulseIndex, throwScore, rolled, rollSucceeded,
-                finalChanceUsed, delivery, pokemonNbt);
+                finalChanceUsed, delivery, pokemonNbt, affix);
     }
 
     /**
@@ -96,7 +120,7 @@ public record RaidCaptureSession(
         return new RaidCaptureSession(playerId, raidId, definitionId, tier, species, form, level, shiny,
                 CapturePhase.RESOLVED, bankedRaidPoints, choiceDeadlineEpochMs, currentStepStartedAtEpochMs,
                 sequenceDeadlineEpochMs, pulse1Score, pulse2Score, pulse3Score, nextPulseIndex, throwScore,
-                rolled, rollSucceeded, finalChanceUsed, delivery, pokemonNbt);
+                rolled, rollSucceeded, finalChanceUsed, delivery, pokemonNbt, affix);
     }
 
     /** Leaves AWAITING_CHOICE and starts the first pulse's travel window now. */
@@ -104,7 +128,7 @@ public record RaidCaptureSession(
         return new RaidCaptureSession(playerId, raidId, definitionId, tier, species, form, level, shiny,
                 CapturePhase.STABILIZING, bankedRaidPoints, choiceDeadlineEpochMs, nowEpochMs,
                 nowEpochMs + sequenceTimeoutSeconds * 1000L,
-                0.0, 0.0, 0.0, 0, 0.0, false, false, 0.0, delivery, pokemonNbt);
+                0.0, 0.0, 0.0, 0, 0.0, false, false, 0.0, delivery, pokemonNbt, affix);
     }
 
     /**
@@ -120,7 +144,7 @@ public record RaidCaptureSession(
         return new RaidCaptureSession(playerId, raidId, definitionId, tier, species, form, level, shiny,
                 newPhase, bankedRaidPoints, choiceDeadlineEpochMs, nowEpochMs, sequenceDeadlineEpochMs,
                 p1, p2, p3, nextIndex, throwScore, rolled, rollSucceeded, finalChanceUsed, delivery,
-                pokemonNbt);
+                pokemonNbt, affix);
     }
 
     /** The one and only capture roll for this session. Never called twice. */
@@ -128,21 +152,21 @@ public record RaidCaptureSession(
         return new RaidCaptureSession(playerId, raidId, definitionId, tier, species, form, level, shiny,
                 CapturePhase.RESOLVED, bankedRaidPoints, choiceDeadlineEpochMs, currentStepStartedAtEpochMs,
                 sequenceDeadlineEpochMs, pulse1Score, pulse2Score, pulse3Score, nextPulseIndex, throwScoreValue,
-                true, succeeded, chanceUsed, delivery, pokemonNbt);
+                true, succeeded, chanceUsed, delivery, pokemonNbt, affix);
     }
 
     public RaidCaptureSession withPokemonNbt(CompoundTag nbt) {
         return new RaidCaptureSession(playerId, raidId, definitionId, tier, species, form, level, shiny,
                 phase, bankedRaidPoints, choiceDeadlineEpochMs, currentStepStartedAtEpochMs, sequenceDeadlineEpochMs,
                 pulse1Score, pulse2Score, pulse3Score, nextPulseIndex, throwScore, rolled, rollSucceeded,
-                finalChanceUsed, delivery, nbt);
+                finalChanceUsed, delivery, nbt, affix);
     }
 
     public RaidCaptureSession withDelivery(DeliveryState newDelivery) {
         return new RaidCaptureSession(playerId, raidId, definitionId, tier, species, form, level, shiny,
                 phase, bankedRaidPoints, choiceDeadlineEpochMs, currentStepStartedAtEpochMs, sequenceDeadlineEpochMs,
                 pulse1Score, pulse2Score, pulse3Score, nextPulseIndex, throwScore, rolled, rollSucceeded,
-                finalChanceUsed, newDelivery, pokemonNbt);
+                finalChanceUsed, newDelivery, pokemonNbt, affix);
     }
 
     public double stabilizationQuality() {

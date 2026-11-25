@@ -195,7 +195,8 @@ final class CobbleRaidsConfigCodec {
                 Json.decimal(renownObject, "points_multiplier", rn.pointsMultiplier()),
                 Json.decimal(renownObject, "currency_multiplier", rn.currencyMultiplier()),
                 Json.integer(renownObject, "level_bonus", rn.levelBonus()),
-                Json.decimal(renownObject, "base_health_bonus", rn.baseHealthBonus()));
+                Json.decimal(renownObject, "base_health_bonus", rn.baseHealthBonus()),
+                readAffixes(Json.object(renownObject, "affixes"), rn.affixes()));
 
         JsonObject reconnectGraceObject = Json.object(root, "reconnect_grace");
         CobbleRaidsConfig.ReconnectGrace rg = defaults.reconnectGrace();
@@ -206,6 +207,14 @@ final class CobbleRaidsConfigCodec {
         return new CobbleRaidsConfig(naturalSpawning, recruitmentDefaults, combatDefaults, battleCarryover,
                 bossTraits, catching, currency, dynamicLevel, megaPity, raidPoints, personalBossShop, tierScaling,
                 bossGlow, bossMovement, renown, reconnectGrace, Json.bool(root, "debug_logging", defaults.debugLogging()));
+    }
+
+    private static CobbleRaidsConfig.Renown.Affixes readAffixes(JsonObject object, CobbleRaidsConfig.Renown.Affixes fallback) {
+        return new CobbleRaidsConfig.Renown.Affixes(
+                Json.bool(object, "enabled", fallback.enabled()),
+                Json.bool(object, "owned_in_raids", fallback.ownedInRaids()),
+                Json.bool(object, "owned_in_pvp", fallback.ownedInPvp()),
+                Json.bool(object, "owned_in_other_battles", fallback.ownedInOtherBattles()));
     }
 
     private static CobbleRaidsConfig.TierMultipliers readTierMultipliers(
@@ -388,6 +397,13 @@ final class CobbleRaidsConfigCodec {
         renownJson.addProperty("currency_multiplier", renown.currencyMultiplier());
         renownJson.addProperty("level_bonus", renown.levelBonus());
         renownJson.addProperty("base_health_bonus", renown.baseHealthBonus());
+        CobbleRaidsConfig.Renown.Affixes affixes = renown.affixes();
+        JsonObject affixesJson = new JsonObject();
+        affixesJson.addProperty("enabled", affixes.enabled());
+        affixesJson.addProperty("owned_in_raids", affixes.ownedInRaids());
+        affixesJson.addProperty("owned_in_pvp", affixes.ownedInPvp());
+        affixesJson.addProperty("owned_in_other_battles", affixes.ownedInOtherBattles());
+        renownJson.add("affixes", affixesJson);
         root.add("renown", renownJson);
 
         CobbleRaidsConfig.ReconnectGrace reconnectGrace = config.reconnectGrace();

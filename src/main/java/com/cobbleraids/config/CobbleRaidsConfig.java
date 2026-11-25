@@ -608,8 +608,36 @@ public record CobbleRaidsConfig(
      */
     public record Renown(boolean enabled, double starter, double powerhouse, double legendary, double mythical,
                          double healthBonus, int statFocusEvs, double pointsMultiplier, double currencyMultiplier,
-                         int levelBonus, double baseHealthBonus) {
+                         int levelBonus, double baseHealthBonus, Affixes affixes) {
         public static final int DEFAULT_LEVEL_BONUS = 10;
+
+        /**
+         * Where a renowned boss's affix runs in battle. Every renowned boss still rolls one whatever this says
+         * (see RaidBossSpawner#rollRenown), so the switches only decide whether it runs, and turning one on
+         * later wakes the affixes already caught.
+         *
+         * <ul>
+         *   <li>{@code enabled} -- master switch; off means no affix runs anywhere, the boss's own included.</li>
+         *   <li>{@code owned_in_raids} -- a caught Pokemon's affix in a raid it is brought into.</li>
+         *   <li>{@code owned_in_pvp} -- in a battle between players. Off by default: a rare catch should not
+         *       decide PvP until the operator chooses that it may.</li>
+         *   <li>{@code owned_in_other_battles} -- against wild Pokemon and NPC trainers, which includes
+         *       other mods' NPC battles such as towers and gyms.</li>
+         * </ul>
+         */
+        public record Affixes(boolean enabled, boolean ownedInRaids, boolean ownedInPvp, boolean ownedInOtherBattles) {
+            public static Affixes defaults() {
+                return new Affixes(true, true, false, true);
+            }
+        }
+
+        /** Without the affix switches, which then take their defaults; kept for the callers that predate them. */
+        public Renown(boolean enabled, double starter, double powerhouse, double legendary, double mythical,
+                      double healthBonus, int statFocusEvs, double pointsMultiplier, double currencyMultiplier,
+                      int levelBonus, double baseHealthBonus) {
+            this(enabled, starter, powerhouse, legendary, mythical, healthBonus, statFocusEvs, pointsMultiplier,
+                    currencyMultiplier, levelBonus, baseHealthBonus, Affixes.defaults());
+        }
         public static final double DEFAULT_BASE_HEALTH_BONUS = 0.30;
         /** What shipped before the level and base pool bonuses existed; see the codec's migration. */
         public static final int PREVIOUS_STAT_FOCUS_EVS = 128;
@@ -630,6 +658,7 @@ public record CobbleRaidsConfig(
                 throw new IllegalArgumentException("renown.level_bonus must be 0..50");
             if (!(baseHealthBonus >= 0.0) || baseHealthBonus > 1.0)
                 throw new IllegalArgumentException("renown.base_health_bonus must be 0..1");
+            if (affixes == null) affixes = Affixes.defaults();
         }
 
         public static Renown defaults() {

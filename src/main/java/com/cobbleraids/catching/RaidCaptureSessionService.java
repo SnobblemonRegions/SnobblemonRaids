@@ -4,6 +4,8 @@ import com.cobbleraids.perf.RaidPerf;
 import com.cobbleraids.RaidLog;
 import com.cobbleraids.config.CobbleRaidsConfig;
 import com.cobbleraids.config.CobbleRaidsConfigManager;
+import com.cobbleraids.renown.RenownAffix;
+import com.cobbleraids.renown.RenownAffixData;
 import com.cobbleraids.config.RaidDefinition;
 import com.cobbleraids.fault.RaidFaultBarrier;
 import com.cobbleraids.network.CaptureDetailsPayload;
@@ -162,23 +164,35 @@ public final class RaidCaptureSessionService {
     public static void offer(MinecraftServer server, RaidDefinition definition, Pokemon bossPokemon,
                              UUID raidId, Set<UUID> victors) {
         if (server == null || definition == null || bossPokemon == null || victors.isEmpty()) return;
+        offer(server, definition, bossPokemon.getSpecies().getResourceIdentifier(),
+                bossPokemon.getForm() == null ? null : bossPokemon.getForm().getName(),
+                bossPokemon.getLevel(), bossPokemon.getShiny(),
+                RenownAffixData.read(bossPokemon).map(RenownAffix::id).orElse(null), raidId, victors);
+    }
+
+    /**
+     * {@link #offer(MinecraftServer, RaidDefinition, Pokemon, UUID, Set)} from the boss's details rather than the boss itself, for a fight whose
+     * boss may no longer exist when it is paid: the daily World Boss pays after a restart from its saved state. {@code affix} is an affix id or
+     * null; it is the only way an affix reaches a player's Pokemon.
+     *
+     * @return true when sessions were queued (capture is on and this tier can be caught)
+     */
+    public static boolean offer(MinecraftServer server, RaidDefinition definition, ResourceLocation species, String form, int level,
+                                boolean shiny, String affix, UUID raidId, Set<UUID> victors) {
+        if (server == null || definition == null || species == null || victors.isEmpty()) return false;
         CobbleRaidsConfig.Catching config = CobbleRaidsConfigManager.get().catching();
-        if (!config.enabled() || config.isNoOp()) return;
+        if (!config.enabled() || config.isNoOp()) return false;
 
         var tier = definition.rarityTier();
-        if (config.ceilingFor(tier) <= 0.0) return;
-
-        ResourceLocation species = bossPokemon.getSpecies().getResourceIdentifier();
-        String form = bossPokemon.getForm() == null ? null : bossPokemon.getForm().getName();
-        int level = bossPokemon.getLevel();
-        boolean shiny = bossPokemon.getShiny();
+        if (config.ceilingFor(tier) <= 0.0) return false;
 
         for (UUID playerId : victors) {
             RaidCaptureSession session = RaidCaptureSession.offer(playerId, raidId, definition.id(), tier,
-                    species, form, level, shiny);
+                    species, form, level, shiny, affix);
             SESSIONS.computeIfAbsent(playerId, ignored -> new ArrayDeque<>()).addLast(session);
         }
         persistNow(server);
+        return true;
     }
 
     /**
@@ -415,6 +429,9 @@ public final class RaidCaptureSessionService {
         if (session.shiny()) { overlay.setShiny(Boolean.TRUE); any = true; }
         if (session.form() != null) { overlay.setForm(session.form()); any = true; }
         if (any) overlay.apply(pokemon);
+        // The one thing besides species/form/level/shiny that the boss passes on; byId refuses anything
+        // the store was hand-edited to hold.
+        RenownAffix.byId(session.affix()).ifPresent(affix -> RenownAffixData.write(pokemon, affix));
         return pokemon;
     }
 
@@ -499,6 +516,9 @@ public final class RaidCaptureSessionService {
         player.sendSystemMessage(Component.literal(
                         "You caught the raid boss! It replaces this raid's Raid Points.")
                 .withStyle(ChatFormatting.GOLD));
+        RenownAffixData.read(toDeliver).ifPresent(affix -> player.sendSystemMessage(
+                Component.literal("It kept its affix, " + affix.displayName() + ": " + affix.description())
+                        .withStyle(ChatFormatting.LIGHT_PURPLE)));
         return resolved.withDelivery(RaidCaptureSession.DeliveryState.DELIVERED);
     }
 

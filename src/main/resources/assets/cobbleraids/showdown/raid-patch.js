@@ -721,6 +721,14 @@ function bossLateMoveUnusable(side, message) {
   return Boolean(slot.disabled || (requested && requested.disabled));
 }
 
+// Renown affixes (renown-affixes.js, installed beside this file by ShowdownIntegrationInstaller). Isolated the same
+// way the extensions below are: a fault in an affix costs battles their affixes, never the simulator or the raids.
+try {
+  require('./renown-affixes');
+} catch (err) {
+  console.log('[CobbleRaids] Renown affixes failed to load and are off this session: ' + ((err && err.stack) || err));
+}
+
 // Extension modules other mods registered through CobbleRaids' ShowdownExtensions API, installed beside this file
 // as ext-<id>.js. Loaded last, in name order, so everything above is already in place for them to build on.
 //
