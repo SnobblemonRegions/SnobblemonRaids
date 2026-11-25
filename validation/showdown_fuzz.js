@@ -21,6 +21,8 @@
 //                 not commit. This is the freeze. A boss left empty is the case that mattered most.
 //   * THROW    -- the sim or the patch threw instead of answering.
 //   * NOPROGRESS -- a full round ran and nothing about the battle changed.
+//   * VISION   -- a vanilla -damage/-heal line about the boss got out: it carries simulator health and would
+//                 overwrite the shared raid bar on every client.
 // Rejected choices are expected and are only counted, so the summary shows what the sim refuses.
 //
 // Usage (see validate_showdown_fuzz.py, which builds <fixtureDir> from the Cobblemon jar):
@@ -59,6 +61,11 @@ const patch = require(path.join(fixtureDir, 'raid-patch.js'));
 const {Battle} = require(path.join(fixtureDir, 'sim/battle'));
 const {BattleStream} = require(path.join(fixtureDir, 'sim/battle-stream'));
 const {Dex} = require(path.join(fixtureDir, 'sim/dex'));
+const {Format} = require(path.join(fixtureDir, 'sim/dex-formats'));
+// Cobblemon's own format mod, as every live raid uses: it is where the merged raidboss condition lives, so the
+// boss's pool-mirrored HP is really in play (a plain gen9customgame battle has no raidboss at all).
+const RAID_FORMAT = new Format({name: '[Gen 9] Cobblemon Raid (fuzz)', mod: 'cobblemon', effectType: 'Format',
+  ruleset: Dex.formats.get('gen9customgame').ruleset.slice()});
 
 // ---------------------------------------------------------------------------------------------
 // Deterministic randomness
@@ -180,7 +187,7 @@ function runBattle(seed, stats) {
   const bossSet = makeSet(rng, {boss: true});
   sets.push([bossSet]);
 
-  const sim = new Battle({formatid: 'gen9customgame', seed: [seed & 0xffff, 1, 2, 3]});
+  const sim = new Battle({format: RAID_FORMAT, seed: [seed & 0xffff, 1, 2, 3]});
   sim.sides.length = playerCount + 1;
   sim.sides.fill(null);
   sim.gameType = 'raid';
@@ -188,6 +195,33 @@ function runBattle(seed, stats) {
 
   const stream = new BattleStream();
   stream.battle = sim;
+
+  // The Java side of the shared pool, as RaidPoolInstruction runs it: apply each -raiddamage / -raidheal
+  // line, and end the raid with >raidwin once the pool is empty.
+  const bossMon = sim.sides[playerCount].pokemon[0];
+  const pool = {current: 0, max: Math.max(1, bossMon.maxhp * (playerCount + 1))};
+  pool.current = pool.max;
+  let logCursor = 0;
+  function javaSide() {
+    const lines = sim.log.slice(logCursor);
+    logCursor = sim.log.length;
+    const bossId = sim.sides[playerCount].id;
+    let moved = false;
+    for (const line of lines) {
+      // VISION: a vanilla health line about the boss carries simulator health and would overwrite the shared
+      // raid bar on every client (Struggle recoil drew a ~15% boss as 75%). -sethp is left out: only Pain
+      // Split writes it, and that move is banned in raids (RaidBannedMoves.POOL_BYPASSING).
+      const kind = /^\|(-damage|-heal)\|(p\d+)a:/.exec(line);
+      if (kind && kind[2] === bossId) {
+        throw new Failure('VISION', `boss health line reached the bar: ${line.split('|')[1]}`, line);
+      }
+      const parts = line.split('|');
+      if (parts[1] === '-raiddamage') { pool.current = Math.max(0, pool.current - Number(parts[3])); moved = true; }
+      if (parts[1] === '-raidheal') { pool.current = Math.min(pool.max, pool.current + Number(parts[3])); moved = true; }
+    }
+    if (!moved || sim.ended) return;
+    if (pool.current <= 0) stream._writeLine('raidwin', 'P1');
+  }
 
   const log = [];
   const say = line => { log.push(line); if (OPTIONS.verbose || OPTIONS.replay !== null) console.log(`  ${line}`); };
@@ -217,6 +251,7 @@ function runBattle(seed, stats) {
     } catch (err) {
       thrown = err;
     }
+    if (!thrown) javaSide();
     const rejected = rejections.slice();
     say(`>${side.id} ${text}${thrown ? `  THROWS ${thrown.message}` : ''}${rejected.length ? `  -> ${rejected.map(r => r.text).join(' / ')}` : ''}`);
     if (thrown) {
@@ -312,6 +347,7 @@ function runBattle(seed, stats) {
 
   say('--- start');
   for (const side of sim.sides) if (sim.requestState === 'teampreview') sim.choose(side.id, 'team 1');
+  javaSide();
 
   for (let round = 1; round <= OPTIONS.turns && !sim.ended; round++) {
     const before = signature();
@@ -336,6 +372,7 @@ function runBattle(seed, stats) {
         throw new Failure('THROW', `${verb}: ${String(err.message).split('\n')[0].slice(0, 120)}`, '');
       }
       say(`>${verb} ${side.id} -> ${ok}`);
+      javaSide();
     }
 
     // The boss's AI answers the request immediately; humans take longer. Rarely the order differs.

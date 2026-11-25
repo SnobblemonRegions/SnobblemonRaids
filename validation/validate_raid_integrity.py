@@ -81,9 +81,19 @@ def validate_raid_healing() -> None:
     assert "'-raidheal'" in patch
     assert "lendRaidBossHealHeadroom" in patch and "repinRaidBoss" in patch
 
-    # Vanilla -heal lines carry the pinned simulator health string and would overwrite the
-    # authoritative raid percentage on every client.
-    assert "if (parts[0] === '-heal') return;" in patch
+    # Self-damage (Struggle recoil, confusion, Curse/Belly Drum/Substitute costs) skips the
+    # Damage event; it must still reach the pool.
+    assert "Battle.prototype.directDamage = function" in patch
+
+    # Our data files are merged beside Cobblemon's, never copied over them (alphaboost).
+    installer = read(JAVA / "showdown/ShowdownIntegrationInstaller.java")
+    assert '"/data/mods/cobblemon/conditions.js"' not in installer and "installMerged(\"conditions\"" in installer, \
+        "conditions.js must be merged into Cobblemon's, not copied over it"
+    assert "__FILE__" in read(SHOWDOWN / "mods/merge-hook.js")
+
+    # Vanilla -damage/-heal lines about the boss carry simulator health and would overwrite the
+    # authoritative raid percentage on every client; none may get out, marked or not.
+    assert "(parts[0] === '-damage' || parts[0] === '-heal')" in patch
 
     # onTryHeal returning 0 made Battle#heal report failure to its callers; boss healing now
     # lives in raid-patch.js so the TryHeal event stays vanilla.

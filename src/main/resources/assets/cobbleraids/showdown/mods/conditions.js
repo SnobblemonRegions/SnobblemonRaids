@@ -1,4 +1,8 @@
 "use strict";
+// CobbleRaids' own battle conditions. Installed as data/mods/cobblemon/cobbleraids-conditions.js and
+// merged into Cobblemon's conditions.js by a one-line hook (ShowdownModMerge), never copied over it:
+// Cobblemon keeps its own conditions in that file (alphaboost, which the Wild Alpha rule adds), and
+// replacing it took them out of every battle on the server.
 const Conditions = {};
 Conditions.raidboss = {
   name: 'raidboss',
@@ -7,7 +11,7 @@ Conditions.raidboss = {
     // Showdown still emits its ordinary -damage line when a Damage event returns 0.
     // Because the simulator intentionally keeps the boss at full HP, that follow-up
     // line says 100/100 and overwrites the authoritative shared raid percentage.
-    // raid-patch.js consumes exactly that one redundant boss-health instruction.
+    // raid-patch.js drops every boss -damage line; this marks the expected one.
     target.__cobbleRaidsSuppressVanillaDamageLog = true;
     if (source) this.add('-raiddamage', target, damage, source);
     else this.add('-raiddamage', target, damage);
