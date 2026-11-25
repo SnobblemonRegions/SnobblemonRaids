@@ -43,6 +43,32 @@ def find_cobblemon_jar() -> Path | None:
     return matches[0] if matches else None
 
 
+SHOWDOWN_RESOURCES = ROOT / "src/main/resources/assets/cobbleraids/showdown"
+MERGED_FILES = (("conditions", "Conditions"), ("items", "Items"))
+
+
+def install_raid_integration(showdown_dir: Path) -> None:
+    """Lays CobbleRaids' files into a freshly extracted Showdown exactly as ShowdownIntegrationInstaller
+    does on a server: raid-patch.js beside index.js, and each of our data files BESIDE Cobblemon's own
+    in data/mods/cobblemon/, merged in by the same hook template (ShowdownModMerge). A fresh extract
+    never holds the legacy overwrite, so Cobblemon's file on disk is always the base here.
+
+    Without this the harnesses ran raids with no raidboss condition at all -- the boss took ordinary
+    damage -- so nothing about the pool-mirrored boss HP was ever exercised by CI."""
+    shutil.copy(RAID_PATCH, showdown_dir / "raid-patch.js")
+    template = (SHOWDOWN_RESOURCES / "mods/merge-hook.js").read_text(encoding="utf-8")
+    folder = showdown_dir / "data/mods/cobblemon"
+    folder.mkdir(parents=True, exist_ok=True)
+    for name, export in MERGED_FILES:
+        own = f"cobbleraids-{name}.js"
+        shutil.copy(SHOWDOWN_RESOURCES / f"mods/{name}.js", folder / own)
+        target = folder / f"{name}.js"
+        base = target.read_text(encoding="utf-8") if target.exists() else \
+            f'"use strict";\nmodule.exports = {{{export}: {{}}}};\n'
+        hook = template.replace("__FILE__", own).replace("__EXPORT__", export)
+        target.write_text(base.rstrip() + "\n\n" + hook.strip() + "\n", encoding="utf-8")
+
+
 def main() -> None:
     cobblemon_jar = find_cobblemon_jar()
     if cobblemon_jar is None:
@@ -59,7 +85,7 @@ def main() -> None:
         tmp_path = Path(tmp)
         with zipfile.ZipFile(io.BytesIO(bundle_bytes)) as bundle:
             bundle.extractall(tmp_path)
-        shutil.copy(RAID_PATCH, tmp_path / "raid-patch.js")
+        install_raid_integration(tmp_path)
 
         result = subprocess.run(
             ["node", str(TEST_SCRIPT), str(tmp_path)],

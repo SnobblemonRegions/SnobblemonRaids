@@ -194,8 +194,90 @@ for (const playerCount of [1, 2, 3, 4]) {
   check('the turn advances rather than waiting on the boss', sim.turn, before + 1);
 }
 
+// --- the real sim, installed as on a server: boss health lines and self-damage ---
+// Audit of 2026-11-25. Struggle recoil (Battle#directDamage) skipped the pool and its vanilla
+// `-damage ... 75/100 [from] recoil` line drew a ~15% tower boss as 75%; a Disguise boss that
+// swallowed a hit drew itself back at 100%; and Cobblemon's alphaboost was gone from every battle,
+// because our conditions.js had been copied over Cobblemon's. These battles use Cobblemon's own
+// format mod, so the merged raidboss condition is really in play.
+{
+  const {Battle} = require(path.join(fixtureDir, 'sim/battle'));
+  const {BattleStream} = require(path.join(fixtureDir, 'sim/battle-stream'));
+  const {Format} = require(path.join(fixtureDir, 'sim/dex-formats'));
+  const mon = (species, moves, o = {}) => ({
+    name: species, species, level: o.level || 100, gender: '', moves,
+    movesInfo: moves.map(() => ({pp: 40, maxPp: 40})), ability: o.ability || 'No Ability', item: o.item || '',
+    nature: 'Hardy', evs: {hp: 85, atk: 85, def: 85, spa: 85, spd: 85, spe: 85},
+    ivs: {hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: o.spe ?? 31},
+  });
+  /** A one-player raid. The boss's simulated HP is pinned at full; the pool lives in Java. */
+  function raid(player, boss, {seed = [1, 2, 3, 4]} = {}) {
+    const format = new Format({name: '[Gen 9] Cobblemon Raid', mod: 'cobblemon', gameType: 'raid',
+      effectType: 'Format', ruleset: [], playerCount: 2});
+    const sim = new Battle({format, seed});
+    sim.setPlayer('p1', {team: [player]});
+    sim.setPlayer('p2', {team: [boss]});
+    const stream = new BattleStream();
+    stream.battle = sim;
+    return {sim, stream,
+      turn(pMove, bMove, setup) {
+        if (setup) setup(sim);
+        const from = sim.log.length;
+        if (bMove) sim.choose('p2', bMove);
+        sim.choose('p1', pMove);
+        return sim.log.slice(from);
+      },
+      boss: () => sim.p2.active[0], player: () => sim.p1.active[0]};
+  }
+  /** Every vanilla line that would put SIMULATOR health on the raid bar. None may ever be about the boss. */
+  const barLeaks = lines => lines.filter(l => /^\|(-damage|-heal|-sethp)\|p2a:/.test(l));
+  const allLines = [];
+  const keep = lines => { allLines.push(...lines); return lines; };
+
+  // Install: both Cobblemon's and our condition are in the cobblemon format mod.
+  {
+    const {sim} = raid(mon('Blissey', ['splash']), mon('Snorlax', ['splash']));
+    check('install: raidboss exists in the cobblemon format mod', sim.dex.conditions.get('raidboss').exists, true);
+    check('install: Cobblemon\'s alphaboost survives beside it', sim.dex.conditions.get('alphaboost').exists, true);
+    check('install: Guardian Scale is in the item dex', sim.dex.items.get('cobbleraidsguardianscale').exists, true);
+    check('install: the boss carries raidboss', !!sim.p2.active[0].volatiles.raidboss, true);
+  }
+
+  // The reported bug: Struggle recoil.
+  {
+    const r = raid(mon('Blissey', ['splash']), mon('Tapu Bulu', ['splash']));
+    const lines = keep(r.turn('move 1', 'move 1', s => { s.p2.active[0].moveSlots.forEach(m => m.pp = 0); s.makeRequest('move'); }));
+    check('struggle: the boss struggled', lines.some(l => /\|move\|p2a: [^|]*\|Struggle\|/.test(l)), true);
+    const recoil = lines.filter(l => l.startsWith('|-raiddamage|p2a:'));
+    check('struggle: recoil reported to the pool once', recoil.length, 1);
+    check('struggle: a quarter of the boss\'s simulated max HP', Number((recoil[0] || '').split('|')[3]),
+        Math.round(r.boss().baseMaxhp / 4));
+    check('struggle: no source, so the boss is never credited for hurting itself', (recoil[0] || '').split('|').length, 4);
+  }
+
+  // An ability that swallows the hit before raidboss runs: the pool is untouched, and Showdown's
+  // `-damage <boss> 272/272` must not draw the boss back at 100% (fuzz seed 41).
+  {
+    const r = raid(mon('Garchomp', ['earthquake']), mon('Mimikyu', ['splash'], {ability: 'Disguise'}));
+    const lines = keep(r.turn('move 1', 'move 1'));
+    check('disguise: the first hit is blocked', lines.some(l => /\|-activate\|p2a: [^|]*\|ability: Disguise/.test(l)), true);
+  }
+
+  check('no line in any of these battles put simulator health on the raid bar', barLeaks(allLines).join(' / '), '');
+
+  // A player's own direct damage is untouched.
+  {
+    const r = raid(mon('Blissey', ['splash']), mon('Snorlax', ['splash']));
+    const player = r.player();
+    const before = player.hp;
+    r.sim.directDamage(10, player, player, {id: 'strugglerecoil'});
+    check('a player\'s direct damage still lowers its HP', player.hp, before - 10);
+    check('a player\'s direct damage still logs vanilla -damage', r.sim.log[r.sim.log.length - 1].startsWith('|-damage|p1a:'), true);
+  }
+}
+
 if (failures > 0) {
   console.error(`${failures} assertion(s) failed`);
   process.exit(1);
 }
-console.log('raid-patch.js topology predicates and late boss choices: PASS');
+console.log('raid-patch.js topology predicates, late boss choices and boss health lines: PASS');

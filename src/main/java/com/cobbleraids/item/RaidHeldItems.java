@@ -21,7 +21,8 @@ import net.minecraft.world.item.Items;
  * the same mechanism {@code minecraft:charcoal} already rides in {@link
  * com.cobbleraids.config.RaidBossTraits}'s held-item allowlist. The effect itself
  * ("survive lethal damage at reduced HP, once") lives in {@code showdown/mods/items.js}, installed
- * by {@code ShowdownIntegrationInstaller} the same way {@code raid-patch.js} already is.
+ * by {@code ShowdownIntegrationInstaller} beside Cobblemon's own items file and merged into it
+ * ({@code ShowdownModMerge}).
  *
  * <p>{@link #RAID_CORE} carries no such component: its effect is a Java-side Raid Points bonus
  * checked at reward-grant time ({@code RaidRewardGrantEngine.awardPoints}), not a battle mechanic,

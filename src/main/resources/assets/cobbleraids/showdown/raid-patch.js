@@ -26,22 +26,20 @@ const isEliminatedPlayerSide = side => isPlayerSide(side) && (
 );
 const isActivePlayerSide = side => isPlayerSide(side) && !side.raidWithdrawn && !isEliminatedPlayerSide(side);
 
-// raidboss.onDamage must return numeric 0 so Showdown keeps the hit successful and
-// continues secondary effects and turn resolution. Showdown nevertheless follows a
-// zero-damage result with a vanilla `-damage ... 100/100` instruction. Suppress only
-// that marked boss instruction; the preceding `-raiddamage` remains authoritative.
+// Every vanilla -damage and -heal line about the boss carries the PINNED simulator
+// health (100/100 while the raid pool may be nearly empty), and Cobblemon draws it
+// straight onto the shared raid bar on every client. The bar belongs to the pool:
+// -raiddamage/-raidheal go to Java, which pushes the true percentage. So no such line
+// about the boss gets out -- not just the one following a hit raidboss.onDamage saw
+// (it marks that one), but also the `-damage <boss> 272/272` Showdown logs when an
+// earlier onDamage handler swallowed the hit before raidboss ran (Disguise, Ice Face),
+// which drew a damaged boss back at 100% (found by validation/showdown_fuzz.js, seed 41).
 const oldAdd = Battle.prototype.add;
 Battle.prototype.add = function(...parts) {
   const target = parts[1];
-  if (isRaid(this) && isBossSide(target?.side)) {
-    if (parts[0] === '-damage' && target.__cobbleRaidsSuppressVanillaDamageLog) {
-      delete target.__cobbleRaidsSuppressVanillaDamageLog;
-      return;
-    }
-    // Every vanilla -heal line about the boss carries the pinned simulator health
-    // string (100/100 while the raid pool may be nearly empty) and would overwrite
-    // the shared raid bar on every client. -raidheal below is the authoritative one.
-    if (parts[0] === '-heal') return;
+  if (isRaid(this) && isBossSide(target?.side) && (parts[0] === '-damage' || parts[0] === '-heal')) {
+    delete target.__cobbleRaidsSuppressVanillaDamageLog;
+    return;
   }
   return oldAdd.apply(this, parts);
 };
@@ -118,6 +116,35 @@ Pokemon.prototype.heal = function(d, source = null, effect = null) {
   return reportRaidHeal(this.battle, this, d);
 };
 
+/**
+ * Raid boss self-damage.
+ *
+ * Battle#directDamage skips the Damage event, so raidboss.onDamage never sees it. It is
+ * how Struggle recoil, a confusion self-hit and the HP costs of Curse, Belly Drum,
+ * Substitute, Clangorous Soul and Fillet Away are dealt. Before this the pool lost
+ * nothing, simulator HP dropped instead, and the vanilla `-damage <boss> 225/302
+ * [from] recoil` line carried that simulator health to every client: a tower boss on
+ * ~15% that ran out of PP read as healed to 75% after one Struggle (reported
+ * 2026-11-25). The next real hit put the bar back, but the recoil never counted.
+ *
+ * Reported as -raiddamage in the same currency as every other hit (one simulated HP is
+ * one point of pool), with no source so the boss is never credited as a contributor
+ * for hurting itself. Simulator HP stays pinned and no vanilla -damage line is logged.
+ */
+const oldDirectDamage = Battle.prototype.directDamage;
+Battle.prototype.directDamage = function(damage, target = null, source = null, effect = null) {
+  if (this.event && !target) target = this.event.target;
+  if (!isRaid(this) || !isBossSide(target?.side)) {
+    return oldDirectDamage.call(this, damage, target, source, effect);
+  }
+  if (!target.hp || !damage) return 0;
+  damage = this.trunc(damage);
+  if (isNaN(damage)) return 0;
+  damage = this.clampIntRange(damage, 1);
+  this.add('-raiddamage', target, damage);
+  return damage;
+};
+
 const RAID_BOSS_HEAL_HEADROOM = 1;
 const lendRaidBossHealHeadroom = battle => {
   const boss = bossSide(battle);
@@ -143,7 +170,7 @@ BattleActions.prototype.runMove = function(...args) {
     return oldRunMove.apply(this, args);
   } finally {
     // Also re-pins after any effect that writes boss HP directly and bypasses the
-    // Damage event entirely (Curse, Belly Drum, Substitute, Pain Split).
+    // Damage event entirely (Pain Split, now banned in raids).
     repinRaidBoss(lent);
   }
 };
@@ -407,7 +434,13 @@ Battle.prototype.start = function() {
   }
 
   const boss = bossSide(this)?.pokemon[0];
-  if (boss) boss.addVolatile('raidboss');
+  if (boss) {
+    // Canary for an install that lost the condition: it must sit beside Cobblemon's own
+    // in data/mods/cobblemon/conditions.js (ShowdownModMerge). Without it the boss takes
+    // ordinary damage and the raid pool never moves.
+    if (!this.dex.conditions.get('raidboss').exists) this.add('-raidfield', 'error', 'raidbossmissing', '');
+    boss.addVolatile('raidboss');
+  }
 
   applyRaidField(this);
 

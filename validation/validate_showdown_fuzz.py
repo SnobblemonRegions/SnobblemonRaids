@@ -29,7 +29,8 @@ import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from validate_showdown_raid_patch_behavior import RAID_PATCH, ROOT, find_cobblemon_jar  # noqa: E402
+from validate_showdown_raid_patch_behavior import (  # noqa: E402
+    RAID_PATCH, ROOT, find_cobblemon_jar, install_raid_integration)
 
 FUZZ_SCRIPT = ROOT / "validation/showdown_fuzz.js"
 
@@ -42,6 +43,7 @@ REGRESSION_SEEDS = [
     1395,   # AI named a slot the request did not list (Struggle) and wiped the boss's pre-fill
     21685,  # the last player standing, held and resumed, was never asked for a move again
     22104,  # as above, with the other three players eliminated
+    41,     # VISION: a Disguise Mimikyu boss swallowed a hit and `-damage <boss> 272/272` drew it at 100%
 ]
 
 
@@ -67,7 +69,7 @@ def main() -> None:
         tmp_path = Path(tmp)
         with zipfile.ZipFile(io.BytesIO(bundle_bytes)) as bundle:
             bundle.extractall(tmp_path)
-        shutil.copy(RAID_PATCH, tmp_path / "raid-patch.js")
+        install_raid_integration(tmp_path)
 
         command = ["node", str(FUZZ_SCRIPT), str(tmp_path), "--turns", str(opts.turns)]
         if opts.replay is not None:

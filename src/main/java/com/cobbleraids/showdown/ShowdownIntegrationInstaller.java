@@ -84,11 +84,14 @@ public final class ShowdownIntegrationInstaller {
     public static void install() {
         ready = false;
         copy("/assets/cobbleraids/showdown/raid-patch.js", Path.of("showdown/raid-patch.js"));
-        copy("/assets/cobbleraids/showdown/mods/conditions.js", Path.of("showdown/data/mods/cobblemon/conditions.js"));
-        // Same mechanism as conditions.js above: a whole file this mod owns, dropped into Showdown's
-        // own "cobblemon" format-mod folder so it merges into the item dex for every Cobblemon
-        // battle -- no regex-matching of Cobblemon's own data/items.js needed. See RaidHeldItems.java.
-        copy("/assets/cobbleraids/showdown/mods/items.js", Path.of("showdown/data/mods/cobblemon/items.js"));
+        // Our conditions and items go BESIDE Cobblemon's own files in its "cobblemon" format mod and are
+        // merged in by a hook, never copied over them: Cobblemon keeps alphaboost in conditions.js, and
+        // overwriting it switched Wild Alpha boosts off in every battle. See ShowdownModMerge.
+        installMerged("conditions", new ShowdownModMerge.Target(
+                "cobbleraids-conditions.js", "Conditions", "Conditions.raidboss ="));
+        // The item dex for every Cobblemon battle (Guardian Scale). See RaidHeldItems.java.
+        installMerged("items", new ShowdownModMerge.Target(
+                "cobbleraids-items.js", "Items", "Items.cobbleraidsguardianscale ="));
         patchPlayerCount(Path.of("showdown/sim/dex-formats.js"));
         patchIndexBootstrap(Path.of("showdown/index.js"));
         patchOutputPump(Path.of("showdown/index.js"));
@@ -172,6 +175,46 @@ public final class ShowdownIntegrationInstaller {
         } catch (RuntimeException ex) {
             RaidLog.error("Showdown integration FAILED {} -- raids are disabled for this session."
                     + " Ordinary Cobblemon battles are unaffected.", phase, ex);
+        }
+    }
+
+    /** Cobblemon's bundled Showdown, the same resource its own unbundler reads. */
+    private static final String COBBLEMON_SHOWDOWN_ZIP = "/data/cobblemon/showdown.zip";
+
+    /**
+     * Installs {@code mods/<name>.js} as {@code target.ownFile()} beside Cobblemon's
+     * {@code data/mods/cobblemon/<name>.js}, and appends the merge hook to Cobblemon's file
+     * (restoring Cobblemon's original from its bundle first if an older install overwrote it).
+     */
+    private static void installMerged(String name, ShowdownModMerge.Target target) {
+        Path folder = Path.of("showdown/data/mods/cobblemon");
+        copy("/assets/cobbleraids/showdown/mods/" + name + ".js", folder.resolve(target.ownFile()));
+        Path file = folder.resolve(name + ".js");
+        try {
+            String onDisk = Files.exists(file) ? Files.readString(file, StandardCharsets.UTF_8) : null;
+            String bundled;
+            boolean bundleReadable;
+            try (InputStream zip = ShowdownIntegrationInstaller.class.getResourceAsStream(COBBLEMON_SHOWDOWN_ZIP)) {
+                bundleReadable = zip != null;
+                bundled = ShowdownModMerge.bundledEntry(zip, "data/mods/cobblemon/" + name + ".js");
+            }
+            String template;
+            try (InputStream in = ShowdownIntegrationInstaller.class.getResourceAsStream(
+                    "/assets/cobbleraids/showdown/mods/merge-hook.js")) {
+                if (in == null) throw new FileNotFoundException("merge-hook.js");
+                template = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            }
+            // Only when the bundle itself is unreadable. A readable bundle without the entry just means
+            // Cobblemon ships no such file (1.8.2 has no items.js), and the stub is exactly right.
+            if (!bundleReadable && onDisk != null && onDisk.contains(target.legacySignature())) {
+                RaidLog.warn("Cobblemon's own Showdown {}.js was overwritten by an older CobbleRaids install and its"
+                        + " original could not be read from {}; Cobblemon's entries in it stay missing until Cobblemon"
+                        + " re-unbundles Showdown.", name, COBBLEMON_SHOWDOWN_ZIP);
+            }
+            String merged = ShowdownModMerge.compose(onDisk, bundled, target, template);
+            if (!merged.equals(onDisk)) AtomicFiles.writeString(file, merged);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to merge CobbleRaids' " + name + " into Cobblemon's Showdown", e);
         }
     }
 

@@ -29,10 +29,25 @@ public final class RaidBannedMoves {
             "perishsong"
     );
 
+    /**
+     * Moves that set HP from the OTHER Pokemon's HP, which for a raid boss is a mirror of a shared
+     * pool many bars deep rather than one Pokemon's health. Endeavor (target HP down to the user's)
+     * took a full bar off the pool every turn from a 1 HP Pokemon held up by Sturdy, Focus Sash or
+     * Guardian Scale; Pain Split (both set to their average) healed a player for free every turn and,
+     * used by the boss, wrote its averaged HP straight onto every client's raid bar. Neither has a
+     * meaning against a pool, so neither side may use them. Kept apart from {@link #BANNED} because
+     * that list is mechanically checked to be exactly the self-faint moves;
+     * validate_raid_banned_moves.py checks that these still exist and are listed here.
+     */
+    private static final Set<String> POOL_BYPASSING = Set.of(
+            "endeavor",
+            "painsplit"
+    );
+
     private RaidBannedMoves() {}
 
     public static boolean isBanned(String showdownMoveId) {
-        return showdownMoveId != null && BANNED.contains(showdownMoveId);
+        return showdownMoveId != null && (BANNED.contains(showdownMoveId) || POOL_BYPASSING.contains(showdownMoveId));
     }
 
     public static String displayName(String showdownMoveId) {

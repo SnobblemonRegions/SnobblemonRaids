@@ -119,8 +119,21 @@ def main() -> None:
                 print(f"    {move_id}", file=sys.stderr)
         raise SystemExit(1)
 
+    # The second set is curated, not derived: moves that set HP from the other Pokemon's HP (see
+    # RaidBannedMoves.POOL_BYPASSING). Each must still exist under that id, and still write HP that
+    # way, or the ban silently stops covering it.
+    pool_match = re.search(r"POOL_BYPASSING = Set\.of\((.*?)\);",
+                           BANNED_MOVES_SOURCE.read_text(encoding="utf-8"), re.S)
+    assert pool_match, "RaidBannedMoves no longer declares POOL_BYPASSING = Set.of(...)"
+    pool = {m.strip().strip('"') for m in pool_match.group(1).split(",") if m.strip()}
+    for move_id in sorted(pool):
+        block = blocks.get(move_id)
+        assert block is not None, f"POOL_BYPASSING lists '{move_id}', which Cobblemon's moves.js no longer has"
+        assert re.search(r"sethp|\.hp\b", block), \
+            f"'{move_id}' no longer reads or writes HP directly -- re-check why it is in POOL_BYPASSING"
+
     print(f"Raid banned-move validation: PASS -- {len(blocks)} move(s) checked, "
-          f"{len(actual)} banned move(s) confirmed exact")
+          f"{len(actual)} banned move(s) confirmed exact, {len(pool)} pool-bypassing move(s) confirmed")
 
 
 if __name__ == "__main__":
