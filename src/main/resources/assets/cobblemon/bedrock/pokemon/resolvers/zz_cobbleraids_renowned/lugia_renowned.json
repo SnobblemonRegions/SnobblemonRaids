@@ -1,12 +1,23 @@
 {
  "species": "cobblemon:lugia",
- "order": 1000,
+ "order": -1000,
  "variations": [
   {
    "aspects": [
     "cobbleraids_renowned"
    ],
-   "texture": "cobbleraids:textures/pokemon/renowned/lugia/lugia_renowned.png"
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0249_lugia/lugia.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
   }
  ]
 }

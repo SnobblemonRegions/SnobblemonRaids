@@ -1,12 +1,23 @@
 {
  "species": "cobblemon:salamence",
- "order": 1000,
+ "order": -1000,
  "variations": [
   {
    "aspects": [
     "cobbleraids_renowned"
    ],
-   "texture": "cobbleraids:textures/pokemon/renowned/salamence/salamence_renowned.png"
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0373_salamence/salamence.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
   }
  ]
 }

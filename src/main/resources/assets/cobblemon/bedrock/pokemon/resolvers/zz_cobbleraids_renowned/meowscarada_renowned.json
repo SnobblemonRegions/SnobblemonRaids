@@ -1,12 +1,23 @@
 {
  "species": "cobblemon:meowscarada",
- "order": 1000,
+ "order": -1000,
  "variations": [
   {
    "aspects": [
     "cobbleraids_renowned"
    ],
-   "texture": "cobbleraids:textures/pokemon/renowned/meowscarada/meowscarada_renowned.png"
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0908_meowscarada/meowscarada.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
   }
  ]
 }

@@ -1,97 +1,38 @@
-"""Renowned raid boss skins: an obsidian-and-gold recolour of every raid species' own textures.
+"""Renowned raid boss look: a runtime colour tint over every raid species' own texture.
 
-A renowned boss carries the aspect `cobbleraids_renowned` (RenownLook.java). This script writes, for every species a raid
-definition names, one resolver file whose variations match that aspect and swap only the texture, so the model, poser and
-layers (Charizard's flame, alpha eyes) stay Cobblemon's own. Textures are recoloured from Cobblemon's, never hand-painted:
+A renowned boss carries the aspect `cobbleraids_renowned` (RenownLook.java). For every species a raid definition names, this
+script writes one resolver file whose variations match that aspect and add one layer, `cobbleraids_renowned`: the species'
+own texture, drawn again with a dark bronze tint. Nothing is copied or edited: the layer points at the texture path the
+player's own packs already provide (Cobblemon's, or the Complete Cobblemon Collection's for the legendaries), and the game
+multiplies it by the tint while drawing. That keeps us clear of the CCC licence (no modified assets, no bundling), and gives
+every species the same treatment.
 
-  - each pixel keeps its lightness, so the artist's shading survives;
-  - the texture's main colour (the most common saturated hue) becomes obsidian, lit with bronze;
-  - every other colour (wings, markings) becomes gold, so a second colour still reads;
-  - near-white and near-grey pixels (eyes, teeth, claws) become a pale gold-white.
+Draw order: Cobblemon gathers every matching variation's layers into one map, in resolver order, and draws them in that
+order. Our file has a negative order, so its layer goes in first and a species' own layers (Charizard's flame, alpha eyes)
+still draw on top of it.
 
-Usage: python tools/renown_skins.py <Cobblemon jar> [--preview out.png species...]
-Writes src/main/resources/assets/cobbleraids/textures/pokemon/renowned/ and
-src/main/resources/assets/cobblemon/bedrock/pokemon/resolvers/zz_cobbleraids_renowned/, plus the list the server adds to the
-Polymer resource pack (assets/cobbleraids/renowned_skins.txt). Species with no resolver in the jar (Cobblemon ships no model
-for most legendaries; a server's model pack does) are listed and skipped.
+Usage: python tools/renown_skins.py <Cobblemon jar> [<model pack zip> ...]
+Later sources win where they define the same variation (a model pack replacing Cobblemon's Xerneas, say). Reads paths only.
+Writes src/main/resources/assets/cobblemon/bedrock/pokemon/resolvers/zz_cobbleraids_renowned/ and the list the server adds to
+the Polymer resource pack (assets/cobbleraids/renowned_skins.txt).
 """
-import colorsys
 import glob
-import io
 import json
 import os
+import shutil
 import sys
 import zipfile
 
-from PIL import Image
-
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RES = os.path.join(ROOT, 'src', 'main', 'resources')
-TEX_DIR = 'assets/cobbleraids/textures/pokemon/renowned'
 RESOLVER_DIR = 'assets/cobblemon/bedrock/pokemon/resolvers/zz_cobbleraids_renowned'
+OLD_TEXTURES = 'assets/cobbleraids/textures/pokemon/renowned'
 INDEX = 'assets/cobbleraids/renowned_skins.txt'
 ASPECT = 'cobbleraids_renowned'
-ORDER = 1000  # after Cobblemon's own variations (order 0), so ours is applied last and wins the texture
-
-# (position 0..1 along lightness, RGB)
-BODY = [(0.0, (14, 11, 18)), (0.30, (38, 31, 44)), (0.55, (70, 57, 70)), (0.78, (134, 98, 52)), (1.0, (222, 178, 98))]
-ACCENT = [(0.0, (34, 20, 6)), (0.30, (110, 72, 18)), (0.55, (186, 132, 34)), (0.78, (236, 192, 74)), (1.0, (255, 238, 168))]
-NEUTRAL = [(0.0, (16, 14, 18)), (0.40, (70, 62, 58)), (0.75, (196, 180, 150)), (1.0, (255, 246, 214))]
-HUE_BAND = 0.09   # within this much hue (0..1) of the main colour counts as the body
-GREY_SAT = 0.16   # below this saturation a pixel is neutral
-
-
-def ramp(stops, t):
-    t = max(0.0, min(1.0, t))
-    for (a, ca), (b, cb) in zip(stops, stops[1:]):
-        if t <= b:
-            u = (t - a) / (b - a) if b > a else 0.0
-            return tuple(round(ca[i] + (cb[i] - ca[i]) * u) for i in range(3))
-    return stops[-1][1]
-
-
-def hue_distance(a, b):
-    d = abs(a - b) % 1.0
-    return min(d, 1.0 - d)
-
-
-def main_hue(img):
-    """The most common hue among saturated, visible pixels, weighted by saturation."""
-    bins = [0.0] * 36
-    for r, g, b, a in (img.get_flattened_data() if hasattr(img, 'get_flattened_data') else img.getdata()):
-        if a < 128:
-            continue
-        h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
-        if s < GREY_SAT or l < 0.08 or l > 0.95:
-            continue
-        bins[int(h * 36) % 36] += s
-    if not any(bins):
-        return None
-    best = max(range(36), key=lambda i: bins[i - 1] + bins[i] + bins[(i + 1) % 36])
-    return (best + 0.5) / 36
-
-
-def recolour(img):
-    img = img.convert('RGBA')
-    body = main_hue(img)
-    out = Image.new('RGBA', img.size)
-    src, dst = img.load(), out.load()
-    w, h = img.size
-    for y in range(h):
-        for x in range(w):
-            r, g, b, a = src[x, y]
-            if a == 0:
-                continue
-            hue, light, sat = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
-            lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-            if sat < GREY_SAT:
-                rgb = ramp(NEUTRAL, lum)
-            elif body is None or hue_distance(hue, body) <= HUE_BAND:
-                rgb = ramp(BODY, lum * 1.1)
-            else:
-                rgb = ramp(ACCENT, lum * 1.05)
-            dst[x, y] = rgb + (a,)
-    return out
+LAYER = 'cobbleraids_renowned'
+ORDER = -1000
+# Multiplied into the texture: darkens every colour toward a warm obsidian while keeping its own hue and shading.
+TINT = [0.46, 0.38, 0.30, 1.0]
 
 
 def raid_species():
@@ -102,84 +43,65 @@ def raid_species():
     return sorted(names)
 
 
-def resolvers(jar):
-    by_species = {}
-    for name in jar.namelist():
-        if name.startswith('assets/cobblemon/bedrock/pokemon/resolvers/') and name.endswith('.json'):
-            data = json.loads(jar.read(name))
-            by_species.setdefault(data['species'].split(':')[-1], []).append(data)
-    return by_species
+def resolvers(sources):
+    """species -> [(order, source index, resolver)], every source's resolvers for it."""
+    found = {}
+    for index, path in enumerate(sources):
+        archive = zipfile.ZipFile(path)
+        for name in archive.namelist():
+            if '/bedrock/pokemon/resolvers/' not in name or not name.endswith('.json'):
+                continue
+            try:
+                data = json.loads(archive.read(name))
+                species = data['species'].split(':')[-1]
+            except (ValueError, KeyError):
+                continue
+            found.setdefault(species, []).append((data.get('order', 0), index, data))
+    return found
 
 
-def texture_path(location):
-    ns, path = location.split(':', 1)
-    return f'assets/{ns}/{path}'
+def textures(entries):
+    """aspects -> the texture a player sees for them, the last definition winning (as Cobblemon applies them). Shiny skipped."""
+    chosen = {}
+    for _, _, data in sorted(entries, key=lambda e: (e[1], e[0])):
+        for variation in data.get('variations', []):
+            texture = variation.get('texture')
+            aspects = variation.get('aspects', [])
+            if texture is None or 'shiny' in aspects:
+                continue
+            chosen[tuple(aspects)] = texture
+    return chosen
 
 
-def build(jar_path, preview=None, preview_species=()):
-    jar = zipfile.ZipFile(jar_path)
-    found = resolvers(jar)
-    written, skipped, index = 0, [], []
-    previews = []
+def build(sources):
+    found = resolvers(sources)
+    out_dir = os.path.join(RES, RESOLVER_DIR)
+    shutil.rmtree(out_dir, ignore_errors=True)
+    shutil.rmtree(os.path.join(RES, OLD_TEXTURES), ignore_errors=True)
+    os.makedirs(out_dir)
+    index, skipped = [], []
     for species in raid_species():
-        if species not in found:
+        chosen = textures(found.get(species, []))
+        if not chosen:
             skipped.append(species)
             continue
-        variations, done = [], {}
-        for data in sorted(found[species], key=lambda d: d.get('order', 0)):
-            for v in data['variations']:
-                tex = v.get('texture')
-                aspects = v.get('aspects', [])
-                if not isinstance(tex, str) or 'shiny' in aspects:
-                    continue  # animated textures and shiny swaps: the base recolour covers them
-                if tex not in done:
-                    recoloured = recolour(Image.open(io.BytesIO(jar.read(texture_path(tex)))))
-                    file = os.path.basename(tex.split(':', 1)[1]).replace('.png', '_renowned.png')
-                    rel = f'{TEX_DIR}/{species}/{file}'
-                    if preview is None:
-                        os.makedirs(os.path.join(RES, os.path.dirname(rel)), exist_ok=True)
-                        recoloured.save(os.path.join(RES, rel), optimize=True)
-                        index.append(rel)
-                    elif species in preview_species:
-                        previews.append((Image.open(io.BytesIO(jar.read(texture_path(tex)))).convert('RGBA'), recoloured))
-                    done[tex] = 'cobbleraids:' + rel.split('/', 2)[2]
-                variations.append({'aspects': aspects + [ASPECT], 'texture': done[tex]})
-        if not variations:
-            skipped.append(species)
-            continue
-        if preview is None:
-            rel = f'{RESOLVER_DIR}/{species}_renowned.json'
-            os.makedirs(os.path.join(RES, RESOLVER_DIR), exist_ok=True)
-            with open(os.path.join(RES, rel), 'w', encoding='utf-8', newline='\n') as f:
-                json.dump({'species': f'cobblemon:{species}', 'order': ORDER, 'variations': variations}, f, indent=1)
-                f.write('\n')
-            index.append(rel)
-        written += 1
-    if preview is not None:
-        scale, gap = 3, 8
-        width = max(a.width + b.width for a, b in previews) * scale + gap * 2
-        height = sum(max(a.height, b.height) * scale + gap for a, b in previews)
-        sheet = Image.new('RGBA', (width, height), (52, 56, 64, 255))
-        y = 0
-        for a, b in previews:
-            sheet.alpha_composite(a.resize((a.width * scale, a.height * scale), Image.NEAREST), (0, y))
-            sheet.alpha_composite(b.resize((b.width * scale, b.height * scale), Image.NEAREST), (a.width * scale + gap, y))
-            y += max(a.height, b.height) * scale + gap
-        sheet.save(preview)
-        print('preview', preview)
-        return
+        variations = []
+        for aspects in sorted(chosen, key=len):   # the plain form first, so a form's own layer replaces it
+            variations.append({
+                'aspects': list(aspects) + [ASPECT],
+                'layers': [{'name': LAYER, 'texture': chosen[aspects], 'tint': TINT}],
+            })
+        rel = f'{RESOLVER_DIR}/{species}_renowned.json'
+        with open(os.path.join(RES, rel), 'w', encoding='utf-8', newline='\n') as f:
+            json.dump({'species': f'cobblemon:{species}', 'order': ORDER, 'variations': variations}, f, indent=1)
+            f.write('\n')
+        index.append(rel)
     with open(os.path.join(RES, INDEX), 'w', encoding='utf-8', newline='\n') as f:
         f.write('\n'.join(sorted(index)) + '\n')
-    print(f'{written} species skinned, {len(index)} files; skipped (no resolver in this jar): {len(skipped)}')
-    print(' ', ' '.join(skipped))
+    print(f'{len(index)} species tinted; no texture found for {len(skipped)}: {" ".join(skipped)}')
 
 
 if __name__ == '__main__':
-    args = sys.argv[1:]
-    if not args:
+    if len(sys.argv) < 2:
         sys.exit(__doc__)
-    if '--preview' in args:
-        i = args.index('--preview')
-        build(args[0], args[i + 1], set(args[i + 2:]))
-    else:
-        build(args[0])
+    build(sys.argv[1:])

@@ -1,12 +1,41 @@
 {
  "species": "cobblemon:moltres",
- "order": 1000,
+ "order": -1000,
  "variations": [
   {
    "aspects": [
     "cobbleraids_renowned"
    ],
-   "texture": "cobbleraids:textures/pokemon/renowned/moltres/moltres_renowned.png"
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0146_moltres/moltres.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "galarian",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0146_moltres/moltres_galarian.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
   }
  ]
 }

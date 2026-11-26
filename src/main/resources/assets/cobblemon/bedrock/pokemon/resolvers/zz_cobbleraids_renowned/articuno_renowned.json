@@ -1,12 +1,41 @@
 {
  "species": "cobblemon:articuno",
- "order": 1000,
+ "order": -1000,
  "variations": [
   {
    "aspects": [
     "cobbleraids_renowned"
    ],
-   "texture": "cobbleraids:textures/pokemon/renowned/articuno/articuno_renowned.png"
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0144_articuno/articuno.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "galarian",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0144_articuno/articuno_galarian.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
   }
  ]
 }

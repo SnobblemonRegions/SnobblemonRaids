@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 /** The generated renowned skins (tools/renown_skins.py) hang together: every listed file ships, every resolver points at a shipped texture. */
@@ -33,33 +32,33 @@ class RenownSkinsResourceTest {
     }
 
     @Test
-    void everyListedFileShips() throws IOException {
+    void everyListedFileShipsAndNoArtIsCopied() throws IOException {
         List<String> paths = index();
-        assertTrue(paths.size() > 50, "a resolver and texture for most raid species");
-        for (String path : paths) assertNotNull(resource(path), path);
+        assertTrue(paths.size() >= 132, "a resolver for every raid species");
+        for (String path : paths) {
+            assertNotNull(resource(path), path);
+            // The look is a tint over the player's own textures: shipping a texture would copy someone's art (CCC forbids it).
+            assertTrue(path.endsWith(".json"), path);
+        }
     }
 
     @Test
-    void everyResolverSwapsOnlyTheTextureForTheRenownedAspect() throws IOException {
-        List<String> paths = index();
-        Set<String> textures = paths.stream().filter(p -> p.endsWith(".png")).collect(Collectors.toSet());
-        int resolvers = 0;
-        for (String path : paths) {
-            if (!path.endsWith(".json")) continue;
-            resolvers++;
+    void everyResolverOnlyAddsTheTintedLayerForTheRenownedAspect() throws IOException {
+        for (String path : index()) {
             JsonObject resolver = JsonParser.parseString(new String(resource(path), StandardCharsets.UTF_8)).getAsJsonObject();
-            assertTrue(resolver.get("order").getAsInt() > 0, path + " runs after Cobblemon's own variations");
+            assertTrue(resolver.get("order").getAsInt() < 0, path + " goes first, so the species' own layers draw over ours");
             for (JsonElement element : resolver.getAsJsonArray("variations")) {
                 JsonObject variation = element.getAsJsonObject();
-                assertEquals(Set.of("aspects", "texture"), variation.keySet(), path + " leaves model, poser and layers alone");
+                assertEquals(Set.of("aspects", "layers"), variation.keySet(), path + " leaves model, poser and texture alone");
                 boolean renowned = false;
                 for (JsonElement aspect : variation.getAsJsonArray("aspects")) renowned |= RenownLook.ASPECT.equals(aspect.getAsString());
                 assertTrue(renowned, path + " only applies to a renowned boss");
-                String texture = variation.get("texture").getAsString();
-                assertTrue(texture.startsWith("cobbleraids:"), texture);
-                assertTrue(textures.contains("assets/cobbleraids/" + texture.substring("cobbleraids:".length())), path + " -> " + texture);
+                assertEquals(1, variation.getAsJsonArray("layers").size(), path);
+                JsonObject layer = variation.getAsJsonArray("layers").get(0).getAsJsonObject();
+                assertEquals("cobbleraids_renowned", layer.get("name").getAsString(), path);
+                assertEquals(4, layer.getAsJsonArray("tint").size(), path + " tint is [r, g, b, a]");
+                assertTrue(layer.has("texture"), path);
             }
         }
-        assertTrue(resolvers > 50);
     }
 }
