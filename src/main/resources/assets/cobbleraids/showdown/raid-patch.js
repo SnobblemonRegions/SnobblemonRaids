@@ -81,6 +81,9 @@ const reportRaidDamage = (battle, target, amount, source) => {
 };
 Battle.prototype.raidBossDamage = function(target, damage, source) {
   const reported = reportRaidDamage(this, target, damage, source);
+  // spreadDamage calls target.damage() next with the amount returned here; the mark tells the
+  // Pokemon#damage hook below that this hit is already in the pool.
+  if (target) target.__cobbleRaidsPoolReported = true;
   return Math.max(0, Math.min(reported, target.hp - 1));
 };
 
@@ -205,6 +208,35 @@ Battle.prototype.directDamage = function(damage, target = null, source = null, e
   return damage;
 };
 
+/**
+ * Raid boss damage dealt straight through Pokemon#damage.
+ *
+ * Other scripts hurt a foe that way, skipping both spreadDamage's Damage event and directDamage:
+ * AscensionLib's modifier chips and Thorns-style returns do. On the boss that damage never reached
+ * the pool, and since the mirror lets the boss stand on a few simulated HP it could faint the
+ * simulator boss, ending the battle behind the pool's back. It is now reported as -raiddamage like
+ * every other hit (credited to a player's Pokemon, never to the boss itself) and HP re-syncs.
+ *
+ * spreadDamage's own call, right after raidboss.onDamage reported the hit, carries the mark
+ * raidBossDamage leaves and goes through unchanged, so nothing is reported twice.
+ */
+const oldPokemonDamage = Pokemon.prototype.damage;
+Pokemon.prototype.damage = function(d, source = null, effect = null) {
+  const battle = this.battle;
+  if (!isRaid(battle) || !isBossSide(this.side)) {
+    return oldPokemonDamage.call(this, d, source, effect);
+  }
+  if (this.__cobbleRaidsPoolReported) {
+    delete this.__cobbleRaidsPoolReported;
+    return oldPokemonDamage.call(this, d, source, effect);
+  }
+  if (!this.hp || isNaN(d) || d <= 0) return 0;
+  const credit = source && source.side && !isBossSide(source.side) ? source : null;
+  const dealt = reportRaidDamage(battle, this, Math.max(1, battle.trunc(d)), credit);
+  syncRaidBossHp(battle);
+  return dealt;
+};
+
 // Every hit on the boss goes through spreadDamage. raidboss.onDamage lets it take a capped
 // amount off simulated HP (so the hit's effects can read it); this puts HP back on the mirror.
 const oldSpreadDamage = Battle.prototype.spreadDamage;
@@ -212,7 +244,12 @@ Battle.prototype.spreadDamage = function(...args) {
   try {
     return oldSpreadDamage.apply(this, args);
   } finally {
-    if (isRaid(this)) syncRaidBossHp(this);
+    if (isRaid(this)) {
+      // A hit raidboss reported but spreadDamage never applied must not wave the next direct one through.
+      const boss = bossSide(this);
+      if (boss) for (const pokemon of boss.pokemon) if (pokemon) delete pokemon.__cobbleRaidsPoolReported;
+      syncRaidBossHp(this);
+    }
   }
 };
 
