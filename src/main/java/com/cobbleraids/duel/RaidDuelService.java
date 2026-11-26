@@ -94,8 +94,8 @@ public final class RaidDuelService {
         final long duelLimitTicks;
         boolean lastMinuteWarned;
         boolean finished;
-        /** The shared pool's HP bar over the raid boss; null if it could not be built (cosmetic, never stops a raid). */
-        RaidHpBar bar;
+        /** The shared pool's health bar: over the boss, or at the top of the screen for a renowned boss; null if it could not be built (cosmetic, never stops a raid). */
+        DuelBossBar bar;
 
         DuelRaid(RaidDefinition definition, PokemonEntity boss, List<ServerPlayer> players, long startedTick) {
             this.definition = definition;
@@ -170,7 +170,9 @@ public final class RaidDuelService {
                 boss.getPokemon().getSpecies().getResourceIdentifier().toString(), raid.bossLevel,
                 AscensionLibArming.threatFor(definition.rarityTier()));
         RAIDS.put(raid.raidId, raid);
-        RaidFaultBarrier.guard("duel-raid:hp-bar", () -> raid.bar = RaidHpBar.attach(boss));
+        RaidFaultBarrier.guard("duel-raid:hp-bar", () -> raid.bar = raid.renownTitle.isEmpty() ? RaidHpBar.attach(boss)
+                : new RaidHudBar(raid.renownTitle + " (" + boss.getPokemon().getSpecies().getTranslatedName().getString() + ")",
+                        raid.players, raid.out, id -> server.getPlayerList().getPlayer(id)));
         int started = 0;
         for (ServerPlayer player : players) {
             String why = startDuel(raid, player);
@@ -405,7 +407,7 @@ public final class RaidDuelService {
     }
 
     private static void updateBar(DuelRaid raid, long now) {
-        RaidHpBar bar = raid.bar;
+        DuelBossBar bar = raid.bar;
         if (bar == null) return;
         int fighters = Math.max(0, raid.players.size() - raid.out.size());
         long secondsLeft = (raid.windowTicks - (now - raid.startedTick) + SECOND - 1) / SECOND;
@@ -419,7 +421,7 @@ public final class RaidDuelService {
     }
 
     private static void removeBar(DuelRaid raid) {
-        RaidHpBar bar = raid.bar;
+        DuelBossBar bar = raid.bar;
         raid.bar = null;
         if (bar != null) RaidFaultBarrier.guard("duel-raid:hp-bar-remove", bar::remove);
     }

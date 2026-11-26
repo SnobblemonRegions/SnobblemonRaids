@@ -15,7 +15,7 @@ import org.joml.Vector3f;
  * text displays riding the boss through Polymer, sent to everyone who can see the boss; no client mod. Layout and colours come
  * from {@link RaidHpBarLayout}, the trailing strip from {@link RaidHpBarTrail}. Server thread only.
  */
-final class RaidHpBar {
+final class RaidHpBar implements DuelBossBar {
     /** How long the fill takes to slide to a new value. */
     private static final int FILL_TICKS = 3;
     /** Layers sit a hair apart, nearest the viewer last, so they never fight for the same depth. */
@@ -65,7 +65,8 @@ final class RaidHpBar {
         return element;
     }
 
-    void update(float current, float max, int fighters, long secondsLeft, long tick) {
+    @Override
+    public void update(float current, float max, int fighters, long secondsLeft, long tick) {
         float bossHeight = boss.getBbHeight();
         if (bossHeight != height) {
             height = bossHeight;
@@ -112,7 +113,8 @@ final class RaidHpBar {
         label.setTranslation(new Vector3f(0f, RaidHpBarLayout.textBottom(height), 0f));
     }
 
-    void remove() {
+    @Override
+    public void remove() {
         attachment.destroy();
         holder.destroy();
     }
