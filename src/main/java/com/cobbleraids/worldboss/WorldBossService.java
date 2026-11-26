@@ -559,7 +559,10 @@ public final class WorldBossService {
         if (!WorldBossRules.hasRoom(fighters(s), player.getUUID()))
             return "The World Boss already has " + WorldBossRules.MAX_PLAYERS + " challengers.";
         int cap = s.kind() == WorldBossKind.DAILY ? config.daily().maxPlayers() : 0;
-        if (!WorldBossRules.hasRoom(fighters(s), player.getUUID(), cap)) {
+        // Counted over everyone who has taken a place, not just those fighting now: players waiting for the opening countdown hold one too,
+        // so a 26th is refused when they join rather than told "you are in" and turned away when the fight opens, and a place is kept
+        // while its player heals. Participants also size the daily pool, so nobody can be in the pool without a place.
+        if (!WorldBossRules.hasRoom(s.participants(), player.getUUID(), cap)) {
             return "The daily boss is full: " + cap + " players are already fighting it.";
         }
         String why = cannotDuel(player, s, config);
