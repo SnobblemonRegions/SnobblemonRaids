@@ -1,0 +1,12 @@
+{
+ "species": "cobblemon:hooh",
+ "order": 1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/hooh/ho_oh_renowned.png"
+  }
+ ]
+}

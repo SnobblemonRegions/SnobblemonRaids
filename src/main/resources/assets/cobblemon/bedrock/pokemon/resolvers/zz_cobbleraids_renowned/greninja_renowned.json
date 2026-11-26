@@ -1,0 +1,19 @@
+{
+ "species": "cobblemon:greninja",
+ "order": 1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/greninja/greninja_renowned.png"
+  },
+  {
+   "aspects": [
+    "ash",
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/greninja/greninja_ash_renowned.png"
+  }
+ ]
+}

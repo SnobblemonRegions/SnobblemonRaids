@@ -1,0 +1,12 @@
+{
+ "species": "cobblemon:empoleon",
+ "order": 1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/empoleon/empoleon_renowned.png"
+  }
+ ]
+}

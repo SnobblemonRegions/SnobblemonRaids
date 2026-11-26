@@ -159,6 +159,8 @@ public final class RaidBossSpawner {
         // After traits and before the health line too: a stat focus adds to whatever EVs the
         // definition pinned, and a traits form can change the types an epithet is drawn against.
         RaidRenown renown = rollRenown(pokemon, definition, givenRenown != null ? RenownRequest.FORCE : renownRequest);
+        // A renowned boss wears the renowned recolour of its species (RenownLook), on top of any skin its definition forces.
+        if (renown != null) com.cobbleraids.renown.RenownLook.apply(pokemon);
         pokemon.setCurrentHealth(pokemon.getMaxHealth());
         UncatchableProperty.INSTANCE.uncatchable().apply(pokemon);
 

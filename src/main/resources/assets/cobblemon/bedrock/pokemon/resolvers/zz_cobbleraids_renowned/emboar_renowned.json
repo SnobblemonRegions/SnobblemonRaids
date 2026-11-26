@@ -1,0 +1,12 @@
+{
+ "species": "cobblemon:emboar",
+ "order": 1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/emboar/emboar_renowned.png"
+  }
+ ]
+}

@@ -1,0 +1,12 @@
+{
+ "species": "cobblemon:eternatus",
+ "order": 1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/eternatus/eternatus_renowned.png"
+  }
+ ]
+}

@@ -242,6 +242,8 @@ public final class RaidDuelService {
      * given at spawn, read from it rather than recomputed so the copy can never end up stronger than the boss it copies.
      */
     private static void applyStatFocus(DuelRaid raid, PokemonEntity copy) {
+        // A renowned raid's copy wears the boss's renowned look, so the battle portrait matches the boss in the world.
+        if (!raid.renownTitle.isEmpty()) com.cobbleraids.renown.RenownLook.apply(copy.getPokemon());
         if (raid.statFocus == null) return;
         var stat = com.cobbleraids.pokemon.PokemonStatNames.statFor(raid.statFocus.stat());
         Pokemon pokemon = copy.getPokemon();

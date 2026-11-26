@@ -1,0 +1,19 @@
+{
+ "species": "cobblemon:venusaur",
+ "order": 1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/venusaur/venusaur_renowned.png"
+  },
+  {
+   "aspects": [
+    "female",
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/venusaur/venusaur_renowned.png"
+  }
+ ]
+}

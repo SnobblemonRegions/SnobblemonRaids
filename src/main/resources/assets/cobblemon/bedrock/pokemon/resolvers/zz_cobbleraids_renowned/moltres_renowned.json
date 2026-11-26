@@ -1,0 +1,12 @@
+{
+ "species": "cobblemon:moltres",
+ "order": 1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/moltres/moltres_renowned.png"
+  }
+ ]
+}

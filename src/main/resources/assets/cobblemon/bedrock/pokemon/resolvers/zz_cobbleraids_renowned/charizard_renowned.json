@@ -1,0 +1,12 @@
+{
+ "species": "cobblemon:charizard",
+ "order": 1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/charizard/charizard_renowned.png"
+  }
+ ]
+}

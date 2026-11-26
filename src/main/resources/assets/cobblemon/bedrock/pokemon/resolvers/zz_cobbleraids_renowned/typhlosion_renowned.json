@@ -1,0 +1,19 @@
+{
+ "species": "cobblemon:typhlosion",
+ "order": 1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/typhlosion/typhlosion_renowned.png"
+  },
+  {
+   "aspects": [
+    "hisuian",
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/typhlosion/typhlosion_hisuian_renowned.png"
+  }
+ ]
+}

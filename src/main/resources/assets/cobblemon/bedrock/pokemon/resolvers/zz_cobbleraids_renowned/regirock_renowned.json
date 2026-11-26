@@ -1,0 +1,12 @@
+{
+ "species": "cobblemon:regirock",
+ "order": 1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/regirock/regirock_renowned.png"
+  }
+ ]
+}

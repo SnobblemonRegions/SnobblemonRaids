@@ -1,0 +1,12 @@
+{
+ "species": "cobblemon:quaquaval",
+ "order": 1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "texture": "cobbleraids:textures/pokemon/renowned/quaquaval/quaquaval_renowned.png"
+  }
+ ]
+}
