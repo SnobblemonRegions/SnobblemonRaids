@@ -1207,12 +1207,8 @@ public final class WorldBossService {
                     .append(Component.literal(speciesName(species)).withStyle(ChatFormatting.LIGHT_PURPLE));
         }
         if (arena) {
-            message.append(Component.literal(", has appeared in the arena! Warp in, right-click it to duel, together we bring it down. ")
-                            .withStyle(ChatFormatting.YELLOW))
-                    .append(Component.literal("[Click to warp]").withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA).withBold(true)
-                            .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/cobbleraids worldboss warp"))
-                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                    Component.literal("Teleports you to the arena. /cobbleraids worldboss return takes you back.")))));
+            message.append(Component.literal(", has appeared in the arena! Right-click it to duel, together we bring it down.")
+                    .withStyle(ChatFormatting.YELLOW));
         } else {
             message.append(Component.literal(", has appeared! Near X " + WorldBossRules.coordinateHint(spot.getX())
                             + ", Z " + WorldBossRules.coordinateHint(spot.getZ()) + " ("
@@ -1233,6 +1229,16 @@ public final class WorldBossService {
                             .withColor(ChatFormatting.LIGHT_PURPLE)
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(found.description()
                                     + "\nEveryone who deals damage gets a chance to catch it, and a caught one keeps its affix."))))));
+        }
+        if (arena) {
+            // The way there on a line of its own, last, so it is the one thing a player cannot miss in a long announcement.
+            message.append(Component.literal("\n» ").withStyle(ChatFormatting.DARK_AQUA))
+                    .append(Component.literal("[Teleport to the " + (daily ? "daily boss" : "World Boss") + "]")
+                            .withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA).withBold(true)
+                                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/cobbleraids worldboss warp"))
+                                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                            Component.literal("Teleports you to the arena. /cobbleraids worldboss return takes you back.")))))
+                    .append(Component.literal("  or type /cobbleraids worldboss warp").withStyle(ChatFormatting.GRAY));
         }
         broadcast(current, message);
     }
