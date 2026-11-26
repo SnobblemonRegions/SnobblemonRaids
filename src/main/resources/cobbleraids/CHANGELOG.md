@@ -1,5 +1,23 @@
 # CobbleRaids changelog
 
+## 0.8.208-daily-boss (2026-11-26)
+
+### New
+- Daily Boss: every day at 7 pm Eastern a renowned World Boss appears for up to 25 players. Everyone who deals it damage earns the raid reward and a chance to catch it.
+- Renowned bosses now come only from the Daily Boss, and each one carries one of 30 renown affixes. Catch it and your Pokémon keeps the affix.
+- Renowned bosses have a dark bronze look, so you can tell them apart at a glance.
+- Duel raids show a health bar floating over the boss, with a countdown of the time left.
+- A renowned duel raid shows the shared health at the top of your screen instead, like a World Boss.
+
+### Changed
+- The World Boss alert ends with its own [Teleport to the World Boss] line, so the link is easy to click.
+- Bosses above their usual level have more health in duel raids.
+- Endeavor and Pain Split can no longer be used against raid bosses.
+
+### Fixed
+- Draining moves, Leech Seed, Shell Bell, recoil, Counter, Mirror Coat, Metal Burst and Bide now work properly against raid bosses.
+- Moves that grow stronger as the boss weakens now see the boss's real health.
+
 ## 0.8.207-spawn-safety (2026-11-23)
 
 ### Changed
