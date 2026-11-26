@@ -380,6 +380,50 @@ for (const playerCount of [1, 2, 3, 4]) {
 
   check('no line in any of these battles put simulator health on the raid bar', barLeaks(allLines).join(' / '), '');
 
+  // An ordinary hit is reported to the pool exactly once: raidboss.onDamage reports it, and the
+  // Pokemon#damage call spreadDamage makes afterwards must not report it again.
+  {
+    const r = raid(mon('Garchomp', ['dragonclaw']), mon('Blissey', ['splash']), {poolMax: 100000});
+    const lines = keep(r.turn('move 1', 'move 1'));
+    check('one hit: reported to the pool once', amounts(lines, '-raiddamage').length, 1);
+  }
+
+  // Damage another script deals straight through Pokemon#damage (AscensionLib's modifier chips,
+  // Thorns-style returns) skips raidboss.onDamage. It goes to the pool, credited to the player, and
+  // never faints the simulator boss, which since the pool mirror can stand on a few HP.
+  {
+    const r = raid(mon('Blissey', ['splash']), mon('Snorlax', ['splash']), {poolMax: 10000});
+    r.setPool(300);
+    const boss = r.boss();
+    const from = r.sim.log.length;
+    const chip = Math.floor(boss.maxhp / 6);
+    const dealt = boss.damage(chip, r.player(), {id: 'ascensiontranscend', effectType: 'Condition'});
+    const lines = r.sim.log.slice(from);
+    const reported = lines.filter(l => l.startsWith('|-raiddamage|p2a:'));
+    check('chip: reported to the pool once', reported.length, 1);
+    check('chip: the full amount', Number((reported[0] || '').split('|')[3]), chip);
+    check('chip: credited to the player who dealt it', /^p1a:/.test((reported[0] || '').split('|')[4] || ''), true);
+    check('chip: answers with the damage dealt', dealt, chip);
+    check('chip: the simulator boss is still standing', !boss.fainted && boss.hp >= 1, true);
+    check('chip: no vanilla line about the boss', barLeaks(lines).join(' / '), '');
+  }
+  {
+    const r = raid(mon('Blissey', ['splash']), mon('Snorlax', ['splash']), {poolMax: 10000});
+    const boss = r.boss();
+    const from = r.sim.log.length;
+    boss.damage(20, boss, {id: 'selfcost', effectType: 'Condition'});
+    const reported = r.sim.log.slice(from).filter(l => l.startsWith('|-raiddamage|p2a:'));
+    check('self chip: reported to the pool', reported.length, 1);
+    check('self chip: no source, so the boss is never credited for hurting itself', (reported[0] || '').split('|').length, 4);
+  }
+  {
+    const r = raid(mon('Blissey', ['splash']), mon('Snorlax', ['splash']));
+    const player = r.player();
+    const before = player.hp;
+    player.damage(10, r.boss(), {id: 'ascensionthorns', effectType: 'Condition'});
+    check('a player\'s Pokemon#damage still lowers its HP', player.hp, before - 10);
+  }
+
   // A player's own direct damage is untouched.
   {
     const r = raid(mon('Blissey', ['splash']), mon('Snorlax', ['splash']));
