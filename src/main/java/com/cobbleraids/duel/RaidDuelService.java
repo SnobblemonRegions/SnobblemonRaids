@@ -94,6 +94,8 @@ public final class RaidDuelService {
         final long duelLimitTicks;
         boolean lastMinuteWarned;
         boolean finished;
+        /** The shared pool's health bar: over the boss, or at the top of the screen for a renowned boss; null if it could not be built (cosmetic, never stops a raid). */
+        DuelBossBar bar;
 
         DuelRaid(RaidDefinition definition, PokemonEntity boss, List<ServerPlayer> players, long startedTick) {
             this.definition = definition;
@@ -110,7 +112,7 @@ public final class RaidDuelService {
                     .filter(b -> b.kind() == com.cobbleraids.renown.RenownBoon.Kind.STAT_FOCUS).orElse(null);
             // A renowned boss has a larger shared pool, and a larger one again with the hp_pool boon, as its party raid had.
             var renownConfig = com.cobbleraids.config.CobbleRaidsConfigManager.get().renown();
-            long basePool = RaidDuelRules.poolFor(definition.rarityTier(), players.size());
+            long basePool = RaidDuelRules.poolFor(definition.rarityTier(), players.size(), definition.level(), bossLevel);
             this.pool = new WorldBossPool(renown.isEmpty() ? basePool : com.cobbleraids.raid.RaidScalingPolicy.renownPool(basePool,
                     renownConfig.baseHealthBonus(), renown.get().boon().kind() == com.cobbleraids.renown.RenownBoon.Kind.HP_POOL,
                     renownConfig.healthBonus()));
@@ -168,6 +170,9 @@ public final class RaidDuelService {
                 boss.getPokemon().getSpecies().getResourceIdentifier().toString(), raid.bossLevel,
                 AscensionLibArming.threatFor(definition.rarityTier()));
         RAIDS.put(raid.raidId, raid);
+        RaidFaultBarrier.guard("duel-raid:hp-bar", () -> raid.bar = raid.renownTitle.isEmpty() ? RaidHpBar.attach(boss)
+                : new RaidHudBar(raid.renownTitle + " (" + boss.getPokemon().getSpecies().getTranslatedName().getString() + ")",
+                        raid.players, raid.out, id -> server.getPlayerList().getPlayer(id)));
         int started = 0;
         for (ServerPlayer player : players) {
             String why = startDuel(raid, player);
@@ -180,6 +185,7 @@ public final class RaidDuelService {
             }
         }
         if (started == 0) {
+            removeBar(raid);
             RAIDS.remove(raid.raidId);
             FACES.remove(boss.getUUID());
             AscensionLibArming.endEncounter(boss.getPokemon().getUuid());
@@ -203,7 +209,7 @@ public final class RaidDuelService {
         Vec3 position = copyPosition(raid, player);
         if (position == null) return "there is no room for the duel where you are standing";
         EncounterRequest request = new EncounterRequest(OWNER, encounterId, List.of(player), raid.definition.id(),
-                player.serverLevel(), position, raid.bossLevel, OptionalLong.of(RaidDuelRules.duelHealth(raid.definition.rarityTier())),
+                player.serverLevel(), position, raid.bossLevel, OptionalLong.of(RaidDuelRules.duelHealth(raid.definition.rarityTier(), raid.definition.level(), raid.bossLevel)),
                 EncounterPolicy.none().withCarryover(true, true), EncounterRules.none());
         // Owned encounters are not armed by the factory, so the duel arms its own player for the raid's declared boss.
         List<UUID> self = List.of(player.getUUID());
@@ -236,6 +242,8 @@ public final class RaidDuelService {
      * given at spawn, read from it rather than recomputed so the copy can never end up stronger than the boss it copies.
      */
     private static void applyStatFocus(DuelRaid raid, PokemonEntity copy) {
+        // A renowned raid's copy wears the boss's renowned look, so the battle portrait matches the boss in the world.
+        if (!raid.renownTitle.isEmpty()) com.cobbleraids.renown.RenownLook.apply(copy.getPokemon());
         if (raid.statFocus == null) return;
         var stat = com.cobbleraids.pokemon.PokemonStatNames.statFor(raid.statFocus.stat());
         Pokemon pokemon = copy.getPokemon();
@@ -294,6 +302,14 @@ public final class RaidDuelService {
             if (result.outcome() == EncounterOutcome.VICTORY || timedOut) {
                 // Their copy fell but the pool did not: the next copy, after a breather.
                 raid.chainAt.put(playerId, server.overworld().getGameTime() + CHAIN_DELAY_TICKS);
+                ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+                // A timed-out duel already told its player; a won one says how much of the raid boss is left, so the next duel makes sense.
+                if (player != null && !timedOut) {
+                    player.sendSystemMessage(Component.literal("Copy down! ").withStyle(ChatFormatting.GREEN)
+                            .append(raid.boss.getPokemon().getSpecies().getTranslatedName().copy().withStyle(ChatFormatting.WHITE))
+                            .append(Component.literal(RaidHpBarLayout.copyDownTail(RaidHpBarLayout.shownHp(raid.pool.current()),
+                                    RaidHpBarLayout.shownHp(raid.pool.max()), CHAIN_DELAY_TICKS / SECOND)).withStyle(ChatFormatting.GREEN)));
+                }
             } else {
                 raid.out.add(playerId);
                 raid.departures.add(raid.gaveUp.getOrDefault(playerId, com.cobbleraids.telemetry.RaidEndReason.WIPE));
@@ -338,7 +354,11 @@ public final class RaidDuelService {
                     if (player != null) say(player, "Your next duel could not start: " + why, ChatFormatting.YELLOW);
                 }
             }
-            if (raid.duelOfPlayer.isEmpty() && raid.chainAt.isEmpty()) finish(server, raid, com.cobbleraids.telemetry.RaidEndReason.whenNobodyIsLeft(List.copyOf(raid.departures)));
+            if (raid.duelOfPlayer.isEmpty() && raid.chainAt.isEmpty()) {
+                finish(server, raid, com.cobbleraids.telemetry.RaidEndReason.whenNobodyIsLeft(List.copyOf(raid.departures)));
+                continue;
+            }
+            updateBar(raid, now);
         }
     }
 
@@ -388,9 +408,30 @@ public final class RaidDuelService {
         return bossId != null && FACES.contains(bossId);
     }
 
+    private static void updateBar(DuelRaid raid, long now) {
+        DuelBossBar bar = raid.bar;
+        if (bar == null) return;
+        int fighters = Math.max(0, raid.players.size() - raid.out.size());
+        long secondsLeft = (raid.windowTicks - (now - raid.startedTick) + SECOND - 1) / SECOND;
+        try {
+            bar.update(raid.pool.current(), raid.pool.max(), fighters, secondsLeft, now);
+        } catch (RuntimeException ex) {
+            // Cosmetic: a bar that throws is taken down rather than retried every tick.
+            RaidLog.error("The HP bar of duel raid {} failed and was removed", raid.raidId, ex);
+            removeBar(raid);
+        }
+    }
+
+    private static void removeBar(DuelRaid raid) {
+        DuelBossBar bar = raid.bar;
+        raid.bar = null;
+        if (bar != null) RaidFaultBarrier.guard("duel-raid:hp-bar-remove", bar::remove);
+    }
+
     private static void finish(MinecraftServer server, DuelRaid raid, com.cobbleraids.telemetry.RaidEndReason reason) {
         if (raid.finished) return;
         raid.finished = true;
+        removeBar(raid);
         boolean won = reason == com.cobbleraids.telemetry.RaidEndReason.VICTORY;
         RAIDS.remove(raid.raidId);
         FACES.remove(raid.boss.getUUID());

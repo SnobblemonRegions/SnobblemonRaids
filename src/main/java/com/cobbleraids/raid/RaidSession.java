@@ -98,6 +98,16 @@ public final class RaidSession {
     public String getRenownTitle() { return renownTitle; }
     /** {@link com.cobbleraids.renown.RenownBoon#encode()}, or empty. Same capture-at-start reasoning. */
     public String getRenownBoon() { return renownBoon; }
+
+    // Set once by RaidFactory before the session is bound, and read only by -raiddamage on the server thread.
+    private volatile com.cobbleraids.renown.RaidPoolAffix poolAffix = com.cobbleraids.renown.RaidPoolAffix.none();
+
+    /** The boss's affix as it acts on the shared pool (Last Stand, Second Wind, Unbroken); none for most bosses. */
+    public com.cobbleraids.renown.RaidPoolAffix getPoolAffix() { return poolAffix; }
+
+    public void setPoolAffix(com.cobbleraids.renown.RaidPoolAffix poolAffix) {
+        this.poolAffix = poolAffix == null ? com.cobbleraids.renown.RaidPoolAffix.none() : poolAffix;
+    }
     /** Null for an ordinary raid. */
     public Ownership getOwnership() { return ownership; }
     public boolean isOwned() { return ownership != null; }

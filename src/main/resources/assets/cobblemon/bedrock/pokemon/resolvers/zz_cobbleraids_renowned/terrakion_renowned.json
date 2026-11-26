@@ -1,0 +1,23 @@
+{
+ "species": "cobblemon:terrakion",
+ "order": -1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0639_terrakion/terrakion.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  }
+ ]
+}

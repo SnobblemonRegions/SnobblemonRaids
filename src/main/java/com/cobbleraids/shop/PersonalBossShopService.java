@@ -8,6 +8,7 @@ import com.cobbleraids.catching.DefeatedBossSnapshots;
 import com.cobbleraids.config.CobbleRaidsConfig;
 import com.cobbleraids.config.CobbleRaidsConfigManager;
 import com.cobbleraids.config.RaidBossTraits;
+import com.cobbleraids.renown.RenownAffixData;
 import com.cobbleraids.catching.RaidPlayerRecords;
 import com.cobbleraids.pokemon.PokemonStatNames;
 import com.cobbleraids.reward.points.RaidPointsStore;
@@ -146,7 +147,11 @@ public final class PersonalBossShopService {
 
     private static Pokemon deserialize(ServerPlayer player, BossSnapshot snapshot) {
         try {
-            return Pokemon.Companion.loadFromNBT(player.registryAccess(), snapshot.pokemonNbt());
+            Pokemon pokemon = Pokemon.Companion.loadFromNBT(player.registryAccess(), snapshot.pokemonNbt());
+            // Also strips a snapshot saved before BossSnapshotService cleared it, so a buy-back never
+            // delivers an affix.
+            RenownAffixData.clear(pokemon);
+            return pokemon;
         } catch (RuntimeException ex) {
             RaidLog.error("Personal boss snapshot for " + snapshot.species() + " ("
                     + player.getGameProfile().getName() + ") failed to deserialize", ex);

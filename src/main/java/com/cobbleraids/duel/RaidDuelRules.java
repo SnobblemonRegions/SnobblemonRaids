@@ -87,6 +87,27 @@ public final class RaidDuelRules {
         return losers;
     }
 
+    /**
+     * How much tougher a duel gets when the raid boss was raised above its definition level to meet a strong party: the square
+     * root of the level ratio, so a Starter raised from 25 to 88 has about 1.9 times the HP, not the 3.5 times a party raid
+     * gets ({@code RaidScalingPolicy.forLevel}). Softer, because a duel copy is fought by one player's best Pokemon, and a full
+     * proportional rise made raids against mid-level teams unwinnable in the window. Upward only.
+     */
+    public static double levelFactor(int definitionLevel, int bossLevel) {
+        if (definitionLevel <= 0 || bossLevel <= definitionLevel) return 1.0;
+        return Math.sqrt(bossLevel / (double) definitionLevel);
+    }
+
+    /** One copy's HP for a boss at {@code bossLevel}. */
+    public static long duelHealth(RaidRarityTier tier, int definitionLevel, int bossLevel) {
+        return Math.round(duelHealth(tier) * levelFactor(definitionLevel, bossLevel));
+    }
+
+    /** The shared pool for a boss at {@code bossLevel}. */
+    public static long poolFor(RaidRarityTier tier, int players, int definitionLevel, int bossLevel) {
+        return Math.round(poolFor(tier, players) * levelFactor(definitionLevel, bossLevel));
+    }
+
     /** Whether one more player may join a duel raid that has {@code current} already. */
     public static boolean hasRoom(int current) {
         return current < MAX_PLAYERS;

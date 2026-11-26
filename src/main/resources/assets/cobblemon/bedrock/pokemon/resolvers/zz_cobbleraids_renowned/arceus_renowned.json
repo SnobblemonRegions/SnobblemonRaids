@@ -1,0 +1,329 @@
+{
+ "species": "cobblemon:arceus",
+ "order": -1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "fire-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_fire.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "water-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_water.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "grass-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_grass.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "electric-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_electric.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "ice-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_ice.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "fighting-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_fighting.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "poison-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_poison.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "ground-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_ground.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "flying-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_flying.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "psychic-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_psychic.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "bug-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_bug.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "rock-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_rock.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "ghost-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_ghost.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "dragon-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_dragon.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "dark-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_dark.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "steel-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_steel.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "fairy-plate",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0493_arceus/arceus_fairy.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  }
+ ]
+}

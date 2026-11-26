@@ -84,6 +84,8 @@ public final class ShowdownIntegrationInstaller {
     public static void install() {
         ready = false;
         copy("/assets/cobbleraids/showdown/raid-patch.js", Path.of("showdown/raid-patch.js"));
+        // Loaded by raid-patch.js itself, inside its own try/catch, so a fault in an affix can never cost the raids.
+        copy("/assets/cobbleraids/showdown/renown-affixes.js", Path.of("showdown/renown-affixes.js"));
         // Our conditions and items go BESIDE Cobblemon's own files in its "cobblemon" format mod and are
         // merged in by a hook, never copied over them: Cobblemon keeps alphaboost in conditions.js, and
         // overwriting it switched Wild Alpha boosts off in every battle. See ShowdownModMerge.

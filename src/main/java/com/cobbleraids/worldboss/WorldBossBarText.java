@@ -10,7 +10,7 @@ import net.minecraft.network.chat.TextColor;
  * The text over the World Boss bar: a gradient boss name, the pool in short form, a percent badge that goes from green to red as the boss weakens,
  * how many players are fighting, and how long it will stay. The pieces that are plain arithmetic are separate methods so they can be tested.
  */
-final class WorldBossBarText {
+public final class WorldBossBarText {
     static final int NAME_FROM = 0xB57BFF;
     static final int NAME_TO = 0x7BE0A8;
     static final int HEALTHY = 0x7BE0A8;
@@ -61,7 +61,7 @@ final class WorldBossBarText {
     /**
      * @param minutesLeft minutes until the boss leaves, or a negative number when it stays until it is beaten (the time is then left out)
      */
-    static Component build(String species, double current, double max, int percent, int fighting, long minutesLeft) {
+    public static Component build(String species, double current, double max, int percent, int fighting, long minutesLeft) {
         MutableComponent text = Component.empty();
         int[] colors = gradient(species.length(), NAME_FROM, NAME_TO);
         for (int i = 0; i < species.length(); i++) {

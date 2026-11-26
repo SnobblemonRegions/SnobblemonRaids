@@ -11,6 +11,8 @@ import com.cobbleraids.fault.RaidFaultBarrier;
 import com.cobbleraids.presentation.RaidBossGlowService;
 import com.cobbleraids.presentation.RaidBossNameplate;
 import com.cobbleraids.renown.RaidRenown;
+import com.cobbleraids.renown.RenownAffix;
+import com.cobbleraids.renown.RenownAffixData;
 import com.cobbleraids.renown.RaidRenownMarker;
 import com.cobbleraids.renown.RenownBoon;
 import com.cobbleraids.renown.RenownRegistry;
@@ -77,6 +79,28 @@ public final class RaidBossSpawner {
         }
     }
 
+    /** The renown every boss spawned now is given in place of a roll; set by {@link #withRenown} for the length of one spawn, on the server thread. */
+    private static RaidRenown givenRenown;
+    private static RenownAffix givenAffix;
+
+    /**
+     * Runs {@code action} with every boss it spawns made renowned with exactly {@code renown} and {@code affix}, whatever renown request the spawn
+     * names. The daily World Boss uses it so its standing boss and every duel's private copy carry the one title, boon and affix it rolled, and so a
+     * restart rebuilds the same boss. A null {@code affix} rolls one from the boon's group.
+     */
+    public static <T> T withRenown(RaidRenown renown, RenownAffix affix, java.util.function.Supplier<T> action) {
+        RaidRenown beforeRenown = givenRenown;
+        RenownAffix beforeAffix = givenAffix;
+        givenRenown = renown;
+        givenAffix = affix;
+        try {
+            return action.get();
+        } finally {
+            givenRenown = beforeRenown;
+            givenAffix = beforeAffix;
+        }
+    }
+
     /** Drops the excluded moves from a built moveset, keeping at least one so a boss is never left with nothing to use. */
     private static void removeExcludedMoves(Pokemon pokemon, RaidDefinition definition) {
         if (excludedMoves.isEmpty()) return;
@@ -134,7 +158,9 @@ public final class RaidBossSpawner {
         applyTraits(pokemon, definition);
         // After traits and before the health line too: a stat focus adds to whatever EVs the
         // definition pinned, and a traits form can change the types an epithet is drawn against.
-        RaidRenown renown = rollRenown(pokemon, definition, renownRequest);
+        RaidRenown renown = rollRenown(pokemon, definition, givenRenown != null ? RenownRequest.FORCE : renownRequest);
+        // A renowned boss wears the renowned recolour of its species (RenownLook), on top of any skin its definition forces.
+        if (renown != null) com.cobbleraids.renown.RenownLook.apply(pokemon);
         pokemon.setCurrentHealth(pokemon.getMaxHealth());
         UncatchableProperty.INSTANCE.uncatchable().apply(pokemon);
 
@@ -258,9 +284,15 @@ public final class RaidBossSpawner {
      *
      * <p>FORCE skips both the enabled switch and the chance -- it exists so an operator can test the
      * whole path on demand -- but still needs the word lists to have something for this boss.
+     *
+     * <p>ROLL (a wild raid) is never renowned while the daily World Boss runs: renown belongs to that
+     * one boss a day. A renown given by {@link #withRenown} is applied as it is, with no draw.
      */
     private static RaidRenown rollRenown(Pokemon pokemon, RaidDefinition definition, RenownRequest request) {
         if (request == RenownRequest.NONE) return null;
+        if (request == RenownRequest.ROLL && com.cobbleraids.worldboss.WorldBossConfigManager.get().dailyRenown()) return null;
+        RaidRenown given = givenRenown;
+        RenownAffix givenAffixNow = givenAffix;
         RaidRenown[] rolled = { null };
         RaidFaultBarrier.guard("spawn:renown", () -> {
             CobbleRaidsConfig.Renown config = CobbleRaidsConfigManager.get().renown();
@@ -269,9 +301,14 @@ public final class RaidBossSpawner {
                     && !(config.enabled() && RenownRewards.rolls(config.chanceFor(definition.rarityTier()), random))) {
                 return;
             }
-            List<String> types = new ArrayList<>();
-            for (ElementalType type : pokemon.getTypes()) types.add(type.getShowdownId().toLowerCase(Locale.ROOT));
-            Optional<RaidRenown> drawn = RenownRegistry.pools().draw(definition.rarityTier(), types, random);
+            Optional<RaidRenown> drawn;
+            if (given != null) {
+                drawn = Optional.of(given);
+            } else {
+                List<String> types = new ArrayList<>();
+                for (ElementalType type : pokemon.getTypes()) types.add(type.getShowdownId().toLowerCase(Locale.ROOT));
+                drawn = RenownRegistry.pools().draw(definition.rarityTier(), types, random);
+            }
             if (drawn.isEmpty()) return;
 
             // Levels first: the stat focus below adds EVs to a Pokemon whose stats are about to be
@@ -286,6 +323,11 @@ public final class RaidBossSpawner {
                 pokemon.setEV(stat, RenownRewards.focusEvs(
                         pokemon.getEvs().getOrDefault(stat), pokemon.getEvs().total(), config.statFocusEvs()));
             }
+            // Rolled even while affixes are switched off in the config: the switch decides whether they
+            // run in battle, so turning it on later wakes the ones already caught instead of finding none.
+            Optional<RenownAffix> affix = givenAffixNow != null && RenownAffix.groupFor(boon).filter(group -> group == givenAffixNow.group()).isPresent()
+                    ? Optional.of(givenAffixNow) : RenownAffix.roll(boon, random);
+            affix.ifPresent(found -> RenownAffixData.write(pokemon, found));
             rolled[0] = drawn.get();
         });
         return rolled[0];

@@ -73,17 +73,20 @@ def validate_raid_healing() -> None:
     conditions = read(SHOWDOWN / "mods/conditions.js")
 
     # Healing must reach the Java pool through -raidheal on every route Showdown can take:
-    # Battle#heal (residual, drain), Pokemon#heal (moves with a `heal:` property), and the
-    # `hp === maxhp` guards that run inside a move.
+    # Battle#heal (residual, drain) and Pokemon#heal (moves with a `heal:` property).
     assert "Battle.prototype.heal = function" in patch
     assert "Pokemon.prototype.heal = function" in patch
-    assert "BattleActions.prototype.runMove = function" in patch
     assert "'-raidheal'" in patch
-    assert "lendRaidBossHealHeadroom" in patch and "repinRaidBoss" in patch
 
-    # Self-damage (Struggle recoil, confusion, Curse/Belly Drum/Substitute costs) skips the
-    # Damage event; it must still reach the pool.
+    # Boss HP mirrors the pool: every damage route reports -raiddamage (Damage event via
+    # raidboss.onDamage, directDamage for recoil/self-costs), HP re-syncs after hits and moves,
+    # and Java's >raidpool is understood.
+    assert "Battle.prototype.raidBossDamage = function" in patch
     assert "Battle.prototype.directDamage = function" in patch
+    assert "Battle.prototype.spreadDamage = function" in patch
+    assert "BattleActions.prototype.runMove = function" in patch
+    assert "type === 'raidpool'" in patch
+    assert "this.raidBossDamage(" in conditions
 
     # Our data files are merged beside Cobblemon's, never copied over them (alphaboost).
     installer = read(JAVA / "showdown/ShowdownIntegrationInstaller.java")

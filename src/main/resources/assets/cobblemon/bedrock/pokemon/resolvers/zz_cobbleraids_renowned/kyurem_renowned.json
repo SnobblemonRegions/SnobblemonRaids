@@ -1,0 +1,59 @@
+{
+ "species": "cobblemon:kyurem",
+ "order": -1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0646_kyurem/kyurem.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "black-fusion",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0646_kyurem/kyurem_black.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "white-fusion",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0646_kyurem/kyurem_white.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  }
+ ]
+}

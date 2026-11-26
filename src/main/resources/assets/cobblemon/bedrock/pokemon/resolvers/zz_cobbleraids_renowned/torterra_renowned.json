@@ -1,0 +1,203 @@
+{
+ "species": "cobblemon:torterra",
+ "order": -1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0389_torterra/torterra.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "tree-birch",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0389_torterra/torterra_birch.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "tree-darkoak",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0389_torterra/torterra_darkoak.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "tree-oak",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0389_torterra/torterra_oak.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "tree-spruce",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0389_torterra/torterra_spruce.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "tree-jungle",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0389_torterra/torterra_jungle.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "tree-swamp",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0389_torterra/torterra_swamp.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "tree-acacia",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0389_torterra/torterra_acacia.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "tree-azalea",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0389_torterra/torterra_azalea.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "tree-mangrove",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0389_torterra/torterra_mangrove.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "tree-cherry",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0389_torterra/torterra_cherry.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  }
+ ]
+}

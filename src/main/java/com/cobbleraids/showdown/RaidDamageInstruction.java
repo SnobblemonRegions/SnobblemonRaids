@@ -4,6 +4,9 @@ import com.cobbleraids.RaidLog;
 import com.cobbleraids.config.CobbleRaidsConfigManager;
 import com.cobbleraids.encounter.EncounterService;
 import com.cobbleraids.raid.RaidSession;
+import com.cobbleraids.renown.RaidPoolAffix;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import com.cobblemon.mod.common.api.battles.interpreter.BattleMessage;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
@@ -22,12 +25,42 @@ public final class RaidDamageInstruction extends RaidPoolInstruction {
     @Override
     protected void applyToPool(RaidSession raid, PokemonBattle battle, float amount) {
         UUID contributor = resolveContributor(battle);
-        float applied = raid.damage(contributor, amount);
+        RaidPoolAffix poolAffix = CobbleRaidsConfigManager.get().renown().affixes().enabled()
+                ? raid.getPoolAffix() : RaidPoolAffix.none();
+        boolean lastStandBefore = poolAffix.lastStandFired();
+        float requested = poolAffix.adjustDamage(raid.getCurrentHealth(), raid.getMaxHealth(), amount);
+        float applied = raid.damage(contributor, requested);
         EncounterService.notifyDamage(raid, contributor, applied);
+        if (poolAffix.affix() != null) applyPoolAffix(raid, battle, poolAffix, lastStandBefore);
 
         if (CobbleRaidsConfigManager.get().debugLogging()) {
             RaidLog.info("Applied raid damage: battle={}, requested={}, applied={}, hp={}/{}, contributor={}",
                     battle.getBattleId(), amount, applied, raid.getCurrentHealth(), raid.getMaxHealth(), contributor);
+        }
+    }
+
+    /**
+     * The boss's HP-pool affix, after the hit has landed. Runs in the same instruction as the damage, before the
+     * health packets go out (see RaidPoolInstruction#invoke), so the bar players see already includes a
+     * Second Wind heal. Unbroken is told to Showdown, which owns stat drops, through >cobbleaffixpool.
+     */
+    private static void applyPoolAffix(RaidSession raid, PokemonBattle battle, RaidPoolAffix poolAffix,
+                                       boolean lastStandBefore) {
+        String name = poolAffix.affix().displayName();
+        if (!lastStandBefore && poolAffix.lastStandFired()) {
+            battle.broadcastChatMessage(Component.literal("The boss's " + name + " held it on its feet!")
+                    .withStyle(ChatFormatting.GOLD));
+        }
+        float heal = poolAffix.healAfterDamage(raid.getCurrentHealth(), raid.getMaxHealth());
+        if (heal > 0f) {
+            raid.heal(heal);
+            battle.broadcastChatMessage(Component.literal("The boss's " + name + " restored some of its health!")
+                    .withStyle(ChatFormatting.GOLD));
+        }
+        if (poolAffix.unbrokenEndsNow(raid.getCurrentHealth(), raid.getMaxHealth())) {
+            battle.writeShowdownAction(">cobbleaffixpool unbroken_ended");
+            battle.broadcastChatMessage(Component.literal("The boss is no longer " + name + ": its stats can be lowered now.")
+                    .withStyle(ChatFormatting.GOLD));
         }
     }
 

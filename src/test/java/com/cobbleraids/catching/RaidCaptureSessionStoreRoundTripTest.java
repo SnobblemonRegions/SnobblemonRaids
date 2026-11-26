@@ -58,6 +58,34 @@ class RaidCaptureSessionStoreRoundTripTest {
     }
 
     @Test
+    @DisplayName("a renowned boss's affix survives a round trip and every later step of the session")
+    void affixRoundTripsAndSurvivesTransitions() {
+        UUID playerId = UUID.randomUUID();
+        RaidCaptureSession original = RaidCaptureSession.offer(playerId, UUID.randomUUID(), DEFINITION,
+                        RaidRarityTier.LEGENDARY, GARCHOMP, null, 75, false, "last_stand")
+                .withClaimed(10, 1_000L, 60).withAttemptStarted(2_000L, 30).withPulseScored(0.5, 3_000L)
+                .withThrowResolved(0.9, true, 0.4).withPokemonNbt(new CompoundTag())
+                .withDelivery(RaidCaptureSession.DeliveryState.DELIVERED);
+        assertEquals("last_stand", original.affix());
+
+        ArrayDeque<RaidCaptureSession> queue = new ArrayDeque<>();
+        queue.addLast(original);
+        RaidCaptureSession result = roundTrip(Map.of(playerId, queue)).take().get(playerId).peekFirst();
+        assertEquals("last_stand", result.affix());
+    }
+
+    @Test
+    @DisplayName("a session saved before affixes existed loads with none")
+    void sessionWithoutAffixLoadsWithNone() {
+        UUID playerId = UUID.randomUUID();
+        ArrayDeque<RaidCaptureSession> queue = new ArrayDeque<>();
+        queue.addLast(RaidCaptureSession.offer(playerId, UUID.randomUUID(), DEFINITION,
+                RaidRarityTier.LEGENDARY, GARCHOMP, null, 75, false));
+        RaidCaptureSession result = roundTrip(Map.of(playerId, queue)).take().get(playerId).peekFirst();
+        assertNull(result.affix());
+    }
+
+    @Test
     @DisplayName("a claimed, AWAITING_CHOICE session's banked points and deadline survive exactly")
     void claimedSessionRoundTrips() {
         UUID playerId = UUID.randomUUID();

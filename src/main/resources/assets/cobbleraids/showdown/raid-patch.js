@@ -26,12 +26,69 @@ const isEliminatedPlayerSide = side => isPlayerSide(side) && (
 );
 const isActivePlayerSide = side => isPlayerSide(side) && !side.raidWithdrawn && !isEliminatedPlayerSide(side);
 
-// Every vanilla -damage and -heal line about the boss carries the PINNED simulator
-// health (100/100 while the raid pool may be nearly empty), and Cobblemon draws it
-// straight onto the shared raid bar on every client. The bar belongs to the pool:
-// -raiddamage/-raidheal go to Java, which pushes the true percentage. So no such line
-// about the boss gets out -- not just the one following a hit raidboss.onDamage saw
-// (it marks that one), but also the `-damage <boss> 272/272` Showdown logs when an
+/**
+ * The boss's simulated HP mirrors the shared raid pool.
+ *
+ * The pool lives in Java (RaidSession) and is authoritative. The simulator used to keep the boss
+ * pinned at full HP instead, and every effect that READS boss HP was wrong as a result: Eruption and
+ * Crush Grip always at full power, Reversal and Brine never, Endeavor and Super Fang always taking a
+ * full or half bar, Sitrus never eating, Multiscale never off, and every vanilla health line about the
+ * boss telling clients "100%" (or "75%" after Struggle recoil -- the 2026-11-25 report).
+ *
+ * Now simulated HP is the pool's FRACTION of the boss's simulated max HP. Java sends the pool with
+ * `>raidpool <current> <max>` after every change it applies (RaidPoolSync); between syncs the patch
+ * predicts it from its own -raiddamage/-raidheal lines, which use the same currency the Java side
+ * applies (one simulated HP is one point of pool), and the next sync corrects any drift (affixes,
+ * clamping). Until the first sync the pool is unknown and the boss stays at full, as before.
+ *
+ * Two clamps keep the simulator out of the raid's business: below a full pool the mirror is at most
+ * maxhp - 1 (so "HP is full" means the pool really is full), and it never drops below 1 (only Java
+ * ends a raid, through >raidwin; a simulator faint would end it behind the pool's back).
+ */
+const raidBossMirrorHp = (maxhp, pool) => {
+  if (!pool || !(pool.max > 0) || !(maxhp > 0)) return maxhp;
+  if (pool.current >= pool.max) return maxhp;
+  return Math.max(1, Math.min(maxhp - 1, Math.floor(maxhp * pool.current / pool.max)));
+};
+const syncRaidBossHp = battle => {
+  const boss = bossSide(battle);
+  if (!boss) return;
+  for (const pokemon of boss.active) {
+    if (!pokemon || pokemon.fainted || pokemon.hp <= 0) continue;
+    pokemon.hp = raidBossMirrorHp(pokemon.maxhp, battle.raidPool);
+  }
+};
+const predictRaidPool = (battle, delta) => {
+  const pool = battle.raidPool;
+  if (!pool) return;
+  pool.current = Math.max(0, Math.min(pool.max, pool.current + delta));
+};
+
+/**
+ * Damage to the boss: the full amount goes to the pool as -raiddamage, and the simulator is told how
+ * much to take off simulated HP so that "damage dealt" means something again -- drain moves, Leech
+ * Seed and Shell Bell heal, recoil hurts, Counter/Mirror Coat/Metal Burst/Comeuppance/Bide answer
+ * with real numbers. That amount is capped at hp - 1 (no simulator faint); the caller re-syncs HP to
+ * the mirror afterwards, so the cap only limits what those effects can read, as it would vanilla.
+ */
+const reportRaidDamage = (battle, target, amount, source) => {
+  const damage = battle.trunc(amount);
+  if (!damage || isNaN(damage) || damage <= 0) return 0;
+  if (source) battle.add('-raiddamage', target, damage, source);
+  else battle.add('-raiddamage', target, damage);
+  predictRaidPool(battle, -damage);
+  return damage;
+};
+Battle.prototype.raidBossDamage = function(target, damage, source) {
+  const reported = reportRaidDamage(this, target, damage, source);
+  return Math.max(0, Math.min(reported, target.hp - 1));
+};
+
+// Every vanilla -damage and -heal line about the boss carries SIMULATOR health, and
+// Cobblemon draws it straight onto the shared raid bar on every client. The bar belongs
+// to the pool: -raiddamage/-raidheal go to Java, which pushes the true percentage. So no
+// such line about the boss gets out -- not just the one following a hit raidboss.onDamage
+// saw (it marks that one), but also the `-damage <boss> 272/272` Showdown logs when an
 // earlier onDamage handler swallowed the hit before raidboss ran (Disguise, Ice Face),
 // which drew a damaged boss back at 100% (found by validation/showdown_fuzz.js, seed 41).
 const oldAdd = Battle.prototype.add;
@@ -64,13 +121,13 @@ Battle.prototype.add = function(...parts) {
  * silently succeeded and emitted a vanilla -heal, pushing every client's raid bar
  * to 100% without the Java pool ever hearing about it.
  *
- * The three hooks below convert boss healing into -raidheal, which the Java
+ * The two hooks below convert boss healing into -raidheal, which the Java
  * RaidHealInstruction applies to the pool (clamped to the pool maximum) before
  * pushing the true percentage back to clients:
  *   - Battle#heal    handles residual and effect-driven healing.
  *   - Pokemon#heal   handles the direct call runMoveEffects makes for `heal:` moves.
- *   - runMove        lends the boss one point of simulated headroom for the
- *                    duration of a move so the `hp === maxhp` guards stop firing.
+ * The per-move `hp === maxhp` guards need no hook any more: simulated HP mirrors the
+ * pool (see raidBossMirrorHp), so they fire exactly when the pool really is full.
  * Healing is applied in the same currency as damage: one simulated HP restores one
  * point of the raid pool, so a Recover undoes roughly one attack rather than half
  * of a multi-player health bar.
@@ -79,6 +136,8 @@ const reportRaidHeal = (battle, target, amount) => {
   const healed = battle.trunc(amount);
   if (!healed || isNaN(healed) || healed <= 0) return 0;
   battle.add('-raidheal', target, healed);
+  predictRaidPool(battle, healed);
+  syncRaidBossHp(battle);
   return healed;
 };
 
@@ -99,8 +158,9 @@ Battle.prototype.heal = function(damage, target = null, source = null, effect = 
   if (!damage) return damage;
   if (!target.hp) return false;
   if (!target.isActive) return false;
-  // Deliberately no `target.hp >= target.maxhp` guard: simulated boss HP is pinned,
-  // so RaidSession#heal is the only thing that can decide there is nothing to heal.
+  // Deliberately no `target.hp >= target.maxhp` guard: simulated HP is only a mirror
+  // (and is held at full until Java's first >raidpool), so RaidSession#heal is the only
+  // thing that can decide there is nothing to heal.
   return reportRaidHeal(this, target, damage);
 };
 
@@ -112,7 +172,7 @@ Pokemon.prototype.heal = function(d, source = null, effect = null) {
   if (!this.hp) return false;
   d = this.battle.trunc(d);
   if (isNaN(d) || d <= 0) return false;
-  // Simulator HP stays pinned; the pool is the real health, so report and move on.
+  // The pool is the real health: report it, and the mirror follows.
   return reportRaidHeal(this.battle, this, d);
 };
 
@@ -129,7 +189,7 @@ Pokemon.prototype.heal = function(d, source = null, effect = null) {
  *
  * Reported as -raiddamage in the same currency as every other hit (one simulated HP is
  * one point of pool), with no source so the boss is never credited as a contributor
- * for hurting itself. Simulator HP stays pinned and no vanilla -damage line is logged.
+ * for hurting itself. No vanilla -damage line is logged; HP re-syncs to the mirror.
  */
 const oldDirectDamage = Battle.prototype.directDamage;
 Battle.prototype.directDamage = function(damage, target = null, source = null, effect = null) {
@@ -140,38 +200,31 @@ Battle.prototype.directDamage = function(damage, target = null, source = null, e
   if (!target.hp || !damage) return 0;
   damage = this.trunc(damage);
   if (isNaN(damage)) return 0;
-  damage = this.clampIntRange(damage, 1);
-  this.add('-raiddamage', target, damage);
+  damage = reportRaidDamage(this, target, this.clampIntRange(damage, 1), null);
+  syncRaidBossHp(this);
   return damage;
 };
 
-const RAID_BOSS_HEAL_HEADROOM = 1;
-const lendRaidBossHealHeadroom = battle => {
-  const boss = bossSide(battle);
-  const lent = [];
-  if (!boss) return lent;
-  for (const pokemon of boss.active) {
-    if (!pokemon || pokemon.fainted || pokemon.hp <= 0 || pokemon.hp < pokemon.maxhp) continue;
-    if (pokemon.maxhp <= RAID_BOSS_HEAL_HEADROOM) continue;
-    pokemon.hp = pokemon.maxhp - RAID_BOSS_HEAL_HEADROOM;
-    lent.push(pokemon);
+// Every hit on the boss goes through spreadDamage. raidboss.onDamage lets it take a capped
+// amount off simulated HP (so the hit's effects can read it); this puts HP back on the mirror.
+const oldSpreadDamage = Battle.prototype.spreadDamage;
+Battle.prototype.spreadDamage = function(...args) {
+  try {
+    return oldSpreadDamage.apply(this, args);
+  } finally {
+    if (isRaid(this)) syncRaidBossHp(this);
   }
-  return lent;
-};
-const repinRaidBoss = lent => {
-  for (const pokemon of lent) if (!pokemon.fainted) pokemon.hp = pokemon.maxhp;
 };
 
+// Anything that writes boss HP directly, bypassing every hook above, is undone at the end of
+// the move that did it.
 const oldRunMove = BattleActions.prototype.runMove;
 BattleActions.prototype.runMove = function(...args) {
   if (!isRaid(this.battle)) return oldRunMove.apply(this, args);
-  const lent = lendRaidBossHealHeadroom(this.battle);
   try {
     return oldRunMove.apply(this, args);
   } finally {
-    // Also re-pins after any effect that writes boss HP directly and bypasses the
-    // Damage event entirely (Pain Split, now banned in raids).
-    repinRaidBoss(lent);
+    syncRaidBossHp(this.battle);
   }
 };
 
@@ -435,9 +488,10 @@ Battle.prototype.start = function() {
 
   const boss = bossSide(this)?.pokemon[0];
   if (boss) {
-    // Canary for an install that lost the condition: it must sit beside Cobblemon's own
-    // in data/mods/cobblemon/conditions.js (ShowdownModMerge). Without it the boss takes
-    // ordinary damage and the raid pool never moves.
+    // The pool starts full, so the mirror does too -- even for a wild boss whose entity health
+    // an earlier raid wrote down. raidbossmissing is the canary for an install that lost the
+    // condition (it must sit beside Cobblemon's own in data/mods/cobblemon/conditions.js).
+    if (boss.hp > 0) boss.hp = boss.maxhp;
     if (!this.dex.conditions.get('raidboss').exists) this.add('-raidfield', 'error', 'raidbossmissing', '');
     boss.addVolatile('raidboss');
   }
@@ -538,7 +592,8 @@ Battle.prototype.setPlayer = function(slot, options) {
   return result;
 };
 
-module.exports = {isRaid, bossIndex, bossSide, isBossSide, isPlayerSide, isEliminatedPlayerSide, bossLateMoveUnusable};
+module.exports = {isRaid, bossIndex, bossSide, isBossSide, isPlayerSide, isEliminatedPlayerSide, bossLateMoveUnusable,
+  raidBossMirrorHp};
 
 // Controlled cooperative victory command. Cobblemon writes Showdown INPUT, so emitting a raw
 // "|win|..." line from Java is invalid. >raidwin is consumed here and produces the normal
@@ -612,6 +667,20 @@ BattleStream.prototype._writeLine = function(type, message) {
     battle.inputLog.push(`>raidresume ${side.id}`);
     battle.add('-message', `${side.name} reconnected and rejoined the raid.`);
     battle.sendUpdates();
+    return true;
+  }
+
+  // The authoritative pool, sent by RaidPoolSync after every change Java applies: `<current> <max>`.
+  // Silent: it moves the boss's simulated HP to the pool's fraction and logs nothing, because the
+  // bar players see is Java's to push.
+  if (type === 'raidpool') {
+    const battle = this.battle;
+    if (battle.ended) return false;
+    const [current, max] = String(message).trim().split(/\s+/).map(Number);
+    if (!isFinite(current) || !isFinite(max) || max <= 0) return false;
+    battle.raidPool = {current: Math.max(0, Math.min(max, current)), max};
+    syncRaidBossHp(battle);
+    battle.inputLog.push(`>raidpool ${current} ${max}`);
     return true;
   }
 
@@ -752,6 +821,14 @@ function bossLateMoveUnusable(side, message) {
   if (request && request.moves && index >= 0 && index >= request.moves.length) return true;
   const requested = request && request.moves && index >= 0 ? request.moves[index] : null;
   return Boolean(slot.disabled || (requested && requested.disabled));
+}
+
+// Renown affixes (renown-affixes.js, installed beside this file by ShowdownIntegrationInstaller). Isolated the same
+// way the extensions below are: a fault in an affix costs battles their affixes, never the simulator or the raids.
+try {
+  require('./renown-affixes');
+} catch (err) {
+  console.log('[CobbleRaids] Renown affixes failed to load and are off this session: ' + ((err && err.stack) || err));
 }
 
 // Extension modules other mods registered through CobbleRaids' ShowdownExtensions API, installed beside this file

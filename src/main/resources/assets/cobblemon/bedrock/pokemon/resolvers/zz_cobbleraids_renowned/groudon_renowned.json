@@ -1,0 +1,41 @@
+{
+ "species": "cobblemon:groudon",
+ "order": -1000,
+ "variations": [
+  {
+   "aspects": [
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0383_groudon/groudon.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "aspects": [
+    "primal",
+    "cobbleraids_renowned"
+   ],
+   "layers": [
+    {
+     "name": "cobbleraids_renowned",
+     "texture": "cobblemon:textures/pokemon/0383_groudon/groudonprimal.png",
+     "tint": [
+      0.46,
+      0.38,
+      0.3,
+      1.0
+     ]
+    }
+   ]
+  }
+ ]
+}
