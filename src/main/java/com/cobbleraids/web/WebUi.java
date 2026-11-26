@@ -2,33 +2,23 @@ package com.cobbleraids.web;
 
 import com.cobbleraids.RaidLog;
 import com.cobbleraids.fault.RaidFaultBarrier;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Optional;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
  * The server's side of the raid pages: opens them for players whose client can show them.
  *
- * <p>With Snobblemon GUI installed each page is a native Snobblemon page ({@code cobbleraids_<page>}, see
- * {@link WebGuiBridge}). Otherwise WebGUI is the fallback: this mod's page bundle is shipped into WebGUI's
- * folder. Those pages live in this jar under {@code web/} and are served to clients as
- * {@code webgui://cobbleraids/<page>} (WebGUI 2.0.0 refuses the one-slash form and opens a blank page). WebGUI sends them down the player's own connection, so there
- * is no web host and no open port to run.
+ * <p>Each page is a native Snobblemon GUI page ({@code cobbleraids_<page>}, see {@link WebGuiBridge}), drawn by
+ * the Snobblemon Client. A page is still named by its old address, {@code webgui://cobbleraids/<page>}, from
+ * which the native page id is derived; without Snobblemon GUI there are no raid pages.
  */
 public final class WebUi {
     private WebUi() {}
 
-    private static final String MOD_ID = "cobbleraids";
-    private static final String WEBGUI_ID = "webgui";
-    /** Folder under WebGUI's page root that this mod owns outright; sync deletes anything else in it. */
     private static final String PAGE_FOLDER = "cobbleraids";
 
-    /** True once Snobblemon GUI (or WebGUI) is installed and every call this mod makes into it has been resolved. */
+    /** True once Snobblemon GUI is installed and every call this mod makes into it has been resolved. */
     public static boolean available() {
         return WebGuiBridge.bound();
     }
@@ -39,20 +29,12 @@ public final class WebUi {
     }
 
     public static void register() {
-        boolean snobble = FabricLoader.getInstance().isModLoaded(WebGuiBridge.SNOBBLE_ID);
-        boolean webgui = FabricLoader.getInstance().isModLoaded(WEBGUI_ID);
-        if (!snobble && !webgui) {
+        if (!FabricLoader.getInstance().isModLoaded(WebGuiBridge.SNOBBLE_ID)) {
             RaidLog.info("Snobblemon GUI is not installed; the raid pages are disabled.");
             return;
         }
-        if (!WebGuiBridge.bind(snobble, webgui)) return;
-        if (WebGuiBridge.backend() == WebGuiBridge.Backend.SNOBBLE) {
-            RaidLog.info("Raid pages are shown by Snobblemon GUI (native pages; players need the Snobblemon Client).");
-        } else {
-            // Only WebGUI serves the bundled web pages; Snobblemon GUI has its own layouts and nothing needs copying.
-            ServerLifecycleEvents.SERVER_STARTING.register(server ->
-                    RaidFaultBarrier.guard("startup:web-bundle", WebUi::installBundle));
-        }
+        if (!WebGuiBridge.bind()) return;
+        RaidLog.info("Raid pages are shown by Snobblemon GUI (native pages; players need the Snobblemon Client).");
         ShopWebPage.register();
         TrophyWebPage.register();
         LegendWebPage.register();
@@ -63,38 +45,11 @@ public final class WebUi {
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
                 RaidFaultBarrier.guard("player-disconnect:web-icons",
                         () -> {
-                            WebIconFeed.forgetEverywhere(handler.getPlayer().getUUID());
                             WebGuiBridge.forget(handler.getPlayer().getUUID());
                             RewardWebPage.forget(handler.getPlayer().getUUID());
                             CaptureWebPage.forget(handler.getPlayer().getUUID());
                             LeaderboardWebPage.forget(handler.getPlayer().getUUID());
                         }));
-    }
-
-    /**
-     * Copies the bundled pages into WebGUI's page folder and has WebGUI rescan it.
-     *
-     * <p>Done on every start rather than once, so an updated jar is what gets served. WebGUI does its
-     * own rescan during the same event; whichever listener runs second sees the other's work, so the
-     * order between the two mods does not matter.
-     */
-    private static void installBundle() {
-        Optional<ModContainer> self = FabricLoader.getInstance().getModContainer(MOD_ID);
-        Optional<Path> source = self.flatMap(mod -> mod.findPath("web/" + PAGE_FOLDER));
-        if (source.isEmpty() || !Files.isDirectory(source.get())) {
-            RaidLog.warn("The web page bundle is missing from the jar; no pages were installed.");
-            return;
-        }
-        Path target = FabricLoader.getInstance().getConfigDir().resolve("webgui").resolve("web").resolve(PAGE_FOLDER);
-        try {
-            WebBundleSync.Result result = WebBundleSync.sync(source.get(), target);
-            RaidLog.info("Web pages: {} written, {} unchanged, {} removed ({}).",
-                    result.written(), result.unchanged(), result.removed(), target);
-        } catch (java.io.IOException e) {
-            RaidLog.error("Could not install the web pages into {}: {}", target, e.toString());
-            return;
-        }
-        WebGuiBridge.reloadPages();
     }
 
     /** Whether this player can be shown a page at all. */

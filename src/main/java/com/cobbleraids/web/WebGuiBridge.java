@@ -13,46 +13,22 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * The only class that talks to whatever shows this mod's pages, and it does so by name rather than by type.
+ * The only class that talks to Snobblemon GUI (SnobbleGUIOverhaul's server mod, {@code snobblemon_server}), which shows this mod's pages: every page
+ * is a native Snobblemon page, {@code cobbleraids_<page>}, drawn by the Snobblemon Client, through the bridge's public {@code SnobbleUi}.
  *
- * <p>Snobblemon GUI (SnobbleGUIOverhaul's server mod, {@code snobblemon_server}) is used when it is installed: every page is a native
- * Snobblemon page, {@code cobbleraids_<page>}, drawn by the Snobblemon Client, through the bridge's public {@code SnobbleUi}. Each call does
- * what WebGUI's compat jar ({@code WebguiCompat}, which stood in for WebGUI with the same bridge) did with the same request, so a server that
- * ran that jar sees no change and no longer needs it. Otherwise WebGUI itself is used, through its public {@code land.webgui.api.WebviewApi}
- * (and, for the asset rescan and the main-menu setting, {@code land.webgui.server.WebviewAssets} and {@code WebviewServerConfig}).
- *
- * <p>Both are reached through method handles: neither is a compile dependency (WebGUI's jar is built with a newer Loom than Gradle here can
- * remap), and no class of ours links against a type that may be absent. The cost is that an API change is not a compile error, so
- * {@link #bind()} resolves every call once at startup and reports exactly which one is missing. At runtime the mods share one namespace, so a
- * {@link ServerPlayer} here is the very class the other mod's methods take.
+ * <p>Reached through method handles: Snobblemon GUI is not a compile dependency, and no class of ours links against a type that may be absent. The
+ * cost is that an API change is not a compile error, so {@link #bind()} resolves every call once at startup and reports what is missing. At
+ * runtime the mods share one namespace, so a {@link ServerPlayer} here is the very class the bridge's methods take.
  */
 final class WebGuiBridge {
     private WebGuiBridge() {}
 
-    /** What shows the pages, in order of preference. */
-    enum Backend { SNOBBLE, WEBGUI, NONE }
-
     static final String SNOBBLE_ID = "snobblemon_server";
-    static final String WEBGUI_ID = "webgui";
 
     private static final String SNOBBLE_API = "net.snobblemon.server.SnobbleUi";
-    private static final String API = "land.webgui.api.WebviewApi";
-    private static final String ASSETS = "land.webgui.server.WebviewAssets";
-    private static final ResourceLocation OPEN_CHANNEL = ResourceLocation.fromNamespaceAndPath("webgui", "open_web");
-
-    // WebGUI
-    private static MethodHandle openGui;
-    private static MethodHandle emitToPage;
-    private static MethodHandle onPageEvent;
-    private static MethodHandle reloadAssets;
-    private static MethodHandle sendMainMenu;
-    private static MethodHandle configuredMainMenu;
-    // Snobblemon GUI
     private static MethodHandle sAvailable;
     private static MethodHandle sOpen;
     private static MethodHandle sOpenPage;
@@ -60,43 +36,20 @@ final class WebGuiBridge {
     private static MethodHandle sEmitJson;
     private static MethodHandle sOnMessage;
 
-    private static Backend backend = Backend.NONE;
+    private static boolean bound;
     /** Pages Snobblemon GUI had no layout for, warned about once each. */
     private static final Set<String> MISSING = ConcurrentHashMap.newKeySet();
 
-    /** Snobblemon GUI when installed, else WebGUI when installed, else nothing. Pure, for the tests. */
-    static Backend choose(boolean snobbleInstalled, boolean webguiInstalled) {
-        if (snobbleInstalled) return Backend.SNOBBLE;
-        return webguiInstalled ? Backend.WEBGUI : Backend.NONE;
-    }
-
-    /**
-     * Resolves every call this mod makes into the chosen backend. Snobblemon GUI falls back to WebGUI when it is installed but its API cannot
-     * be bound. Returns false, and says why, when nothing is left.
-     */
-    static boolean bind(boolean snobbleInstalled, boolean webguiInstalled) {
-        backend = choose(snobbleInstalled, webguiInstalled);
-        if (backend == Backend.SNOBBLE) {
-            try {
-                bindSnobble();
-                return true;
-            } catch (ReflectiveOperationException | LinkageError e) {
-                RaidLog.error("Snobblemon GUI is installed but its page API is not what this mod expects ({}); {}", e.toString(),
-                        webguiInstalled ? "using WebGUI instead." : "pages are disabled.");
-                backend = choose(false, webguiInstalled);
-            }
+    /** Resolves every call this mod makes into Snobblemon GUI. Returns false, and says why, if one is missing. */
+    static boolean bind() {
+        try {
+            bindSnobble();
+            bound = true;
+        } catch (ReflectiveOperationException | LinkageError e) {
+            bound = false;
+            RaidLog.error("Snobblemon GUI is installed but its page API is not what this mod expects ({}); raid pages are disabled.", e.toString());
         }
-        if (backend == Backend.WEBGUI) {
-            try {
-                bindWebGui();
-                return true;
-            } catch (ReflectiveOperationException | LinkageError e) {
-                RaidLog.error("WebGUI is installed but its API is not what this mod expects ({}); web pages are disabled. "
-                        + "Update CobbleRaids or use WebGUI 1.8.x.", e.toString());
-                backend = Backend.NONE;
-            }
-        }
-        return false;
+        return bound;
     }
 
     private static void bindSnobble() throws ReflectiveOperationException {
@@ -112,95 +65,39 @@ final class WebGuiBridge {
         sAvailable = available; sOpen = open; sOpenPage = openPage; sHudPage = hudPage; sEmitJson = emitJson; sOnMessage = onMessage;
     }
 
-    private static void bindWebGui() throws ReflectiveOperationException {
-        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
-        Class<?> api = Class.forName(API);
-        Class<?> assets = Class.forName(ASSETS);
-        openGui = lookup.findStatic(api, "openGui",
-                MethodType.methodType(void.class, ServerPlayer.class, String.class));
-        emitToPage = lookup.findStatic(api, "emitToPage",
-                MethodType.methodType(void.class, ServerPlayer.class, String.class, String.class));
-        onPageEvent = lookup.findStatic(api, "onPageEvent",
-                MethodType.methodType(void.class, String.class, BiConsumer.class));
-        reloadAssets = lookup.findStatic(assets, "reload", MethodType.methodType(void.class));
-        sendMainMenu = lookup.findStatic(api, "sendMainMenuUrl",
-                MethodType.methodType(void.class, ServerPlayer.class, String.class));
-        configuredMainMenu = lookup.findStatic(Class.forName("land.webgui.server.WebviewServerConfig"),
-                "mainMenuUrl", MethodType.methodType(String.class));
-    }
-
     static boolean bound() {
-        return backend != Backend.NONE;
+        return bound;
     }
 
-    static Backend backend() {
-        return backend;
-    }
-
-    /** Rescans WebGUI's page folder, so files this mod has just written are served. Snobblemon GUI has its own layouts: nothing to do. */
-    static void reloadPages() {
-        if (backend != Backend.WEBGUI) return;
-        invoke(() -> reloadAssets.invoke());
-    }
-
-    /** True if an open request can reach this player's client: the Snobblemon Client, or WebGUI's channel. */
+    /** True if an open request can reach this player's client: it has the Snobblemon Client. */
     static boolean clientReady(ServerPlayer player) {
-        return switch (backend) {
-            case SNOBBLE -> {
-                try {
-                    yield (boolean) sAvailable.invokeExact(player);
-                } catch (Throwable t) {
-                    yield false;
-                }
-            }
-            case WEBGUI -> ServerPlayNetworking.canSend(player, OPEN_CHANNEL);
-            case NONE -> false;
-        };
+        if (!bound) return false;
+        try {
+            return (boolean) sAvailable.invokeExact(player);
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     static void openGui(ServerPlayer player, String url) {
-        if (backend == Backend.SNOBBLE) {
-            String id = pageId(url);
-            boolean shown;
-            try {
-                shown = (boolean) sOpen.invokeExact(player, id);
-            } catch (Throwable t) {
-                shown = false;
-            }
-            if (!shown && MISSING.add(id)) RaidLog.warn("Snobblemon GUI did not show page '{}' ({}) to {}", id, url, player.getGameProfile().getName());
-            return;
+        if (!bound) return;
+        String id = pageId(url);
+        boolean shown;
+        try {
+            shown = (boolean) sOpen.invokeExact(player, id);
+        } catch (Throwable t) {
+            shown = false;
         }
-        invoke(() -> openGui.invoke(player, url));
+        if (!shown && MISSING.add(id)) RaidLog.warn("Snobblemon GUI did not show page '{}' ({}) to {}", id, url, player.getGameProfile().getName());
     }
 
     /** Sends an event to the player's open page (a {@code hud...} event to their overlay when one is up); dropped when nothing is open. */
     static void emit(ServerPlayer player, String event, String json) {
-        if (backend == Backend.SNOBBLE) {
-            invoke(() -> {
-                String hud = (String) sHudPage.invokeExact(player);
-                String page = event.startsWith("hud") && hud != null ? hud : (String) sOpenPage.invokeExact(player);
-                if (page != null) sEmitJson.invokeExact(player, page, event, json);
-            });
-            return;
-        }
-        invoke(() -> emitToPage.invoke(player, event, json));
-    }
-
-    /** Sets the page this player's main-menu key (F6 by default) opens. A WebGUI client feature; Snobblemon GUI has its own menus. */
-    static void sendMainMenuUrl(ServerPlayer player, String url) {
-        if (backend != Backend.WEBGUI) return;
-        invoke(() -> sendMainMenu.invoke(player, url));
-    }
-
-    /** The main-menu page the server operator has set in WebGUI's own config; blank when they have not, or without WebGUI. */
-    static String configuredMainMenuUrl() {
-        if (backend != Backend.WEBGUI) return "";
-        try {
-            String url = (String) configuredMainMenu.invoke();
-            return url == null ? "" : url;
-        } catch (Throwable t) {
-            return "";
-        }
+        invoke(() -> {
+            String hud = (String) sHudPage.invokeExact(player);
+            String page = event.startsWith("hud") && hud != null ? hud : (String) sOpenPage.invokeExact(player);
+            if (page != null) sEmitJson.invokeExact(player, page, event, json);
+        });
     }
 
     /**
@@ -253,14 +150,13 @@ final class WebGuiBridge {
             try {
                 handler.accept(player, json);
             } catch (RuntimeException e) {
-                // A page can send anything; a handler bug must not reach the other mod's event bus.
+                // A page can send anything; a handler bug must not reach Snobblemon GUI's event bus.
                 RaidLog.error("web page event '{}' failed: {}", channel, e.toString());
             } finally {
                 RaidPerf.stop(section, started);
             }
         };
-        if (backend == Backend.SNOBBLE) invoke(() -> sOnMessage.invoke(channel, guarded));
-        else invoke(() -> onPageEvent.invoke(channel, guarded));
+        invoke(() -> sOnMessage.invoke(channel, guarded));
     }
 
     private interface Call {
@@ -268,7 +164,7 @@ final class WebGuiBridge {
     }
 
     private static void invoke(Call call) {
-        if (backend == Backend.NONE) return;
+        if (!bound) return;
         try {
             call.run();
         } catch (RuntimeException | Error e) {

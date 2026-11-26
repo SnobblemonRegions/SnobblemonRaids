@@ -4,16 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-/** Raid pages go to Snobblemon GUI first, and every page keeps the native page id the compat jar gave it. */
+/** Every raid page keeps the native page id the compat jar gave it, so the layouts in Snobblemon GUI still match. */
 class WebGuiBridgeTest {
-
-    @Test
-    void snobblemonGuiIsPreferredAndWebGuiIsTheFallback() {
-        assertEquals(WebGuiBridge.Backend.SNOBBLE, WebGuiBridge.choose(true, true), "with both, the native pages win");
-        assertEquals(WebGuiBridge.Backend.SNOBBLE, WebGuiBridge.choose(true, false));
-        assertEquals(WebGuiBridge.Backend.WEBGUI, WebGuiBridge.choose(false, true));
-        assertEquals(WebGuiBridge.Backend.NONE, WebGuiBridge.choose(false, false));
-    }
 
     /** The seven pages this mod opens, each the layout SnobbleGUIOverhaul ships for it. */
     @Test

@@ -266,7 +266,7 @@ public final class RaidRewardService {
     }
 
     private static void sendChatFallbackChoices(ServerPlayer player, PendingRaidReward pending) {
-        player.sendSystemMessage(Component.literal("The reward screen needs WebGUI on your client. Choose with /cobbleraids reward claim <id>:"));
+        player.sendSystemMessage(Component.literal("The reward screen needs the Snobblemon Client mod. Choose with /cobbleraids reward claim <id>:"));
         for (String choiceId : pending.rewards().choices().keySet()) {
             player.sendSystemMessage(Component.literal(" - " + choiceId));
         }
