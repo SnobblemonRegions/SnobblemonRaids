@@ -52,7 +52,8 @@ _Avoid_: raid (an encounter becomes a raid once it starts; the word names the re
 
 **Renown / Renowned Boss**:
 A boss that rolled a name and epithet (e.g. "Kaelen, the Relentless") on spawn, on top of its normal
-species and tier. Rarer, and pays a reward multiplier.
+species and tier, and pays a reward multiplier. While the Daily Boss runs, it is the only renowned boss:
+wild raids never roll renown (an operator can still force one).
 _Avoid_: named boss, elite boss
 
 **Boon**:
@@ -61,6 +62,26 @@ one stat. A closed set of kinds — the epithet may say what kind of boon and, f
 stat, but never how strong it is; strength is a server config number, not something a datapack or
 word list can set.
 _Avoid_: epithet effect, boss buff
+
+**Affix**:
+One extra battle power a Renowned Boss rolls from its Boon's group of five. Only the raid catch (Capture
+Protocol, after a Daily Boss) passes it to a player's Pokémon; a Personal Boss Shop buy-back never carries one. It is
+stored on the Pokémon by id and run by Showdown in any battle the config allows; how strong it is lives
+in code and config, never in the stored value. On a raid boss, the HP affixes act on the shared pool.
+_Avoid_: perk, trait, modifier
+
+**World Boss**:
+A server-wide boss with one shared health pool, the **World Pool**. Each player fights it in a **Duel**,
+a solo owned encounter against a private copy of the boss, and every Duel's damage drains the World Pool.
+One runs at a time. Not a raid. Its kind says how it starts and pays: the seasonal event boss, or the
+Daily Boss (a weekly boss is planned).
+_Avoid_: event boss (that is one kind of World Boss), raid boss
+
+**Daily Boss**:
+The World Boss kind that appears once a day at a fixed local time (19:00 America/New_York by default) as a
+Renowned Boss with an Affix, for up to 25 players. Everyone who dealt damage gets its raid reward and a
+capture attempt, the only way its Affix reaches a player.
+_Avoid_: daily raid, renowned raid
 
 **Raid Points**:
 The currency a raid pays out and the raid shop spends. Owned entirely by this mod rather than

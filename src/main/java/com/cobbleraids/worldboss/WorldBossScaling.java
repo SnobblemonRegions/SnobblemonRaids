@@ -42,4 +42,30 @@ public final class WorldBossScaling {
         if (!Float.isFinite(wanted)) return base;
         return Math.min(poolMax, Math.max(base, wanted));
     }
+
+    /**
+     * How much bigger a renowned boss's World Pool is: the same shares a renowned raid boss gets on its raid pool, {@code renown.base_health_bonus}
+     * for every renowned boss and {@code renown.health_bonus} on top for an {@code hp_pool} epithet.
+     */
+    public static float renownMultiplier(double baseHealthBonus, double hpPoolBonus, boolean hpPoolBoon) {
+        return (float) (1.0 + baseHealthBonus + (hpPoolBoon ? hpPoolBonus : 0.0));
+    }
+
+    /**
+     * The daily boss's World Pool before renown: {@code winsPerPlayer} duel wins for each player, counting at least {@code minPlayers}. It grows
+     * in a straight line, so each player needs about the same number of wins whether five or twenty-five turn up.
+     */
+    public static float dailyPool(long duelHealth, float winsPerPlayer, int players, int minPlayers) {
+        return (float) duelHealth * winsPerPlayer * Math.max(Math.max(1, minPlayers), players);
+    }
+
+    /** The level of a daily duel copy before renown's bonus: {@code configured}, or the boss's own raid level when that is 0. */
+    public static int dailyDuelLevel(int configured, int definitionLevel) {
+        return configured > 0 ? configured : definitionLevel;
+    }
+
+    /** A pool from {@link #poolSize} made renowned. Applied after the ceiling, so a renowned boss at the cap is still tougher than an ordinary one. */
+    public static float renowned(float pool, float multiplier) {
+        return pool * multiplier;
+    }
 }

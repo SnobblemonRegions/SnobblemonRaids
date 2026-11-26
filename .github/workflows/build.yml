@@ -88,6 +88,9 @@ jobs:
       - name: Validate raid-patch.js behaviour against Cobblemon's real Showdown fork
         run: python3 validation/validate_showdown_raid_patch_behavior.py
 
+      - name: Validate renown affixes against Cobblemon's real Showdown fork
+        run: python3 validation/validate_showdown_renown_affixes.py
+
       - name: Fuzz the raid battle model on the real Showdown fork
         run: python3 validation/validate_showdown_fuzz.py
 

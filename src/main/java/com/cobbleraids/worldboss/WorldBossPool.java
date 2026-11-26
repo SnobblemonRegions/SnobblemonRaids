@@ -13,8 +13,9 @@ import java.util.UUID;
  * <p>Three rules matter. A strike is clamped to what is left, so contributions always add up to
  * exactly the damage the pool took and the last hitter cannot be credited with overkill. The
  * defeat is one-way and reported exactly once, because strikes arrive from many duels in the same
- * tick and every one of them must not be able to pay the reward. And the pool only ever grows:
- * when more players join the max rises by the difference, so damage already dealt is never undone.
+ * tick and every one of them must not be able to pay the reward. And damage already dealt is never
+ * undone: when more players join the max rises by the difference; when the daily boss shrinks for
+ * players who left ({@link #resizeTo}) it keeps the fraction of health left.
  *
  * <p>Synchronised: strikes come from separate duels' Showdown handlers, the state is written by a
  * timer and read by commands.
@@ -63,6 +64,23 @@ public final class WorldBossPool {
         if (defeated || !(newMax > max) || Float.isInfinite(newMax)) return;
         current += newMax - max;
         max = newMax;
+    }
+
+    /**
+     * Moves the max to {@code newMax}. Larger: as {@link #growTo}, the difference is added to the health left. Smaller: the health left
+     * keeps its fraction of the max, so a boss at 40% stays at 40%, damage already dealt still counts, and a shrink can never empty the
+     * pool. The two are uneven on purpose: leaving and coming back adds more health than the leave took away, so cycling never weakens
+     * the boss. A defeated pool, or a value that is not positive and finite, changes nothing.
+     */
+    public synchronized void resizeTo(float newMax) {
+        if (defeated || !(newMax > 0f) || Float.isInfinite(newMax)) return;
+        if (newMax >= max) {
+            growTo(newMax);
+            return;
+        }
+        float left = current / max;
+        max = newMax;
+        current = current <= 0f ? 0f : Math.max(Math.ulp(newMax), Math.min(newMax, newMax * left));
     }
 
     /**

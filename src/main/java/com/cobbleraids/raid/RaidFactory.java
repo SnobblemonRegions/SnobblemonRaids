@@ -7,7 +7,10 @@ import com.cobbleraids.battle.RaidBossBattleActor;
 import com.cobbleraids.battle.RaidBossBattleAI;
 import com.cobbleraids.config.RaidDefinition;
 import com.cobbleraids.renown.RaidRenown;
+import com.cobbleraids.renown.RaidPoolAffix;
 import com.cobbleraids.renown.RaidRenownMarker;
+import com.cobbleraids.renown.RenownAffix;
+import com.cobbleraids.renown.RenownAffixData;
 import com.cobbleraids.spawn.RaidBossEntityMarker;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
@@ -59,6 +62,15 @@ public final class RaidFactory {
             playerActors.add(new PlayerBattleActor(player.getUUID(), team));
         }
 
+        // Before the battle starts, so the affix is in the >start payload. A boss renowned before affixes
+        // existed has a title but no affix; it gets one now rather than fighting, and being caught, without.
+        Optional<RenownAffix> bossAffix = RenownAffixData.read(bossEntity.getPokemon());
+        if (bossAffix.isEmpty()) {
+            bossAffix = RaidRenownMarker.read(bossEntity)
+                    .flatMap(renown -> RenownAffix.roll(renown.boon(), java.util.concurrent.ThreadLocalRandom.current()));
+            bossAffix.ifPresent(affix -> RenownAffixData.write(bossEntity.getPokemon(), affix));
+        }
+
         try (var charges = ownership == null ? com.cobbleraids.charges.RaidChargeStore.get(ordered.getFirst().server)
                 .reserve(ordered.getFirst().server, ordered.stream().map(ServerPlayer::getUUID).toList()) : null) {
             BattlePokemon bossPokemon = new BattlePokemon(
@@ -108,6 +120,7 @@ public final class RaidFactory {
                     renown.map(r -> r.boon().encode()).orElse(""),
                     ownership
             );
+            session.setPoolAffix(new RaidPoolAffix(bossAffix.orElse(null)));
             RaidRegistry.bind(session);
             session.activate();
             // Before any choice can resolve: from here the boss's simulated HP mirrors the pool.

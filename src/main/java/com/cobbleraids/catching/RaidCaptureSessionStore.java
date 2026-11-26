@@ -144,7 +144,9 @@ public final class RaidCaptureSessionStore extends SavedData {
                 tag.getBoolean("roll_succeeded"),
                 tag.getDouble("final_chance"),
                 delivery,
-                tag.contains("pokemon") ? tag.getCompound("pokemon") : null);
+                tag.contains("pokemon") ? tag.getCompound("pokemon") : null,
+                // Absent on every session saved before affixes existed: no affix, as those bosses had none.
+                tag.contains("affix") ? tag.getString("affix") : null);
     }
 
     @Override
@@ -187,6 +189,7 @@ public final class RaidCaptureSessionStore extends SavedData {
         tag.putDouble("final_chance", session.finalChanceUsed());
         tag.putString("delivery", session.delivery().name());
         if (session.pokemonNbt() != null) tag.put("pokemon", session.pokemonNbt());
+        if (session.affix() != null) tag.putString("affix", session.affix());
         return tag;
     }
 }

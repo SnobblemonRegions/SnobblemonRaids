@@ -7,6 +7,10 @@ import com.cobbleraids.presentation.RaidBossNameplate;
 import com.cobbleraids.presentation.RaidBroadcast;
 import com.cobbleraids.renown.RaidRenown;
 import com.cobbleraids.renown.RaidRenownMarker;
+import com.cobbleraids.renown.RenownAffix;
+import com.cobbleraids.renown.RenownAffixData;
+import java.util.Optional;
+import net.minecraft.network.chat.HoverEvent;
 import com.cobbleraids.presentation.RaidTierPresentation;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 
@@ -76,11 +80,20 @@ public final class RaidSpawnAnnouncementService {
                     .append(Component.literal(tier.displayName()).withStyle(RaidTierPresentation.color(tier)))
                     .append(Component.literal(" raid, has appeared in ").withStyle(ChatFormatting.YELLOW));
         }
+        // Named up front so players can choose which renowned boss to hunt for the affix it keeps when caught;
+        // what it does is on hover, which keeps the line short.
+        Optional<RenownAffix> affix = renown == null ? Optional.empty() : RenownAffixData.read(entity.getPokemon());
         message.append(Component.literal(biomeName).withStyle(ChatFormatting.GREEN))
                 .append(Component.literal("! " + locationHint())
                         .withStyle(ChatFormatting.YELLOW))
                 .append(Component.literal(" (" + friendlyName(dimensionId) + ").")
                         .withStyle(ChatFormatting.DARK_GRAY));
+        affix.ifPresent(found -> message
+                .append(Component.literal(" Affix: ").withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal(found.displayName()).withStyle(style -> style
+                        .withColor(ChatFormatting.LIGHT_PURPLE)
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(
+                                found.description() + "\nKept if you catch it."))))));
 
         for (ServerPlayer onlinePlayer : server.getPlayerList().getPlayers()) {
             if (!isMuted(onlinePlayer)) onlinePlayer.sendSystemMessage(message);

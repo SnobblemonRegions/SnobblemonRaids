@@ -172,6 +172,81 @@ A built arena (for example a pasted schematic in its own world) can host the bos
   facing the boss with the boss bar showing, breaking the entrance unregistered it and warp then used the ring, return went back to the overworld. Not verified: a real pasted
   schematic, `arena scan` on one, or a dedicated custom dimension.
 
+## 12d. The Daily Boss: renowned bosses move to a daily World Boss (2026-11-25, uncommitted)
+
+Renowned bosses are no longer a rare wild raid. Once a day a renowned World Boss appears for up to 25 players to fight together, so the
+server has something everyone can do daily. A weekly boss with more phases and lore is planned as a third kind.
+
+**Owner decisions (2026-11-25):**
+
+1. **Fight shape:** solo duels on one shared World Pool, as for the event boss. A battle stays capped at 4 (ADR 0003); "together" is the
+   shared pool, bar and zone.
+2. **Daily only:** while the Daily Boss runs, wild raids are never renowned. Operators can still force a renowned raid for testing.
+3. **Who catches:** everyone who dealt damage gets a capture attempt.
+4. **When:** 19:00 Eastern every day.
+
+**How it works:**
+
+- `world_boss.json` has a `daily` section:
+
+  | Key | Default | Meaning |
+  |---|---|---|
+  | `enabled` | `true` | Also needs the system's own `enabled`. |
+  | `time` / `zone` | `19:00` / `America/New_York` | Daylight saving is followed: 23:00 UTC in summer, 00:00 UTC in winter. |
+  | `late_start_minutes` | 60 | How late it may still start if the server was down or an event boss was running. Past it, the day is skipped. |
+  | `warning_minutes` | `[15, 5]` | Broadcast warnings before the slot. A server that comes up late says the real time left. |
+  | `max_players` | 25 | The most players who may take part. A place is taken at the first join and kept, so leaving to heal never loses it. 0 = no cap. |
+  | `raid_definitions` / `tiers` | `[]` / `["legendary"]` | Which bosses it is drawn from. An empty list means every loaded definition of those tiers that spawns in the wild. |
+  | `duel_level` | 0 | Each duel copy's level before renown's +10. 0 = the boss's own raid level, so a legendary duel is level 100. |
+  | `duel_health` | 5000 | Each duel copy's HP, and the most one duel takes off the World Pool. A solo renowned legendary raid is about 4,550. |
+  | `wins_per_player` | 6 | Duel wins' worth of health each player adds to the pool. The pool grows in a straight line, so 5 or 25 players each need about 6 wins (15–20 minutes). |
+  | `min_players` | 3 | The pool is never smaller than for this many players: 90,000 (×1.3 renowned) at the defaults. |
+  | `grace_seconds` | 180 | How long a player who left the zone or disconnected still counts. After it the pool shrinks to the players still present, keeping its percentage; it grows back by their full share when they return. |
+
+  **Strength (owner, 2026-11-25: "somewhat strong").** The event boss's duel settings (level 70, 3,000 HP, a pool capped at 5 players) made
+  each daily duel weaker than a renowned legendary raid, and let 25 players finish it in about 10 minutes. The daily boss now uses the four
+  keys above instead. The event boss is unchanged.
+
+- **One renown per boss.** The standing boss draws its renown (name, epithet, boon, affix) on its first spawn. The state saves it, so every
+  duel copy (through `RaidBossSpawner.withRenown`) and a restart carry the same one.
+  - The World Pool grows by the same shares a renowned raid pool gets: `renown.base_health_bonus`, plus `renown.health_bonus` for an
+    `hp_pool` epithet. The share is applied after `pool.max`.
+  - Stat-focus boons apply to each duel copy.
+  - HP-pool affixes (Last Stand, Second Wind, Unbroken, Regrowth) act on each duel's own pool, not on the World Pool.
+- **Pay.** Everyone who dealt damage gets that definition's raid reward through the normal claim screen. It is renowned, so the renown payout
+  multiplier applies. The capture choice appears when they claim it.
+  - A catch replaces that reward's Raid Points, as after a raid. Legendary's flawless ceiling is about 7%, so a full daily yields about 1–2
+    catches.
+  - A caught Pokémon keeps the affix.
+  - The event boss's flat Raid Points and daily payout cap do not apply.
+- **Duels end at the defeat.** Duels still running are ended before rewards are queued, so no reward screen opens over a battle.
+- **Commands.** `/cobbleraids worldboss start daily` starts one now, for testing, without using up the day. `status` shows the kind,
+  renown, affix, players against the cap, and the last day it ran.
+
+**Threat model:**
+
+| Exploit considered | Mitigation |
+|---|---|
+| Two daily bosses in one day (restart, crash during start) | The day is saved before the boss spawns. A day that already ran is never due again. |
+| Paid twice after a crash | The paid flag is saved before anything is queued (at most once). A crash mid-pay can lose that payout; it cannot double it. |
+| Affix from a duel copy | Duels run under `EncounterPolicy.none()`: no capture, no buy-back snapshot. The standing boss is uncatchable and invulnerable. |
+| Leave to shrink the boss, still get paid | Accepted with the reward rule (owner, 2026-11-25: keep "everyone who dealt damage"). Leaving only makes the fight fairer for those who stay; the leaver gets nothing they did not already have from one hit. |
+| Leave and rejoin to weaken it | A shrink keeps the percentage, but a return adds the full share to what is left, so each cycle makes the boss harder. |
+| A shrink kills the boss | It keeps the fraction left and never goes below a sliver; only a duel's hit can defeat the boss. |
+| A 26th player | Refused at join. Someone already counted may always come back. |
+| Leech: one hit for a full reward and a catch | Accepted, the owner's call ("everyone who participates"). The cap means a leecher takes a real player's place. Raise it with the owner if it shows up in live data. |
+| Operator start farms affixes | Operator-only command. |
+
+**Verified:** unit tests for the schedule (daylight saving, a late start past midnight, once a day, warnings), the cap, the renowned pool, the
+`daily` config round trip and the saved state across a restart.
+
+**Not verified:** anything in game. To check on rig 2:
+- `start daily` announces a title and an affix.
+- Duel copies show the title and their affix fires.
+- `win` gives each fighter the claim screen and then the capture choice.
+- A catch keeps the affix.
+- A natural raid is never renowned.
+
 ## 13. Decisions still needed
 
 1. Which Ghost bosses to add as raid definitions (Gengar, Mimikyu, Gholdengo, others)?

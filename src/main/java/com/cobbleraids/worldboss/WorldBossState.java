@@ -1,10 +1,15 @@
 package com.cobbleraids.worldboss;
 
 import com.cobbleraids.config.SavedDataFlush;
+import com.cobbleraids.renown.RaidRenown;
+import com.cobbleraids.renown.RenownAffix;
+import com.cobbleraids.renown.RenownBoon;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.HolderLookup;
@@ -46,6 +51,17 @@ public final class WorldBossState extends SavedData {
     /** Players whose defeat reward has been paid (marked and saved just before each payment), so a restart half way through pays only the rest. */
     private final Set<UUID> paidPlayers = new LinkedHashSet<>();
     private boolean arena;
+    private WorldBossKind kind = WorldBossKind.EVENT;
+    /** The daily boss's renown, rolled once at its start so the standing boss, every duel copy and a restart all carry the same one; null otherwise. */
+    private RaidRenown renown;
+    /** The affix id that renown rolled, or empty. */
+    private String affix = "";
+    /** How much bigger the World Pool is for the renown (1 for none). */
+    private float poolMultiplier = 1f;
+    /** Everyone who has joined this boss; the daily boss's player cap counts them, and a place once taken is kept. */
+    private final Set<UUID> participants = new LinkedHashSet<>();
+    /** The last day (in the daily zone, {@code 2026-07-01}) a daily boss started; never cleared, so a day cannot run twice. */
+    private String dailyLastDay = "";
 
     public static SavedData.Factory<WorldBossState> factory() {
         return new SavedData.Factory<>(WorldBossState::new, WorldBossState::load, DataFixTypes.LEVEL);
@@ -80,12 +96,28 @@ public final class WorldBossState extends SavedData {
     public boolean rewardsPaid() { return rewardsPaid; }
     /** True when the boss started at an arena spawn marker: the zone then uses {@code arena.radius} and players can warp in. */
     public boolean arena() { return arena; }
+    public WorldBossKind kind() { return kind; }
+    public Optional<RaidRenown> renown() { return Optional.ofNullable(renown); }
+    public Optional<RenownAffix> affix() { return RenownAffix.byId(affix); }
+    public float poolMultiplier() { return poolMultiplier; }
+    public Set<UUID> participants() { return Collections.unmodifiableSet(participants); }
+    public String dailyLastDay() { return dailyLastDay; }
 
     // ---- writes (each marks the state dirty) ----
 
     public void begin(UUID bossId, String definitionId, String dimension, double x, double y, double z,
                       long startedAtMillis, long endsAtMillis, WorldBossPool pool, boolean arena) {
+        begin(WorldBossKind.EVENT, bossId, definitionId, dimension, x, y, z, startedAtMillis, endsAtMillis, pool, arena);
+    }
+
+    public void begin(WorldBossKind kind, UUID bossId, String definitionId, String dimension, double x, double y, double z,
+                      long startedAtMillis, long endsAtMillis, WorldBossPool pool, boolean arena) {
         this.active = true;
+        this.kind = kind;
+        this.renown = null;
+        this.affix = "";
+        this.poolMultiplier = 1f;
+        this.participants.clear();
         this.bossId = bossId;
         this.definitionId = definitionId;
         this.dimension = dimension;
@@ -101,6 +133,24 @@ public final class WorldBossState extends SavedData {
         this.paidPlayers.clear();
         setDirty();
     }
+
+    /** The renown the standing boss rolled, and how much bigger it makes the pool. */
+    public void setRenown(RaidRenown renown, RenownAffix affix, float poolMultiplier) {
+        this.renown = renown;
+        this.affix = affix == null ? "" : affix.id();
+        this.poolMultiplier = poolMultiplier;
+        setDirty();
+    }
+
+    /** Counts a player in. @return true if they were not counted before */
+    public boolean addParticipant(UUID player) {
+        boolean added = participants.add(player);
+        if (added) setDirty();
+        return added;
+    }
+
+    /** Marks a day's daily boss as started, before it is spawned, so a crash during the start cannot run the day again. */
+    public void markDailyDay(String day) { dailyLastDay = day; setDirty(); }
 
     public void markDefeatAnnounced() { defeatAnnounced = true; setDirty(); }
 
@@ -125,7 +175,26 @@ public final class WorldBossState extends SavedData {
         WorldBossState state = new WorldBossState();
         state.active = tag.getBoolean("active");
         state.lastEndedAtMillis = tag.getLong("last_ended");
+        state.dailyLastDay = tag.getString("daily_last_day");
         if (!tag.contains("boss")) return state;
+        state.kind = WorldBossKind.parse(tag.getString("kind"));
+        if (tag.contains("renown_name")) {
+            try {
+                RaidRenown loaded = RenownBoon.decode(tag.getString("renown_boon"))
+                        .map(boon -> new RaidRenown(tag.getString("renown_name"), tag.getString("renown_epithet"), boon))
+                        .orElse(null);
+                state.renown = loaded;
+            } catch (IllegalArgumentException ex) {
+                state.renown = null;   // a hand-edited or outdated title: the boss carries on without renown
+            }
+        }
+        state.affix = tag.getString("affix");
+        state.poolMultiplier = tag.contains("pool_multiplier") ? tag.getFloat("pool_multiplier") : 1f;
+        ListTag joined = tag.getList("participants", Tag.TAG_COMPOUND);
+        for (int i = 0; i < joined.size(); i++) {
+            CompoundTag item = joined.getCompound(i);
+            if (item.hasUUID("player")) state.participants.add(item.getUUID("player"));
+        }
         state.bossId = tag.getUUID("boss");
         state.definitionId = tag.getString("definition");
         state.dimension = tag.getString("dimension");
@@ -159,7 +228,23 @@ public final class WorldBossState extends SavedData {
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         tag.putBoolean("active", active);
         tag.putLong("last_ended", lastEndedAtMillis);
+        tag.putString("daily_last_day", dailyLastDay);
         if (pool == null) return tag;
+        tag.putString("kind", kind.serializedName());
+        if (renown != null) {
+            tag.putString("renown_name", renown.name());
+            tag.putString("renown_epithet", renown.epithet());
+            tag.putString("renown_boon", renown.boon().encode());
+        }
+        tag.putString("affix", affix);
+        tag.putFloat("pool_multiplier", poolMultiplier);
+        ListTag joined = new ListTag();
+        for (UUID id : participants) {
+            CompoundTag item = new CompoundTag();
+            item.putUUID("player", id);
+            joined.add(item);
+        }
+        tag.put("participants", joined);
         tag.putUUID("boss", bossId);
         tag.putString("definition", definitionId);
         tag.putString("dimension", dimension);

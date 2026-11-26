@@ -56,6 +56,8 @@ def install_raid_integration(showdown_dir: Path) -> None:
     Without this the harnesses ran raids with no raidboss condition at all -- the boss took ordinary
     damage -- so nothing about the pool-mirrored boss HP was ever exercised by CI."""
     shutil.copy(RAID_PATCH, showdown_dir / "raid-patch.js")
+    # raid-patch.js loads it, as on a live server; without it the patch runs with affixes off.
+    shutil.copy(RAID_PATCH.with_name("renown-affixes.js"), showdown_dir / "renown-affixes.js")
     template = (SHOWDOWN_RESOURCES / "mods/merge-hook.js").read_text(encoding="utf-8")
     folder = showdown_dir / "data/mods/cobblemon"
     folder.mkdir(parents=True, exist_ok=True)
