@@ -154,7 +154,10 @@ public final class RaidBossGlowService {
             if (!config.enabled()) return;
 
             // Inside a running World Boss zone the outline would draw the duel copy and the showpiece through terrain: no glow there.
-            if (com.cobbleraids.worldboss.WorldBossService.suppressesGlowAt(boss.level().dimension().location(), boss.getX(), boss.getZ())) {
+            // A hidden duel copy (RaidDuelService, World Boss duels) is invisible, but Glowing still draws its outline
+            // through the invisibility, which showed every player's copy standing on the raid boss. No glow on an invisible boss.
+            if (boss.hasEffect(MobEffects.INVISIBILITY) || boss.isInvisible()
+                    || com.cobbleraids.worldboss.WorldBossService.suppressesGlowAt(boss.level().dimension().location(), boss.getX(), boss.getZ())) {
                 if (boss.hasEffect(MobEffects.GLOWING)) boss.removeEffect(MobEffects.GLOWING);
                 return;
             }

@@ -40,6 +40,25 @@ class RaidDuelRulesTest {
     }
 
     @Test
+    void aRaisedBossGetsTheSquareRootOfItsLevelRise() {
+        // The tester's raid: a level 25 Starter Delphox raised to 88 by a level 100 team.
+        assertEquals(1032, RaidDuelRules.duelHealth(RaidRarityTier.STARTER, 25, 88));
+        assertEquals(3096, RaidDuelRules.poolFor(RaidRarityTier.STARTER, 1, 25, 88));
+        // The two-player raid raised to 49: 40% more, not double.
+        assertEquals(1.4, RaidDuelRules.levelFactor(25, 49), 1e-9);
+        assertEquals(4164, RaidDuelRules.poolFor(RaidRarityTier.STARTER, 2, 25, 49));
+    }
+
+    @Test
+    void levelScalingIsUpwardOnly() {
+        assertEquals(1.0, RaidDuelRules.levelFactor(25, 25));
+        assertEquals(1.0, RaidDuelRules.levelFactor(50, 30), "a boss below its level keeps its base HP");
+        assertEquals(1.0, RaidDuelRules.levelFactor(0, 80), "a definition with no level is not scaled");
+        assertEquals(550, RaidDuelRules.duelHealth(RaidRarityTier.STARTER, 25, 25));
+        assertEquals(RaidDuelRules.poolFor(RaidRarityTier.MYTHICAL, 4), RaidDuelRules.poolFor(RaidRarityTier.MYTHICAL, 4, 70, 70));
+    }
+
+    @Test
     void eightPlayersFit() {
         assertTrue(RaidDuelRules.hasRoom(7));
         assertFalse(RaidDuelRules.hasRoom(8));
