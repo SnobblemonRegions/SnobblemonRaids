@@ -1,5 +1,15 @@
 # CobbleRaids changelog
 
+## 0.8.209 (2026-11-27)
+
+### Changed
+- Raid screens (the raid shop, rewards and catch screens) now open as Snobblemon screens and fill your whole window. You no longer need the WebGUI mod; update to Snobblemon Client 2.25.0.
+- When you catch a renowned boss, the catch screen names the affix your Pokémon keeps.
+
+### Fixed
+- The Daily Boss's 25-player limit now counts everyone who joined during the gather, not just players already fighting.
+- Damage from Ascension traits, like Thorns, now counts toward a boss's shared health and can no longer faint your copy of the boss on its own.
+
 ## 0.8.208-daily-boss (2026-11-26)
 
 ### New
