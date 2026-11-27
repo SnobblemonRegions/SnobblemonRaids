@@ -405,7 +405,7 @@ public final class WorldBossService {
         // Before anything is spawned: a crash during the start must not let the same day run again after the restart.
         if (dailyDay != null) s.markDailyDay(dailyDay);
         s.begin(kind, UUID.randomUUID(), definition.id().toString(), level.dimension().location().toString(),
-                spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, now, WorldBossRules.endMillis(config, now),
+                spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, now, WorldBossRules.endMillis(config, now, kind),
                 new WorldBossPool(pool), arenaMode);
         DUELS.clear();
         DUEL_PLAYER.clear();
@@ -524,6 +524,8 @@ public final class WorldBossService {
         String definitionId = s.definitionId();
         Map<UUID, Float> damage = pool == null ? Map.of() : pool.contributions();
         float total = pool == null ? 0f : pool.max();
+        boolean daily = s.kind() == WorldBossKind.DAILY;
+        String name = daily ? bossName(s) : null;      // read before finish() clears the boss
         abortDuels();
         s.finish(System.currentTimeMillis());
         flush(current);
@@ -534,8 +536,15 @@ public final class WorldBossService {
             if (visitor != null) say(visitor, "The fight is over. /cobbleraids worldboss return takes you back.", ChatFormatting.YELLOW);
         }
         clearBar();
-        broadcast(current, Component.literal("[World Boss] ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
-                .append(Component.literal(message).withStyle(ChatFormatting.YELLOW)));
+        if (daily) {
+            // The daily boss speaks as the Daily Boss and names itself, not as the generic event World Boss
+            String said = message.replace("The World Boss", name);
+            broadcast(current, dailyPrefix().append(Component.literal(said + " A new renowned boss comes tomorrow.")
+                    .withStyle(ChatFormatting.YELLOW)));
+        } else {
+            broadcast(current, Component.literal("[World Boss] ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                    .append(Component.literal(message).withStyle(ChatFormatting.YELLOW)));
+        }
         for (WorldBossListener listener : LISTENERS) {
             RaidFaultBarrier.guard("worldboss:listener-ended",
                     () -> listener.onEnded(bossId, definitionId, damage, total));

@@ -192,8 +192,16 @@ public final class WorldBossRules {
      * the end of the event window, and never sooner than a minute.
      */
     public static long endMillis(WorldBossConfig config, long startMillis) {
+        return endMillis(config, startMillis, WorldBossKind.EVENT);
+    }
+
+    /**
+     * When a boss of {@code kind} leaves undefeated. An event boss never outlasts the event window; the daily boss keeps its own clock, so a
+     * window that ended long ago (or ends mid-fight) never cuts it short.
+     */
+    public static long endMillis(WorldBossConfig config, long startMillis, WorldBossKind kind) {
         long end = startMillis + config.spawnLifetimeMinutes() * 60_000L;
-        if (config.windowEnd().isPresent()) end = Math.min(end, config.windowEnd().get().toEpochMilli());
+        if (kind != WorldBossKind.DAILY && config.windowEnd().isPresent()) end = Math.min(end, config.windowEnd().get().toEpochMilli());
         return Math.max(end, startMillis + 60_000L);
     }
 
