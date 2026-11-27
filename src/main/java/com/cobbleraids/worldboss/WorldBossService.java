@@ -216,6 +216,7 @@ public final class WorldBossService {
         lastDailyProblem = null;
         WorldBossMusic.clear();
         WorldBossDome.reset();
+        WorldBossSeal.reset();
         server = null;
         state = null;
         bar = null;
@@ -239,6 +240,18 @@ public final class WorldBossService {
             else WorldBossDome.clear(current);
             if (running && (visual.borderParticles() || visual.dome().enabled())) drawBorder(current, live, visual);
             else LAST_INSIDE.clear();
+        }
+        WorldBossState sealed = state;
+        if (sealed.active() && sealed.kind() == WorldBossKind.DAILY && sealed.pool() != null && !sealed.pool().isDefeated()) {
+            WorldBossConfig visual = WorldBossConfigManager.get();
+            if (visual.dome().enabled()) {
+                RaidFaultBarrier.guard("worldboss:seal", () -> WorldBossSeal.tick(current, sealed, joinSecondsLeft(sealed, visual),
+                        visual.joinCountdownSeconds()));
+            } else {
+                WorldBossSeal.clear(current);
+            }
+        } else {
+            WorldBossSeal.clear(current);   // the boss left or fell: the seal goes with it
         }
         if (tickCounter % SECOND != 0) return;
 
@@ -1391,10 +1404,12 @@ public final class WorldBossService {
             Boolean was = LAST_INSIDE.put(player.getUUID(), inside);
             if (was != null && was != inside) {
                 if (config.dome().enabled()) WorldBossDome.ripple(player, inside);
+                boolean daily = s.kind() == WorldBossKind.DAILY;
+                String zone = daily ? "the Daily Boss arena" : "the World Boss zone";
                 player.displayClientMessage(Component.literal(inside
-                        ? "You entered the World Boss zone. Right-click the boss, or /cr worldboss join."
-                        : "You left the World Boss zone.")
-                        .withStyle(inside ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.GRAY), true);
+                        ? "You entered " + zone + ". Right-click the boss, or /cr worldboss join."
+                        : "You left " + zone + ".")
+                        .withStyle(inside ? (daily ? ChatFormatting.GOLD : ChatFormatting.LIGHT_PURPLE) : ChatFormatting.GRAY), true);
             }
             if (columns.isEmpty() || !config.borderParticles() || config.dome().enabled()) continue;   // the dome replaces the particle wall
             ServerLevel level = player.serverLevel();
@@ -1433,17 +1448,19 @@ public final class WorldBossService {
         barDirty = false;
         WorldBossPool pool = s.pool();
         WorldBossConfig config = WorldBossConfigManager.get();
+        BossEvent.BossBarColor colour = s.kind() == WorldBossKind.DAILY ? BossEvent.BossBarColor.WHITE : BossEvent.BossBarColor.PINK;
+        if (event.getColor() != colour) event.setColor(colour);
         event.setProgress(pool.max() <= 0f ? 0f : Math.max(0f, Math.min(1f, pool.current() / pool.max())));
         Set<UUID> fighting = new HashSet<>(DUELS.keySet());
         fighting.addAll(CHAIN.keySet());
         long minutesLeft = s.endsAtMillis() > 0L ? Math.max(0L, (s.endsAtMillis() - System.currentTimeMillis() + 59_999L) / 60_000L) : -1L;
         int gatherLeft = joinSecondsLeft(s, config);
+        WorldBossBarText.Palette palette = s.kind() == WorldBossKind.DAILY ? WorldBossBarText.Palette.RENOWN : WorldBossBarText.Palette.EVENT;
         if (gatherLeft > 0) {
-            event.setName(Component.literal(bossName(s) + " - gathering, the fight opens in "
-                    + gatherLeft / 60 + ":" + String.format("%02d", gatherLeft % 60) + " (" + GATHERED.size() + " ready)"));
+            event.setName(WorldBossBarText.gathering(bossName(s), gatherLeft, GATHERED.size(), palette));
         } else {
             event.setName(WorldBossBarText.build(bossName(s), pool.current(), pool.max(),
-                    percentLeft(pool), fighting.size(), minutesLeft));
+                    percentLeft(pool), fighting.size(), minutesLeft, palette));
         }
         for (ServerPlayer player : current.getPlayerList().getPlayers()) {
             boolean show = !pool.isDefeated() && (DUELS.containsKey(player.getUUID())
