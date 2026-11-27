@@ -26,9 +26,10 @@
     "polymer-resource-pack": ">=0.9.19"
   },
   "recommends": {
-    "webgui": ">=1.8.1"
+    "snobblemon_server": "*"
   },
   "suggests": {
+    "webgui": ">=1.8.1",
     "placeholder-api": ">=2.4.0",
     "mega_showdown": "*",
     "simpletms": "*",

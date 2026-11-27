@@ -12,10 +12,11 @@ import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * The server's side of the WebGUI pages: ships this mod's page bundle into WebGUI's folder and opens
- * pages for players whose client can show them.
+ * The server's side of the raid pages: opens them for players whose client can show them.
  *
- * <p>Pages live in this jar under {@code web/} and are served to clients as
+ * <p>With Snobblemon GUI installed each page is a native Snobblemon page ({@code cobbleraids_<page>}, see
+ * {@link WebGuiBridge}). Otherwise WebGUI is the fallback: this mod's page bundle is shipped into WebGUI's
+ * folder. Those pages live in this jar under {@code web/} and are served to clients as
  * {@code webgui://cobbleraids/<page>} (WebGUI 2.0.0 refuses the one-slash form and opens a blank page). WebGUI sends them down the player's own connection, so there
  * is no web host and no open port to run.
  */
@@ -27,7 +28,7 @@ public final class WebUi {
     /** Folder under WebGUI's page root that this mod owns outright; sync deletes anything else in it. */
     private static final String PAGE_FOLDER = "cobbleraids";
 
-    /** True once WebGUI is installed and every call this mod makes into it has been resolved. */
+    /** True once Snobblemon GUI (or WebGUI) is installed and every call this mod makes into it has been resolved. */
     public static boolean available() {
         return WebGuiBridge.bound();
     }
@@ -38,13 +39,20 @@ public final class WebUi {
     }
 
     public static void register() {
-        if (!FabricLoader.getInstance().isModLoaded(WEBGUI_ID)) {
-            RaidLog.info("WebGUI is not installed; web pages are disabled.");
+        boolean snobble = FabricLoader.getInstance().isModLoaded(WebGuiBridge.SNOBBLE_ID);
+        boolean webgui = FabricLoader.getInstance().isModLoaded(WEBGUI_ID);
+        if (!snobble && !webgui) {
+            RaidLog.info("Snobblemon GUI is not installed; the raid pages are disabled.");
             return;
         }
-        if (!WebGuiBridge.bind()) return;
-        ServerLifecycleEvents.SERVER_STARTING.register(server ->
-                RaidFaultBarrier.guard("startup:web-bundle", WebUi::installBundle));
+        if (!WebGuiBridge.bind(snobble, webgui)) return;
+        if (WebGuiBridge.backend() == WebGuiBridge.Backend.SNOBBLE) {
+            RaidLog.info("Raid pages are shown by Snobblemon GUI (native pages; players need the Snobblemon Client).");
+        } else {
+            // Only WebGUI serves the bundled web pages; Snobblemon GUI has its own layouts and nothing needs copying.
+            ServerLifecycleEvents.SERVER_STARTING.register(server ->
+                    RaidFaultBarrier.guard("startup:web-bundle", WebUi::installBundle));
+        }
         ShopWebPage.register();
         TrophyWebPage.register();
         LegendWebPage.register();
@@ -91,7 +99,7 @@ public final class WebUi {
 
     /** Whether this player can be shown a page at all. */
     public static boolean canShow(ServerPlayer player) {
-        return available() && WebGuiBridge.clientHasWebGui(player);
+        return available() && WebGuiBridge.clientReady(player);
     }
 
     /** Opens a page full-screen. Returns false, sending nothing, if the client cannot show it. */
