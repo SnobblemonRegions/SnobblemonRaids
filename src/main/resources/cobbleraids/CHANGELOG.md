@@ -6,6 +6,10 @@
 - Daily Boss: every day at 7 pm Eastern a renowned World Boss appears for up to 25 players. Everyone who deals it damage earns the raid reward and a chance to catch it.
 - Renowned bosses carry one of 30 renown affixes and have a dark bronze look. Catch one and your Pokémon keeps its affix.
 - The Daily Boss has its own arena: a glowing gold seal turns on the ground beneath it and an amber veil marks the edge. The seal burns red when the boss is nearly beaten.
+- Renown Coins: every Daily Boss you help beat gives you a coin struck with that boss, two if you are in the top three. Coins of the same boss stack and can be traded.
+- The Coin Album (/cobbleraids album): press your coins in to collect one of every Daily Boss, page by page, and earn titles like Numismatist and Renowned along the way.
+- The Renown Vendor, the last page of the raid shop, takes Renown Coins: a Legendary Voucher that lets you choose any legendary at level 1 (one a month), a Master Ball, an Ability Patch and more.
+- The Daily Boss and the seasonal World Boss now have loot of their own, with better odds on the rarest items.
 - The Raidio: the Raid Radar is now a pocket radio you tune by ear. Each tier plays its own tune that speeds up as you get closer. Craft it from iron, redstone, a note block, amethyst and a Cobblemon upgrade.
 - After a win you can keep the boss in your personal boss shop, up to 5 at a time for 7 days each.
 
