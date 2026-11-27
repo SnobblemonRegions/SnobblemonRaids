@@ -9,7 +9,6 @@ import com.cobbleraids.network.CapturePulseResultPayload;
 import com.cobbleraids.network.CaptureResultPayload;
 import com.google.gson.JsonObject;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import com.cobblemon.mod.common.CobblemonSounds;
@@ -31,7 +30,6 @@ public final class CaptureWebPage {
     public static final String CHANNEL = "cobbleraids.capture";
     public static final String PAGE = "capture/capture.html";
 
-    private static final WebIconFeed ICONS = new WebIconFeed("capture_icons");
 
     /** What a player's open page was offered, held until it asks for it. */
     private record Offer(CaptureOfferPayload offer, CaptureDetailsPayload details) {}
@@ -70,7 +68,6 @@ public final class CaptureWebPage {
         UUID raidId = held.offer().raidId();
         switch (WebJson.string(message, "action")) {
             case "ready" -> {
-                ICONS.reset(player.getUUID());
                 sendOffer(player, held);
             }
             case "choice" -> {
@@ -108,7 +105,6 @@ public final class CaptureWebPage {
             boolean have = WebIcons.dataUrl(key).isPresent();
             details.addProperty("icon", have ? key : "");
             out.add("details", details);
-            if (have) ICONS.send(player, Set.of(key));
         }
         WebGuiBridge.emit(player, "capture_offer", out.toString());
     }

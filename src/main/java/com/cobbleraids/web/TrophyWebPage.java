@@ -10,8 +10,6 @@ import com.cobbleraids.network.TrophyRoomEntryPayload;
 import com.cobbleraids.network.TrophyRoomPagePayload;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import java.util.LinkedHashSet;
-import java.util.Set;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -27,7 +25,6 @@ public final class TrophyWebPage {
     /** The page always lays out three display cases, so it always asks for three. */
     private static final int COLUMNS = TrophyGalleryQuery.MAX_COLUMNS;
 
-    private static final WebIconFeed ICONS = new WebIconFeed("trophy_icons");
 
     static void register() {
         WebGuiBridge.onPageEvent(CHANNEL, (player, json) ->
@@ -44,7 +41,6 @@ public final class TrophyWebPage {
         if (message == null) return;
         switch (WebJson.string(message, "action")) {
             case "ready" -> {
-                ICONS.reset(player.getUUID());
                 TrophyRoomGateway.handle(player, TrophyRoomActionPayload.initial(COLUMNS));
             }
             case "query" -> TrophyRoomGateway.handle(player, new TrophyRoomActionPayload(
@@ -66,7 +62,6 @@ public final class TrophyWebPage {
         page.addProperty("filteredCount", payload.filteredCount());
         page.add("tiers", WebTiers.all());
         JsonArray entries = new JsonArray();
-        Set<String> wanted = new LinkedHashSet<>();
         for (TrophyRoomEntryPayload entry : payload.entries()) {
             JsonObject cell = new JsonObject();
             cell.addProperty("species", entry.species());
@@ -83,11 +78,9 @@ public final class TrophyWebPage {
             String key = WebIcons.speciesKey(entry.species(), entry.shiny());
             boolean have = WebIcons.dataUrl(key).isPresent();
             cell.addProperty("icon", have ? key : "");
-            if (have) wanted.add(key);
             entries.add(cell);
         }
         page.add("entries", entries);
-        ICONS.send(player, wanted);
         WebGuiBridge.emit(player, "trophy_page", page.toString());
     }
 }

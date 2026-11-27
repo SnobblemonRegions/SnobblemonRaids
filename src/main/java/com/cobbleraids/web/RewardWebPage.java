@@ -13,9 +13,7 @@ import com.cobbleraids.reward.NativeRewardScreenGateway;
 import com.cobblemon.mod.common.CobblemonSounds;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.sounds.SoundEvent;
@@ -40,7 +38,6 @@ public final class RewardWebPage {
     public static final String CHANNEL = "cobbleraids.reveal";
     public static final String PAGE = "reveal/reveal.html";
 
-    private static final WebIconFeed ICONS = new WebIconFeed("reveal_icons");
     /** The offer each player's open page is showing; the only choices a page may claim. */
     private static final Map<UUID, PendingRewardRevealPayload> OFFERS = new ConcurrentHashMap<>();
 
@@ -69,7 +66,6 @@ public final class RewardWebPage {
         if (offer == null) return;
         switch (WebJson.string(message, "action")) {
             case "ready" -> {
-                ICONS.reset(player.getUUID());
                 WebGuiBridge.emit(player, "reveal_offer", offerJson(offer).toString());
             }
             case "choose" -> {
@@ -131,8 +127,6 @@ public final class RewardWebPage {
         out.addProperty("points", result.raidPointsGranted());
         out.addProperty("hasMore", result.hasMoreQueued());
         JsonArray granted = new JsonArray();
-        Set<String> wanted = new LinkedHashSet<>();
-        wanted.add(WebIcons.FALLBACK_ITEM);
         for (RewardItemPayload item : result.granted()) {
             String namespace = item.item().getNamespace();
             String path = item.item().getPath();
@@ -143,10 +137,8 @@ public final class RewardWebPage {
             row.addProperty("amount", Math.max(1, item.amount()));
             row.addProperty("icon", key);
             granted.add(row);
-            wanted.add(key);
         }
         out.add("granted", granted);
-        ICONS.send(player, wanted);
         WebGuiBridge.emit(player, "reveal_result", out.toString());
         if (result.success()) playOpenSound(player, WebTiers.parse(offer.rarityTier()));
     }

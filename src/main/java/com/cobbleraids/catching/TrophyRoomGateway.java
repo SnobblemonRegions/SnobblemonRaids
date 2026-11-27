@@ -44,7 +44,7 @@ public final class TrophyRoomGateway {
             java.util.Collection<TrophyEntry> held = TrophyLedger.forPlayer(player.getUUID()).values();
             long shiny = held.stream().filter(TrophyEntry::shiny).count();
             player.sendSystemMessage(Component.literal(
-                            "The trophy room needs the WebGUI mod on your client. You hold " + held.size()
+                            "The trophy room needs the Snobblemon Client mod. You hold " + held.size()
                                     + " trophies, " + shiny + " of them shiny.")
                     .withStyle(ChatFormatting.RED));
         }

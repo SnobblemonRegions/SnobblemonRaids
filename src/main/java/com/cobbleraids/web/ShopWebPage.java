@@ -8,8 +8,6 @@ import com.cobbleraids.network.ShopPagePayload;
 import com.cobbleraids.shop.RaidShopGateway;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import java.util.LinkedHashSet;
-import java.util.Set;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -19,7 +17,7 @@ import net.minecraft.server.level.ServerPlayer;
  * {@link RaidShopGateway#handle}, which validates it exactly as it does a native packet; the page it
  * sends back is turned into JSON here instead of a payload.
  *
- * <p>WebGUI caps one event at 32 KB, so icons do not ride with the page; see {@link WebIconFeed}.
+ * <p>(icons: Snobblemon GUI draws them from shop_icons.json and the item art; see {@code WebIcons}).
  */
 public final class ShopWebPage {
     private ShopWebPage() {}
@@ -27,7 +25,6 @@ public final class ShopWebPage {
     public static final String CHANNEL = "cobbleraids.shop";
     public static final String PAGE = "shop/shop.html";
 
-    private static final WebIconFeed ICONS = new WebIconFeed("shop_icons");
 
     static void register() {
         WebGuiBridge.onPageEvent(CHANNEL, (player, json) ->
@@ -45,7 +42,6 @@ public final class ShopWebPage {
         int page = WebJson.integer(message, "page");
         switch (WebJson.string(message, "action")) {
             case "ready" -> {
-                ICONS.reset(player.getUUID());
                 RaidShopGateway.handle(player, ShopActionPayload.turnTo(0));
             }
             case "turn" -> RaidShopGateway.handle(player, ShopActionPayload.turnTo(page));
@@ -70,7 +66,6 @@ public final class ShopWebPage {
         page.addProperty("balance", payload.balance());
         page.addProperty("rotatesInMillis", payload.rotatesInMillis());
         JsonArray entries = new JsonArray();
-        Set<String> wanted = new LinkedHashSet<>();
         String awaiting = RaidShopGateway.awaitingConfirmation(player);
         // Giving up a saved boss is confirmed on that boss's own Replace button.
         String awaitingReplace = awaiting != null && awaiting.startsWith("replace:") ? awaiting.substring("replace:".length()) : null;
@@ -117,7 +112,6 @@ public final class ShopWebPage {
             }
             if (WebIcons.dataUrl(key).isEmpty()) key = WebIcons.FALLBACK_ITEM;
             cell.addProperty("icon", key);
-            wanted.add(key);
             entries.add(cell);
         }
         page.add("entries", entries);
@@ -139,13 +133,11 @@ public final class ShopWebPage {
                 String key = WebIcons.speciesKey(species, boss.shiny());
                 if (WebIcons.dataUrl(key).isEmpty()) key = WebIcons.FALLBACK_ITEM;
                 o.addProperty("icon", key);
-                wanted.add(key);
                 page.add("offer", o);
             }
         }
 
         // Icons first: the page paints from its cache when the page message lands.
-        ICONS.send(player, wanted);
         WebGuiBridge.emit(player, "shop_page", page.toString());
     }
 }
