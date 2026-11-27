@@ -124,6 +124,16 @@ public record RaidRewardPolicy(
         return specialtyTable.replace(TIER_TOKEN, tier.serializedName());
     }
 
+    /** The general table for a reward tier that is not a rarity tier ("daily", "world_boss"). */
+    public String generalTableFor(String tableTier) {
+        return generalTable.replace(TIER_TOKEN, tableTier);
+    }
+
+    /** The specialty table for a reward tier that is not a rarity tier ("daily", "world_boss"). */
+    public String specialtyTableFor(String tableTier) {
+        return specialtyTable.replace(TIER_TOKEN, tableTier);
+    }
+
     /** The boss-specific specialty table id, which may or may not exist; the resolver checks. */
     public String bossSpecialtyTableFor(String species) {
         return bossSpecialtyTable.replace(SPECIES_TOKEN, species.toLowerCase(Locale.ROOT));

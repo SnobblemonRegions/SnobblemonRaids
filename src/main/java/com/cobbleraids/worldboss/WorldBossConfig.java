@@ -101,7 +101,20 @@ public record WorldBossConfig(
         Arena arena,
         float poolMax,
         List<String> bossBannedMoves,
-        Daily daily) {
+        Daily daily,
+        List<Seasonal> seasonal) {
+
+    /**
+     * One seasonal exclusive an event World Boss pays (owner, 2026-11-27): rolled once per qualifying player per defeat, added to their reward
+     * claim. Set in {@code reward.seasonal} for each event; empty by default. Any registered item id works, another mod's included.
+     */
+    public record Seasonal(String item, int count, float chance) {
+        public Seasonal {
+            require(item != null && item.contains(":"), "reward.seasonal.item", "must be an item id like mod:item");
+            require(count >= 1 && count <= 64, "reward.seasonal.count", "must be 1 to 64");
+            require(chance > 0f && chance <= 1f, "reward.seasonal.chance", "must be above 0 and at most 1");
+        }
+    }
 
     /**
      * The daily renowned World Boss: once a day at a fixed local time, a renowned boss (name, epithet, boon and affix) appears for up to
@@ -355,7 +368,7 @@ public record WorldBossConfig(
                 70, 3_000L, 240, 30, 45, true, 128.0,
                 "minecraft:overworld", 300, 1500, 30, 30, true, 40, 60,
                 5f, DEFAULT_REWARD_RAID_POINTS, 0, true, 40, 8f, 3f, "#9A5CC6", 50, Music.defaults(), Dome.defaults(), Look.defaults(), Night.defaults(), Arena.defaults(),
-                150_000f, HEALING_MOVES, Daily.defaults());
+                150_000f, HEALING_MOVES, Daily.defaults(), List.of());
     }
 
     /** The wall's tint as an ARGB int: {@link #wallColor} with the alpha of {@link #wallOpacityPercent}. */
@@ -452,7 +465,22 @@ public record WorldBossConfig(
                         (long) num(dailyJson, "daily.duel_health", dy.duelHealth()),
                         num(dailyJson, "daily.wins_per_player", dy.winsPerPlayer()),
                         (int) num(dailyJson, "daily.min_players", dy.minPlayers()),
-                        (int) num(dailyJson, "daily.grace_seconds", dy.graceSeconds())));
+                        (int) num(dailyJson, "daily.grace_seconds", dy.graceSeconds())),
+                seasonal(reward));
+    }
+
+    private static List<Seasonal> seasonal(JsonObject reward) {
+        if (reward == null || !reward.has("seasonal")) return List.of();
+        if (!reward.get("seasonal").isJsonArray()) throw new IllegalArgumentException("reward.seasonal must be a list");
+        List<Seasonal> out = new ArrayList<>();
+        for (var element : reward.getAsJsonArray("seasonal")) {
+            if (!element.isJsonObject()) throw new IllegalArgumentException("reward.seasonal entries must be objects");
+            JsonObject one = element.getAsJsonObject();
+            out.add(new Seasonal(one.has("item") ? one.get("item").getAsString() : null,
+                    one.has("count") ? one.get("count").getAsInt() : 1,
+                    one.has("chance") ? one.get("chance").getAsFloat() : 1f));
+        }
+        return List.copyOf(out);
     }
 
     /** The defaults written back as JSON, with the keys in the same grouping the parser reads. */
@@ -503,6 +531,15 @@ public record WorldBossConfig(
         reward.addProperty("min_percent_of_average", minPercentOfAverage);
         reward.addProperty("raid_points", rewardRaidPoints);
         reward.addProperty("max_per_player_per_day", rewardMaxPerDay);
+        com.google.gson.JsonArray seasonalOut = new com.google.gson.JsonArray();
+        for (Seasonal one : seasonal) {
+            JsonObject entry = new JsonObject();
+            entry.addProperty("item", one.item());
+            entry.addProperty("count", one.count());
+            entry.addProperty("chance", one.chance());
+            seasonalOut.add(entry);
+        }
+        reward.add("seasonal", seasonalOut);
         root.add("reward", reward);
         JsonObject visual = new JsonObject();
         visual.addProperty("border_particles", borderParticles);

@@ -8,8 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -246,6 +248,46 @@ class WorldBossConfigAndRulesTest {
         assertEquals(start + 40 * 60_000L, WorldBossRules.endMillis(config, start));
         long late = Instant.parse("2026-11-02T23:50:00Z").toEpochMilli();
         assertEquals(Instant.parse("2026-11-03T00:00:00Z").toEpochMilli(), WorldBossRules.endMillis(config, late));
+    }
+
+    @Test
+    void theTopThreeByDamageAreTheThreeBiggestHitters() {
+        UUID a = UUID.randomUUID(), b = UUID.randomUUID(), c = UUID.randomUUID(), d = UUID.randomUUID();
+        Map<UUID, Float> damage = new java.util.LinkedHashMap<>();
+        damage.put(a, 10f);
+        damage.put(b, 900f);
+        damage.put(c, 300f);
+        damage.put(d, 450f);
+        assertEquals(Set.of(b, d, c), WorldBossRules.topDamage(damage, 3));
+        assertEquals(Set.of(b), WorldBossRules.topDamage(damage, 1));
+        assertEquals(Set.of(a, b, c, d), WorldBossRules.topDamage(damage, 10), "fewer fighters than places: everyone");
+    }
+
+    @Test
+    void seasonalItemsRollTheirOwnChanceEachAndNothingByDefault() {
+        assertTrue(WorldBossRules.rollSeasonal(List.of(), new java.util.Random(1)).isEmpty());
+        var always = new WorldBossConfig.Seasonal("minecraft:snowball", 3, 1f);
+        var never = new WorldBossConfig.Seasonal("minecraft:diamond", 1, 0.0001f);
+        var rolled = WorldBossRules.rollSeasonal(List.of(always, never), new java.util.Random(7));
+        assertEquals(1, rolled.size());
+        assertEquals("minecraft:snowball", rolled.get(0).item().toString());
+        assertEquals(3, rolled.get(0).count());
+        int hits = 0;
+        var half = new WorldBossConfig.Seasonal("minecraft:emerald", 1, 0.5f);
+        java.util.Random random = new java.util.Random(42);
+        for (int i = 0; i < 4000; i++) hits += WorldBossRules.rollSeasonal(List.of(half), random).size();
+        assertTrue(hits > 1800 && hits < 2200, "about half: " + hits);
+    }
+
+    @Test
+    void theSeasonalListRoundTripsAndIsEmptyByDefault() {
+        assertTrue(WorldBossConfig.defaults().seasonal().isEmpty());
+        WorldBossConfig config = WorldBossConfig.fromJson(json(
+                "{\"reward\":{\"seasonal\":[{\"item\":\"minecraft:snowball\",\"count\":4,\"chance\":0.25}]}}"));
+        assertEquals(List.of(new WorldBossConfig.Seasonal("minecraft:snowball", 4, 0.25f)), config.seasonal());
+        assertEquals(config.seasonal(), WorldBossConfig.fromJson(config.toJson()).seasonal());
+        assertThrows(IllegalArgumentException.class, () -> WorldBossConfig.fromJson(json(
+                "{\"reward\":{\"seasonal\":[{\"item\":\"minecraft:snowball\",\"chance\":2}]}}")));
     }
 
     @Test

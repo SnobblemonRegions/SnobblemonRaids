@@ -175,12 +175,12 @@ public final class RaidRewardService {
             // not written to disk.
             long rewardSeed = ThreadLocalRandom.current().nextLong();
             // Raid Points are fixed now and counted against today's cap, so a claim held for another day pays no more.
-            int points = com.cobbleraids.reward.RaidRewardGrantEngine.reservePoints(server, playerId,
+            int points = eligibility.skipPoints() ? 0 : com.cobbleraids.reward.RaidRewardGrantEngine.reservePoints(server, playerId,
                     definition.rarityTier(), !eligibility.renownTitle().isEmpty());
             PendingRaidReward pending = new PendingRaidReward(
                     eligibility.raidId(), eligibility.definitionId(), definition.rarityTier(), rewards, percentage, bonusRolls,
                     eligibility.elapsedCombatTicks(), eligibility.participants().size(), rewardSeed,
-                    eligibility.renownTitle(), eligibility.renownBoon(), points);
+                    eligibility.renownTitle(), eligibility.renownBoon(), points, eligibility.tableTier(), eligibility.extrasFor(playerId));
             PENDING.computeIfAbsent(playerId, ignored -> new ArrayDeque<>()).addLast(pending);
             if (server.getPlayerList().getPlayer(playerId) != null) OPEN_DELAY.putIfAbsent(playerId, GUI_OPEN_DELAY_TICKS);
         }

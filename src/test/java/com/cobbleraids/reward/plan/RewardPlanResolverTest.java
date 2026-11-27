@@ -371,4 +371,30 @@ class RewardPlanResolverTest {
         assertEquals("policy", policyPlan.mode());
         assertEquals("legacy", legacyPlan.mode());
     }
+
+    @Test
+    @DisplayName("a boss reward tier rolls its own tables, keeps the boss's own stone pity, and leaves ordinary raids alone")
+    void aTableTierRollsItsOwnTables() {
+        Predicate<String> dailyRayquaza = Set.of("cobbleraids:specialty/boss/rayquaza", "cobbleraids:specialty/boss_daily/rayquaza")::contains;
+        CobbleRaidsConfig.MegaPity pity = new CobbleRaidsConfig.MegaPity(true, 12);
+
+        RewardPlan.Policy daily = assertInstanceOf(RewardPlan.Policy.class, RewardPlanResolver.resolve(rewards(List.of(), noBonus()),
+                emptyChoice(), RaidRarityTier.LEGENDARY, "rayquaza", 100.0, 0, SHIPPED, NO_CURRENCY, dailyRayquaza, 0, pity, "daily"));
+        assertEquals("cobbleraids:specialty/boss_daily/rayquaza", daily.lootTables().get(0), "a boss with a stone: its daily boss table");
+        assertTrue(daily.lootTables().contains("cobbleraids:general/daily"));
+        assertTrue(daily.lootTables().stream().noneMatch(t -> t.endsWith("general/legendary")));
+
+        RewardPlan.Policy owed = assertInstanceOf(RewardPlan.Policy.class, RewardPlanResolver.resolve(rewards(List.of(), noBonus()),
+                emptyChoice(), RaidRarityTier.LEGENDARY, "rayquaza", 100.0, 0, SHIPPED, NO_CURRENCY, dailyRayquaza, 12, pity, "daily"));
+        assertEquals("cobbleraids:specialty/mega/rayquaza", owed.lootTables().get(0), "the pity stone is the boss's own, whatever the tier");
+
+        RewardPlan.Policy noStone = assertInstanceOf(RewardPlan.Policy.class, RewardPlanResolver.resolve(rewards(List.of(), noBonus()),
+                emptyChoice(), RaidRarityTier.LEGENDARY, "zekrom", 100.0, 0, SHIPPED, NO_CURRENCY, dailyRayquaza, 0, pity, "world_boss"));
+        assertEquals("cobbleraids:specialty/world_boss", noStone.lootTables().get(0));
+        assertTrue(noStone.lootTables().contains("cobbleraids:general/world_boss"));
+
+        RewardPlan.Policy ordinary = assertInstanceOf(RewardPlan.Policy.class, RewardPlanResolver.resolve(rewards(List.of(), noBonus()),
+                emptyChoice(), RaidRarityTier.LEGENDARY, "zekrom", 100.0, 0, SHIPPED, NO_CURRENCY, dailyRayquaza, 0, pity, ""));
+        assertEquals("cobbleraids:specialty/legendary", ordinary.lootTables().get(0), "no table tier: exactly as before");
+    }
 }

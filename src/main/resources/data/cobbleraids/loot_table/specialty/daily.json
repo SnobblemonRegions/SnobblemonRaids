@@ -1,0 +1,155 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/daycareplus/netherite_incubator",
+          "weight": 45
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/daycareplus/daycare_spark",
+          "weight": 150
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/daycareplus/shiny_booster",
+          "weight": 150
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/cobblecapsule/pokemon_capsule_shiny",
+          "weight": 30
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/daycareplus/daycare_booster",
+          "weight": 100
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/daycareplus/fertility_candy",
+          "weight": 75
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/leaf/tm_tr",
+          "weight": 1000
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/leaf/capsule_basic",
+          "weight": 400
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/leaf/capsule_rare",
+          "weight": 300
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/cobblecapsule/capsule_core_epic",
+          "weight": 20
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/cobblecapsule/pokemon_capsule",
+          "weight": 50
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/leaf/bonds_pair",
+          "weight": 160
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/companion_bonds/shiny_leaf",
+          "weight": 30
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/companion_bonds/shiny_crown",
+          "weight": 10
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/ridetraining/training_reader",
+          "weight": 80
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/ridetraining/riding_upgrade",
+          "weight": 60
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/leaf/type_charms",
+          "weight": 400
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/leaf/catch_exp_charms",
+          "weight": 150
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/cobblemoncharms/multi_charm",
+          "weight": 30
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/cobblemoncharms/gold_bottle_cap",
+          "weight": 30
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/cobblemoncharms/shiny_charm",
+          "weight": 8
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/cobblesafari/auspicious_pokeball",
+          "weight": 100
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/cobblesafari/union_room_pokeball",
+          "weight": 60
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/cobblesafari/redchain_random_ball",
+          "weight": 5
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/opt/cobblesafari/auspiciouspokeball_gold",
+          "weight": 5
+        },
+        {
+          "type": "minecraft:item",
+          "name": "cobblemon:rare_candy",
+          "weight": 400
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/leaf/raid_core",
+          "weight": 15
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:specialty/leaf/guardian_scale",
+          "weight": 8
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:base/mythical",
+          "weight": 6129
+        }
+      ]
+    }
+  ]
+}

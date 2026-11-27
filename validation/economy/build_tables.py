@@ -267,6 +267,17 @@ MEGA_WEIGHT = 1000
 MEGA_TIERS = ("powerhouse", "legendary", "mythical")
 
 
+# Boss reward tiers (owner, 2026-11-27). Not rarity tiers: the Daily Boss and the event World Boss roll these instead of their boss's own
+# tier (RewardPlanResolver's tableTier). Each is built from a rarity tier's rows, with some rows multiplied and its own Mega Stone weight.
+# daily: mythical odds with the premium rows at 1.5x and the boss's Mega Stone at 15%. world_boss: mythical odds as they are.
+DAILY_PREMIUM = {"shiny charm": 1.5, "gold bottle cap": 1.5, "multi charm": 1.5, "shiny capsule": 1.5, "netherite incubator": 1.5}
+REWARD_TIERS = [
+    # name, the rarity tier it is built from, row multipliers, Mega Stone weight
+    ("daily", "mythical", DAILY_PREMIUM, 1500),
+    ("world_boss", "mythical", {}, MEGA_WEIGHT),
+]
+
+
 def mega_bosses(manifest):
     """The bosses that drop a Mega Stone: every boss with one, outside the tiers that lost them."""
     return {boss: entry for boss, entry in manifest["mega"].items() if entry["tier"] in MEGA_TIERS}
@@ -425,6 +436,15 @@ def build_tables(manifest):
         tier_index = TIERS.index(entry["tier"])
         tables["specialty/boss/%s.json" % boss] = single_pool(
             specialty_entries(tables, tier_index, entry["tier"], boss))
+
+    # the boss reward tiers: general/<name>, specialty/<name> and specialty/boss_<name>/<boss> for every boss with a stone
+    for name, source, boost, mega in REWARD_TIERS:
+        index = TIERS.index(source)
+        tables["general/%s.json" % name] = tables["general/%s.json" % source]
+        tables["specialty/%s.json" % name] = single_pool(specialty_entries(tables, index, source, None, boost, mega))
+        for boss in sorted(mega_bosses(manifest)):
+            tables["specialty/boss_%s/%s.json" % (name, boss)] = single_pool(
+                specialty_entries(tables, index, source, boss, boost, mega))
     return {relative: with_load_conditions(table) for relative, table in tables.items()}
 
 
@@ -459,15 +479,15 @@ def with_load_conditions(table):
     return conditioned
 
 
-def specialty_entries(tables, index, tier, boss):
-    """One specialty pool: the premium rows, then whatever is left over falls to base."""
+def specialty_entries(tables, index, tier, boss, boost=None, mega_weight=MEGA_WEIGHT):
+    """One specialty pool: the premium rows (times their multiplier in boost), then whatever is left over falls to base."""
     entries = []
     spent = 0
     if boss is not None:
-        entries.append(table_entry("cobbleraids:specialty/mega/" + boss, MEGA_WEIGHT))
-        spent += MEGA_WEIGHT
+        entries.append(table_entry("cobbleraids:specialty/mega/" + boss, mega_weight))
+        spent += mega_weight
     for _name, target, weights in SPECIALTY_ROWS:
-        weight = weights[index]
+        weight = boosted(weights[index], _name, boost)
         if weight <= 0:
             continue
         spent += weight
@@ -486,6 +506,13 @@ def specialty_entries(tables, index, tier, boss):
     return entries
 
 
+def boosted(weight, name, boost):
+    """A row's weight times its multiplier, rounded half up (weights are whole hundredths of a percent)."""
+    if not boost or name not in boost or weight <= 0:
+        return weight
+    return int(weight * boost[name] + 0.5)
+
+
 # --- probability report ------------------------------------------------------------------------
 
 def specialty_breakdown(index, boss_matched):
@@ -499,6 +526,36 @@ def specialty_breakdown(index, boss_matched):
             spent += weights[index]
     rows.append(("base fallback", POOL_TOTAL - spent))
     return rows
+
+
+def reward_tier_lines():
+    """The boss reward tiers next to the rarity tier each is built from, row by row, unmatched and with a stone."""
+    lines = ["", "## Boss reward tiers", "",
+             "The Daily Boss and the event World Boss roll these instead of their boss's own tier. Mega Stone is the boss-matched row; "
+             "everything else is the unmatched pool (the matched pool takes the stone's weight out of the fallback).", ""]
+    header = ["Row"]
+    columns = []
+    for name, source, boost, mega in REWARD_TIERS:
+        header.append("%s (from %s)" % (name, source))
+        columns.append((TIERS.index(source), boost, mega))
+    source_index = TIERS.index(REWARD_TIERS[0][1])
+    lines.append("| Row | mythical | " + " | ".join(header[1:]) + " |")
+    lines.append("|---|---:|" + "---:|" * len(columns))
+    lines.append("| mega stone | %s | %s |" % (pct(MEGA_WEIGHT), " | ".join(pct(mega) for _i, _b, mega in columns)))
+    totals = [0] * (len(columns) + 1)
+    for row, _target, weights in SPECIALTY_ROWS:
+        values = [weights[source_index]] + [boosted(weights[i], row, b) for i, b, _m in columns]
+        if not any(values):
+            continue
+        for k, v in enumerate(values):
+            totals[k] += v
+        lines.append("| %s | %s |" % (row, " | ".join(pct(v) for v in values)))
+    lines.append("| base fallback | %s |" % " | ".join(pct(POOL_TOTAL - t) for t in totals))
+    return lines
+
+
+def pct(weight):
+    return "%.2f%%" % (weight / 100.0) if weight * 100 % 100 == 0 or weight >= 10 else "%.3f%%" % (weight / 100.0)
 
 
 def write_report(manifest):
@@ -534,6 +591,7 @@ def write_report(manifest):
                 weight = dict(specialty_breakdown(index, matched and TIERS[index] in MEGA_TIERS)).get(name, 0)
                 cells.append("%.2f%%" % (weight / 100.0) if weight else "--")
         lines.append("| " + name + " | " + " | ".join(cells) + " |")
+    lines.extend(reward_tier_lines())
     lines.append("")
 
     lines.append("## Mega Stones")

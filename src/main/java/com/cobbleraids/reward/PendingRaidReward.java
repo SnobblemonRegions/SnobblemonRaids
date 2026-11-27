@@ -38,7 +38,9 @@ public record PendingRaidReward(
         long rewardSeed,
         String renownTitle,
         String renownBoon,
-        int points
+        int points,
+        String tableTier,
+        java.util.List<RewardExtra> extras
 ) {
     /** A claim saved before its points were fixed at victory. */
     public static final int POINTS_AT_CLAIM = -1;
@@ -47,6 +49,16 @@ public record PendingRaidReward(
         points = Math.max(POINTS_AT_CLAIM, points);
         renownTitle = renownTitle == null ? "" : renownTitle;
         renownBoon = renownBoon == null ? "" : renownBoon;
+        tableTier = tableTier == null ? "" : tableTier;
+        extras = extras == null ? java.util.List.of() : java.util.List.copyOf(extras);
+    }
+
+    /** A claim with no table override and no extras: every ordinary raid, and every claim saved before either existed. */
+    public PendingRaidReward(UUID raidId, ResourceLocation definitionId, RaidRarityTier rarityTier, RaidDefinition.Rewards rewards,
+                             double contributionPercentage, int contributionBonusRolls, int elapsedCombatTicks, int participantCount,
+                             long rewardSeed, String renownTitle, String renownBoon, int points) {
+        this(raidId, definitionId, rarityTier, rewards, contributionPercentage, contributionBonusRolls, elapsedCombatTicks,
+                participantCount, rewardSeed, renownTitle, renownBoon, points, "", java.util.List.of());
     }
 
     public boolean renowned() {

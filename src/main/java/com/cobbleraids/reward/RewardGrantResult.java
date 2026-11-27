@@ -21,6 +21,14 @@ public record RewardGrantResult(
         BigInteger currencyGranted,
         int raidPointsGranted
 ) {
+    /** This result with {@code extras} added to its guaranteed items. */
+    public RewardGrantResult withExtras(List<RewardItem> extras) {
+        if (extras == null || extras.isEmpty()) return this;
+        List<RewardItem> base = new java.util.ArrayList<>(extras);
+        base.addAll(baseItems);
+        return new RewardGrantResult(base, chanceItemsGranted, contributionBonusItems, currencyGranted, raidPointsGranted);
+    }
+
     public RewardGrantResult {
         baseItems = List.copyOf(baseItems);
         chanceItemsGranted = List.copyOf(chanceItemsGranted);
