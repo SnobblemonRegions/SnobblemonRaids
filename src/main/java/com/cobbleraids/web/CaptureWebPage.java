@@ -7,6 +7,10 @@ import com.cobbleraids.network.CaptureDetailsPayload;
 import com.cobbleraids.network.CaptureOfferPayload;
 import com.cobbleraids.network.CapturePulseResultPayload;
 import com.cobbleraids.network.CaptureResultPayload;
+import com.cobbleraids.catching.RaidCaptureSession;
+import com.cobbleraids.renown.RenownAffix;
+import java.util.List;
+import java.util.Optional;
 import com.google.gson.JsonObject;
 import java.util.Map;
 import java.util.UUID;
@@ -106,7 +110,24 @@ public final class CaptureWebPage {
             details.addProperty("icon", have ? key : "");
             out.add("details", details);
         }
+        // A renowned boss carries an affix, and a catch keeps it: the page says which, so the choice is an informed one.
+        affixFor(RaidCaptureSessionService.pendingFor(player.getUUID()), o.raidId()).ifPresent(affix -> {
+            JsonObject a = new JsonObject();
+            a.addProperty("id", affix.id());
+            a.addProperty("name", affix.displayName());
+            a.addProperty("description", affix.description());
+            out.add("affix", a);
+        });
         WebGuiBridge.emit(player, "capture_offer", out.toString());
+    }
+
+    /** The affix a catch from this raid would keep: the pending session's, checked against the known affixes like the catch itself. */
+    static Optional<RenownAffix> affixFor(List<RaidCaptureSession> pending, UUID raidId) {
+        if (pending == null || raidId == null) return Optional.empty();
+        for (RaidCaptureSession session : pending) {
+            if (raidId.equals(session.raidId())) return RenownAffix.byId(session.affix());
+        }
+        return Optional.empty();
     }
 
     private static JsonObject timing(int travel, int good, int perfect) {
