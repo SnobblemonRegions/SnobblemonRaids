@@ -5,6 +5,7 @@
 ### New
 - Daily Boss: every day at 7 pm Eastern a renowned World Boss appears for up to 25 players. Everyone who deals it damage earns the raid reward and a chance to catch it.
 - Renowned bosses carry one of 30 renown affixes and have a dark bronze look. Catch one and your Pokémon keeps its affix.
+- The Daily Boss has its own arena: a glowing gold seal turns on the ground beneath it and an amber veil marks the edge. The seal burns red when the boss is nearly beaten.
 - The Raidio: the Raid Radar is now a pocket radio you tune by ear. Each tier plays its own tune that speeds up as you get closer. Craft it from iron, redstone, a note block, amethyst and a Cobblemon upgrade.
 - After a win you can keep the boss in your personal boss shop, up to 5 at a time for 7 days each.
 
