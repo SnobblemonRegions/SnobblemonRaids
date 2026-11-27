@@ -115,7 +115,7 @@ class ShopCatalogTest {
                 }
                 """));
 
-        assertEquals(Set.of("good", "also_good"), catalog.byId().keySet());
+        assertEquals(Set.of("good", "also_good"), withoutRenown(catalog.byId().keySet()));
         assertEquals(4, catalog.byId().get("good").item().count());
         assertTrue(catalog.byId().get("also_good").isPokemon());
     }
@@ -155,7 +155,7 @@ class ShopCatalogTest {
                 }
                 """));
 
-        assertEquals(Set.of("ok"), catalog.byId().keySet());
+        assertEquals(Set.of("ok"), withoutRenown(catalog.byId().keySet()));
         assertEquals("legendary", catalog.byId().get("ok").pokemon().rarity());
         assertThrows(IllegalArgumentException.class, () -> new ShopPokemonGift("dratini", 5, false, null, null,
                 null, null, null, null, Map.of(), Map.of(), "super"));
@@ -534,7 +534,7 @@ class ShopCatalogTest {
     void retiredPagesAreNotShipped() {
         ShopCatalog defaults = ShopCatalog.defaults();
 
-        assertEquals(List.of("consumables", ShopCatalog.CARDS_SECTION),
+        assertEquals(List.of("consumables", ShopCatalog.CARDS_SECTION, ShopCatalog.RENOWN_SECTION),
                 defaults.sections().stream().map(ShopSection::id).toList());
         for (String id : List.of("revive", "max_revive", "max_potion", "full_restore", "heal_ball", "leftovers",
                 "choice_band", "life_orb", "destiny_knot", "everstone", "link_cable", "mirror_herb")) {
@@ -557,7 +557,8 @@ class ShopCatalogTest {
     void uneditedOldShopMigrates() {
         ShopCatalog migrated = ShopCatalog.fromJson(parse(V3_UNEDITED));
 
-        assertEquals(List.of("consumables"), migrated.sections().stream().map(ShopSection::id).toList());
+        // the Renown Vendor (version 5) joins every catalogue older than it, as the last page
+        assertEquals(List.of("consumables", ShopCatalog.RENOWN_SECTION), migrated.sections().stream().map(ShopSection::id).toList());
         assertEquals(ShopCatalog.defaults().sections().get(0), migrated.sections().get(0));
         assertFalse(migrated.byId().containsKey("max_potion"));
         assertFalse(migrated.byId().containsKey("leftovers"));
@@ -596,7 +597,8 @@ class ShopCatalogTest {
                   {"id": "starter_dratini", "cost": 2500, "limit": 1, "reset": "daily", "species": "dratini",
                    "level": 15, "traits": {"nature": "adamant", "ivs": {"hp": 31, "attack": 31, "speed": 31}}}]}]}
                 """;
-        assertTrue(ShopCatalog.fromJson(parse(untouched)).sections().isEmpty());
+        assertEquals(List.of(ShopCatalog.RENOWN_SECTION),
+                ShopCatalog.fromJson(parse(untouched)).sections().stream().map(ShopSection::id).toList(), "only the vendor a v3 file gains");
 
         String edited = untouched.replace("2500", "2600");
         assertEquals(2600, ShopCatalog.fromJson(parse(edited)).byId().get("starter_dratini").cost());
@@ -629,8 +631,10 @@ class ShopCatalogTest {
 
         assertEquals(ShopCatalog.CURRENT_VERSION, migrated.version());
         assertEquals("mine", migrated.sections().get(0).id());
-        assertEquals(ShopCatalog.CARDS_SECTION, migrated.sections().get(migrated.sections().size() - 1).id());
-        assertEquals(19, migrated.sections().get(migrated.sections().size() - 1).entries().size());
+        // cards (version 3) come before the Renown Vendor (version 5), which is always the very last page
+        assertEquals(ShopCatalog.CARDS_SECTION, migrated.sections().get(migrated.sections().size() - 2).id());
+        assertEquals(ShopCatalog.RENOWN_SECTION, migrated.sections().get(migrated.sections().size() - 1).id());
+        assertEquals(19, migrated.sections().get(migrated.sections().size() - 2).entries().size());
 
         // Saved at the current version, so an operator who deletes the shelf does not get it back.
         ShopCatalog reloaded = ShopCatalog.fromJson(migrated.toJson());
@@ -654,7 +658,8 @@ class ShopCatalogTest {
 
         assertEquals(999, migrated.byId().get("booster_pack").cost());
         assertEquals("cobblemon:poke_ball", migrated.byId().get("booster_pack").item().itemId());
-        assertEquals(18, migrated.sections().get(migrated.sections().size() - 1).entries().size());
+        assertEquals(18, migrated.sections().stream().filter(section -> section.id().equals(ShopCatalog.CARDS_SECTION))
+                .findFirst().orElseThrow().entries().size());
         assertEquals(migrated.totalEntries(), migrated.byId().size(), "entry ids stay unique");
     }
 
@@ -666,5 +671,48 @@ class ShopCatalogTest {
 
         assertEquals(custom.rotation(), ShopCatalog.fromJson(custom.toJson()).rotation());
         assertEquals(ShopRotationConfig.DEFAULTS, ShopCatalog.fromJson(parse("{\"sections\": []}")).rotation());
+    }
+
+    /** The ids an older catalogue file wrote itself, without the Renown Vendor that version 5 adds to it. */
+    private static Set<String> withoutRenown(Set<String> ids) {
+        Set<String> out = new java.util.HashSet<>(ids);
+        out.removeIf(id -> id.startsWith("renown_"));
+        return out;
+    }
+
+    @Test
+    void theRenownVendorIsPaidInCoinsAndAddedOnceToAnOlderCatalogue() {
+        ShopSection renown = ShopCatalog.defaults().sections().stream()
+                .filter(section -> section.id().equals(ShopCatalog.RENOWN_SECTION)).findFirst().orElseThrow();
+        assertTrue(renown.entries().stream().allMatch(entry -> entry.currency() == ShopCurrency.RENOWN_COINS));
+        ShopEntry voucher = renown.entries().stream().filter(entry -> entry.id().equals("renown_legendary_voucher")).findFirst().orElseThrow();
+        assertEquals(25, voucher.cost());
+        assertEquals(1, voucher.limit());
+        assertEquals(ShopResetPeriod.MONTHLY, voucher.reset());
+        assertTrue(renown.entries().stream().noneMatch(entry -> entry.item() != null && entry.item().itemId().contains("raid_key")),
+                "no raid keys (owner)");
+
+        // a version-4 file: gets the vendor once; saved as version 5 and read again, it does not get a second one
+        ShopCatalog old = ShopCatalog.fromJson(parse("""
+                {"version": 4, "sections": [{"id": "consumables", "title": "Consumables", "entries": [
+                  {"id": "poke_ball", "cost": 5, "item": "cobblemon:poke_ball", "count": 8}]}]}"""));
+        assertEquals(1, old.sections().stream().filter(section -> section.id().equals(ShopCatalog.RENOWN_SECTION)).count());
+        ShopCatalog again = ShopCatalog.fromJson(old.toJson());
+        assertEquals(1, again.sections().stream().filter(section -> section.id().equals(ShopCatalog.RENOWN_SECTION)).count());
+        assertEquals(ShopCurrency.RENOWN_COINS, again.byId().get("renown_master_ball").currency(), "the currency survives a save");
+
+        // an operator who deleted the vendor from a version-5 file keeps it deleted
+        ShopCatalog removed = ShopCatalog.fromJson(parse("""
+                {"version": 5, "sections": [{"id": "consumables", "title": "Consumables", "entries": [
+                  {"id": "poke_ball", "cost": 5, "item": "cobblemon:poke_ball", "count": 8}]}]}"""));
+        assertTrue(removed.sections().stream().noneMatch(section -> section.id().equals(ShopCatalog.RENOWN_SECTION)));
+    }
+
+    @Test
+    void anUnknownCurrencyReadsAsRaidPoints() {
+        assertEquals(ShopCurrency.RAID_POINTS, ShopCurrency.parse(null));
+        assertEquals(ShopCurrency.RAID_POINTS, ShopCurrency.parse("gems"));
+        assertEquals(ShopCurrency.RENOWN_COINS, ShopCurrency.parse("Renown_Coins"));
+        assertEquals(ShopCurrency.RENOWN_COINS, ShopCurrency.parse("coins"));
     }
 }

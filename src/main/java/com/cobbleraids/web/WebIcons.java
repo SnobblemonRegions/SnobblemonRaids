@@ -46,6 +46,21 @@ public final class WebIcons {
     private static final Map<String, Map<String, String>> LANG = new ConcurrentHashMap<>();
     private static volatile Map<String, String[]> species;
 
+    /**
+     * How an item looks to the player's client, for the native pages' item widget: {@code id} for an item the client has, or
+     * {@code vanilla_id@model} for a server-only (Polymer) item, which the client draws as that vanilla item with that custom model. Empty
+     * when the item is not registered.
+     */
+    public static String clientItem(net.minecraft.resources.ResourceLocation itemId, net.minecraft.server.level.ServerPlayer player) {
+        var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+        if (item == null) return "";
+        if (!(item instanceof eu.pb4.polymer.core.api.item.PolymerItem)) return itemId.toString();
+        var shown = eu.pb4.polymer.core.api.item.PolymerItemUtils.getPolymerItemStack(new net.minecraft.world.item.ItemStack(item), player.registryAccess(), player);
+        var model = shown.get(net.minecraft.core.component.DataComponents.CUSTOM_MODEL_DATA);
+        String vanilla = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(shown.getItem()).toString();
+        return model == null ? vanilla : vanilla + "@" + model.value();
+    }
+
     /** Key for an item's icon, e.g. {@code i:cobblemon:poke_ball}. */
     public static String itemKey(String namespace, String path) {
         return "i:" + namespace + ":" + path;

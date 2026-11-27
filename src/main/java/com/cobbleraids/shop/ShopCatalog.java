@@ -31,7 +31,8 @@ public record ShopCatalog(int version, int perPage, ShopLimits limits, List<Shop
                           ShopRotationConfig rotation) {
 
     /** Bumped when the schema changes in a way an older file cannot be read as. */
-    public static final int CURRENT_VERSION = 4;
+    public static final int CURRENT_VERSION = 5;
+    public static final String RENOWN_SECTION = "renown";
 
     /** The section the Cobblemon Cards packs sit in, and what a pack costs and how often it can be bought. */
     public static final String CARDS_SECTION = "cards";
@@ -116,7 +117,7 @@ public record ShopCatalog(int version, int perPage, ShopLimits limits, List<Shop
     }
 
     public static ShopCatalog defaults() {
-        List<ShopSection> sections = List.of(consumablesSection(), cardsSection());
+        List<ShopSection> sections = List.of(consumablesSection(), cardsSection(), renownSection());
         return new ShopCatalog(CURRENT_VERSION, MAX_PER_PAGE, ShopLimits.DEFAULTS, sections,
                 ShopRotationConfig.DEFAULTS);
     }
@@ -198,8 +199,34 @@ public record ShopCatalog(int version, int perPage, ShopLimits limits, List<Shop
             }
             if (!packs.isEmpty()) sections.add(new ShopSection(CARDS_SECTION, "Card Packs", packs));
         }
+        // Version 5 opened the Renown Vendor: it is added once, as the last page, to a catalogue written before it. The version it is saved
+        // with stops it coming back after an operator deletes it; an entry id they already used for something else wins.
+        if (version < 5 && sections.stream().noneMatch(section -> section.id().equals(RENOWN_SECTION)) && seenSections.add(RENOWN_SECTION)) {
+            List<ShopEntry> renown = new ArrayList<>();
+            for (ShopEntry entry : renownSection().entries()) {
+                if (seenEntries.add(entry.id())) renown.add(entry);
+            }
+            if (!renown.isEmpty()) sections.add(new ShopSection(RENOWN_SECTION, "Renown Vendor", renown));
+        }
         return new ShopCatalog(Math.max(version, CURRENT_VERSION), perPage, limits, sections,
                 ShopRotationConfig.fromJson(root));
+    }
+
+    /**
+     * The Renown Vendor (owner, 2026-11-27): paid in Renown Coins from the Daily Boss. Raid keys and cosmetics were left out on purpose; the
+     * Legendary Voucher is the headline (one a month, bound to its buyer).
+     */
+    static ShopSection renownSection() {
+        return new ShopSection(RENOWN_SECTION, "Renown Vendor", List.of(
+                coins("renown_legendary_voucher", 25, "cobbleraids:legendary_voucher", 1, ShopResetPeriod.MONTHLY),
+                coins("renown_master_ball", 10, "cobblemon:master_ball", 1, ShopResetPeriod.WEEKLY),
+                coins("renown_gold_bottle_cap", 5, "cobblemoncharms:gold_bottle_cap", 1, ShopResetPeriod.WEEKLY),
+                coins("renown_ability_patch", 4, "cobblemon:ability_patch", 1, ShopResetPeriod.WEEKLY),
+                coins("renown_shiny_charm", 40, "cobblemoncharms:shiny_charm", 1, ShopResetPeriod.NEVER)));
+    }
+
+    private static ShopEntry coins(String id, int cost, String itemId, int limit, ShopResetPeriod reset) {
+        return new ShopEntry(id, cost, limit, reset, new ShopItemGift(itemId, 1), null, ShopCurrency.RENOWN_COINS);
     }
 
     /** A held item or one-off tool: one per purchase, one purchase a day. */

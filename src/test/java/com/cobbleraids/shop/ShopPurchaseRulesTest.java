@@ -239,8 +239,9 @@ class ShopPurchaseRulesTest {
                     result + " has nothing to say to the player");
         }
         // BOUGHT, BOUGHT_TO_PC, and REROLLED -- the personal shop's reroll gamble succeeding is a
-        // third distinct way to leave a player charged and better/worse off, not empty-handed.
-        assertEquals(3, java.util.Arrays.stream(ShopPurchaseResult.values())
+        // third distinct way to leave a player charged and better/worse off, not empty-handed --
+        // and CHOSEN, CHOSEN_TO_PC, a Legendary Voucher redeemed.
+        assertEquals(5, java.util.Arrays.stream(ShopPurchaseResult.values())
                 .filter(ShopPurchaseResult::success).count());
     }
 

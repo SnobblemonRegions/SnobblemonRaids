@@ -36,6 +36,7 @@ public final class WebUi {
         if (!WebGuiBridge.bind()) return;
         RaidLog.info("Raid pages are shown by Snobblemon GUI (native pages; players need the Snobblemon Client).");
         ShopWebPage.register();
+        AlbumWebPage.register();
         TrophyWebPage.register();
         LegendWebPage.register();
         RewardWebPage.register();

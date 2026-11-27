@@ -44,7 +44,7 @@ public final class ShopPurchaseService {
     static ShopPurchaseResult purchase(ServerPlayer player, ShopEntry entry, Instant now) {
         ShopPurchaseResult blocked = ShopPurchaseRules.check(
                 entry,
-                RaidPointsStore.balance(player.getUUID()),
+                balance(player, entry),
                 entry == null ? null : RaidPlayerRecords.get(player.getUUID()).purchasesOf(entry.id()),
                 now);
         if (blocked != null) return blocked;
@@ -56,6 +56,12 @@ public final class ShopPurchaseService {
                     + player.getGameProfile().getName() + " failed", ex);
             return ShopPurchaseResult.FAILED;
         }
+    }
+
+    /** What the player has to spend on this entry: Raid Points, or the Renown Coins in their inventory. */
+    static int balance(ServerPlayer player, ShopEntry entry) {
+        if (entry != null && entry.currency() == ShopCurrency.RENOWN_COINS) return com.cobbleraids.item.RenownCoinWallet.count(player);
+        return RaidPointsStore.balance(player.getUUID());
     }
 
     private static ShopPurchaseResult giveItem(ServerPlayer player, ShopEntry entry, Instant now) {
@@ -77,7 +83,12 @@ public final class ShopPurchaseService {
         }
 
         settle(player, entry, now);
-        ItemGiving.giveStacked(player, item, entry.item().count());
+        if (item instanceof com.cobbleraids.item.LegendaryVoucherItem) {
+            // bound to its buyer, so a legendary is always earned, never bought from another player
+            player.getInventory().placeItemBackInInventory(com.cobbleraids.item.LegendaryVoucherItem.boundTo(player, entry.item().count()));
+        } else {
+            ItemGiving.giveStacked(player, item, entry.item().count());
+        }
         return ShopPurchaseResult.BOUGHT;
     }
 
@@ -119,7 +130,11 @@ public final class ShopPurchaseService {
 
     /** Takes the points and remembers the purchase. Called only once nothing can still fail. */
     private static void settle(ServerPlayer player, ShopEntry entry, Instant now) {
-        RaidPointsStore.spend(player.getServer(), player.getUUID(), entry.cost());
+        if (entry.currency() == ShopCurrency.RENOWN_COINS) {
+            com.cobbleraids.item.RenownCoinWallet.take(player, entry.cost());
+        } else {
+            RaidPointsStore.spend(player.getServer(), player.getUUID(), entry.cost());
+        }
         if (entry.isLimited()) {
             RaidPlayerRecords.recordPurchase(player.getServer(), player.getUUID(), entry.id(),
                     ShopPurchaseRules.windowOf(entry, now), now);
@@ -130,7 +145,7 @@ public final class ShopPurchaseService {
         // which meant a crash before the next autosave handed back the points and kept the item.
         RaidPlayerRecords.flush(player.getServer());
         RaidLog.info("Shop: " + player.getGameProfile().getName() + " bought " + entry.id()
-                + " for " + entry.cost() + " RP");
+                + " for " + entry.cost() + " " + entry.currency().unit());
     }
 
     /** A written gender, or null for anything unrecognised: an operator's typo must not fail a purchase. */

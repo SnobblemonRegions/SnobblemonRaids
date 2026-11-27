@@ -2,6 +2,7 @@ package com.cobbleraids.shop;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
@@ -109,5 +110,16 @@ class ShopResetPeriodTest {
         Instant now = Instant.parse("2026-09-30T00:00:00Z");
 
         assertTrue(ShopResetPeriod.DAILY.windowOf(now) > 5 * ShopResetPeriod.WEEKLY.windowOf(now));
+    }
+
+    @Test
+    void aMonthlyLimitRefillsOnTheFirstAndNeverCollidesWithTheOtherWindows() {
+        java.time.Instant late = java.time.Instant.parse("2026-11-30T23:59:59Z");
+        java.time.Instant first = java.time.Instant.parse("2026-12-01T00:00:00Z");
+        assertEquals(ShopResetPeriod.MONTHLY.windowOf(java.time.Instant.parse("2026-11-01T00:00:00Z")), ShopResetPeriod.MONTHLY.windowOf(late));
+        assertNotEquals(ShopResetPeriod.MONTHLY.windowOf(late), ShopResetPeriod.MONTHLY.windowOf(first));
+        assertTrue(ShopResetPeriod.MONTHLY.windowOf(first) < 0, "negative, so it is never a day, week, rotation or lifetime number");
+        assertEquals(ShopResetPeriod.MONTHLY, ShopResetPeriod.parse("monthly", ShopResetPeriod.DAILY));
+        assertEquals("this month", ShopResetPeriod.MONTHLY.windowNoun());
     }
 }

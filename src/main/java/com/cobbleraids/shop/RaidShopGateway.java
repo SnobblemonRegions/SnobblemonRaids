@@ -96,7 +96,10 @@ public final class RaidShopGateway {
     }
 
     /** A player left, or the server stopped: nothing half-confirmed is carried over. */
-    public static void forget(java.util.UUID playerId) { CONFIRMATION.clear(playerId); }
+    public static void forget(java.util.UUID playerId) {
+        CONFIRMATION.clear(playerId);
+        LegendaryVoucherService.forget(playerId);
+    }
 
     public static void onServerStopped() { CONFIRMATION.clearAll(); }
 
@@ -113,7 +116,9 @@ public final class RaidShopGateway {
         if (!CONFIRMATION.confirm(player.getUUID(), id, System.currentTimeMillis())) {
             player.sendSystemMessage(Component.literal(id.startsWith(REROLL_PREFIX)
                             ? "Click REROLL again to confirm. A reroll cannot be undone."
-                            : "Click it again to confirm your purchase. Raid Points are not refunded.")
+                            : id.startsWith(LegendaryVoucherService.PREFIX)
+                            ? "Click it again to choose this legendary. Your voucher is used up."
+                            : "Click it again to confirm your purchase. Nothing is refunded.")
                     .withStyle(ChatFormatting.YELLOW));
             WebSounds.play(player, SoundEvents.UI_BUTTON_CLICK.value(), 0.6f, 1.0f);
             sendPage(player, action.pageIndex());
@@ -124,7 +129,10 @@ public final class RaidShopGateway {
         // Checked before the catalogue lookup, not after: a coincidentally-prefixed operator id in
         // the global catalogue must never be shadowed by this, and checking first makes that
         // structurally impossible rather than merely unlikely.
-        if (id.startsWith(ROTATING_PREFIX)) {
+        if (id.startsWith(LegendaryVoucherService.PREFIX)) {
+            result = LegendaryVoucherService.redeem(player, id.substring(LegendaryVoucherService.PREFIX.length()));
+            message = result.message();
+        } else if (id.startsWith(ROTATING_PREFIX)) {
             result = ShopRotationService.purchase(player, id);
             message = result.message();
         } else if (id.startsWith(REROLL_PREFIX)) {
@@ -155,6 +163,10 @@ public final class RaidShopGateway {
     }
 
     private static void sendPage(ServerPlayer player, int requestedPage) {
+        if (LegendaryVoucherService.choosing(player)) {
+            LegendaryVoucherService.sendPage(player, requestedPage);
+            return;
+        }
         List<ShopPageView> catalogPages = listablePages(ShopCatalogManager.pages());
         com.cobbleraids.catching.BossShopOffers.pruneExpired(player);
         Map<ResourceLocation, BossSnapshot> personal = DefeatedBossSnapshots.forPlayer(player.getUUID());

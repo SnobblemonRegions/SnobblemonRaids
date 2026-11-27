@@ -171,9 +171,10 @@ public record RaidPlayerRecord(
         long today = com.cobbleraids.shop.ShopResetPeriod.DAILY.windowOf(now);
         long thisWeek = com.cobbleraids.shop.ShopResetPeriod.WEEKLY.windowOf(now);
         long thisRotation = com.cobbleraids.shop.ShopResetPeriod.ROTATION.windowOf(now);
+        long thisMonth = com.cobbleraids.shop.ShopResetPeriod.MONTHLY.windowOf(now);
         LinkedHashMap<String, RaidPurchaseTally> kept = new LinkedHashMap<>();
         purchases.forEach((id, tally) -> {
-            if (tally.day() == today || tally.day() == thisWeek || tally.day() == thisRotation
+            if (tally.day() == today || tally.day() == thisWeek || tally.day() == thisRotation || tally.day() == thisMonth
                     || tally.day() == 0L) {
                 kept.put(id, tally);
             }

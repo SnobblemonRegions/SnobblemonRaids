@@ -31,14 +31,21 @@ import org.junit.jupiter.api.Test;
 class ShopDefaultCatalogResolvesTest {
 
     /** Namespaces every server running this mod is guaranteed to have. */
-    private static final Set<String> ALWAYS_PRESENT = Set.of("minecraft", "cobblemon");
+    private static final Set<String> ALWAYS_PRESENT = Set.of("minecraft", "cobblemon", "cobbleraids");
 
     /**
      * Cobblemon Cards, for the card-pack shelf. Allowed only because the shop hides an entry whose
      * item is not registered and refuses the purchase before charging; the shelf is the single place
      * an optional mod appears, and it is pinned below so a second one cannot slip in beside it.
      */
-    private static final Set<String> OPTIONAL_BUT_HIDDEN = Set.of("cobblemon-cards");
+    private static final Set<String> OPTIONAL_BUT_HIDDEN = Set.of("cobblemon-cards", "cobblemoncharms");
+
+    /**
+     * Which shelf each optional mod may appear on. Cobblemon Charms is on the Renown Vendor because the owner chose its Gold Bottle Cap and
+     * Shiny Charm there (2026-11-27); like the cards, an entry whose item is not registered is hidden and never charged for.
+     */
+    private static final java.util.Map<String, String> OPTIONAL_SHELF = java.util.Map.of(
+            "cobblemon-cards", ShopCatalog.CARDS_SECTION, "cobblemoncharms", ShopCatalog.RENOWN_SECTION);
 
     private static final Path MANIFEST = Path.of("validation", "economy", "manifest.json");
 
@@ -60,7 +67,7 @@ class ShopDefaultCatalogResolvesTest {
             String namespace = id.substring(0, colon);
             String path = id.substring(colon + 1);
 
-            if (namespace.equals("minecraft")) continue;
+            if (namespace.equals("minecraft") || namespace.equals("cobbleraids")) continue;   // vanilla, and this mod's own items
             if (!items.has(namespace)) {
                 unresolved.add(entry.id() + " -> " + id + " (namespace not in the pack)");
                 continue;
@@ -89,15 +96,15 @@ class ShopDefaultCatalogResolvesTest {
     }
 
     @Test
-    @DisplayName("the only shelf naming an optional mod is the card-pack one")
+    @DisplayName("an optional mod appears only on its own shelf")
     void optionalModsStayOnTheirOwnShelf() {
         for (ShopSection section : ShopCatalog.defaults().sections()) {
             for (ShopEntry entry : section.entries()) {
                 if (entry.item() == null) continue;
                 String namespace = entry.item().itemId().split(":", 2)[0];
                 if (OPTIONAL_BUT_HIDDEN.contains(namespace)) {
-                    assertTrue(section.id().equals(ShopCatalog.CARDS_SECTION),
-                            entry.id() + " names " + namespace + " outside the card shelf: " + section.id());
+                    assertTrue(section.id().equals(OPTIONAL_SHELF.get(namespace)),
+                            entry.id() + " names " + namespace + " outside its shelf: " + section.id());
                 }
             }
         }

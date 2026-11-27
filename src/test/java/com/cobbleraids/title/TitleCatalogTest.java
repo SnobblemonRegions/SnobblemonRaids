@@ -33,6 +33,7 @@ class TitleCatalogTest {
         com.google.gson.JsonArray titles = new com.google.gson.JsonArray();
         titles.add(new JsonObject()); // no "id" key at all
         root.add("titles", titles);
+        root.addProperty("version", TitleCatalog.CURRENT_VERSION); // a current file: no album titles added to it
 
         TitleCatalog catalog = TitleCatalog.fromJson(root);
 
@@ -64,6 +65,7 @@ class TitleCatalogTest {
         titles.add(a);
         titles.add(b);
         root.add("titles", titles);
+        root.addProperty("version", TitleCatalog.CURRENT_VERSION); // a current file: no album titles added to it
 
         TitleCatalog catalog = TitleCatalog.fromJson(root);
 
@@ -80,5 +82,29 @@ class TitleCatalogTest {
                         RaidRarityTier.LEGENDARY, 3)));
 
         assertEquals(java.util.List.of("first", "second"), java.util.List.copyOf(catalog.byId().keySet()));
+    }
+
+    @Test
+    @DisplayName("an older titles file gains the Coin Album titles once; a version-2 file keeps its own list")
+    void albumTitlesJoinOnce() {
+        JsonObject old = com.google.gson.JsonParser.parseString(
+                "{\"titles\": [{\"id\": \"novice_raider\", \"display\": \"Novice\", \"unlock_type\": \"raids_won\", \"threshold\": 1}]}").getAsJsonObject();
+        TitleCatalog migrated = TitleCatalog.fromJson(old);
+        assertTrue(migrated.byId().containsKey("album_renowned"));
+        assertTrue(migrated.byId().containsKey("album_curator_dragon"));
+        assertEquals("dragon", migrated.byId().get("album_curator_dragon").type());
+        assertEquals(1 + 5 + 18, migrated.titles().size());
+        TitleCatalog again = TitleCatalog.fromJson(migrated.toJson());
+        assertEquals(migrated.titles(), again.titles(), "saved as version 2: read back unchanged");
+
+        JsonObject trimmed = migrated.toJson();
+        var kept = new com.google.gson.JsonArray();
+        trimmed.getAsJsonArray("titles").forEach(e -> { if (!e.getAsJsonObject().get("id").getAsString().startsWith("album_")) kept.add(e); });
+        trimmed.add("titles", kept);
+        assertEquals(1, TitleCatalog.fromJson(trimmed).titles().size(), "an operator who removed them keeps them removed");
+
+        assertNull(TitleDefinition.fromJson(com.google.gson.JsonParser.parseString(
+                "{\"id\": \"x\", \"unlock_type\": \"album_type\", \"threshold\": 1}").getAsJsonObject()), "album_type needs a type");
+        assertTrue(TitleCatalog.defaults().byId().containsKey("album_coin_bearer"), "fresh servers get them too");
     }
 }

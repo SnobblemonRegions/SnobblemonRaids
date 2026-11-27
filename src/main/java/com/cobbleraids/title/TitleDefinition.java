@@ -23,8 +23,14 @@ public record TitleDefinition(
         String color,
         TitleUnlockType unlockType,
         RaidRarityTier tier,
-        int threshold
+        int threshold,
+        String type
 ) {
+    /** A title that is not a Coin Album page's: every title but the "<Type> Curator" ones. */
+    public TitleDefinition(String id, String display, String color, TitleUnlockType unlockType, RaidRarityTier tier, int threshold) {
+        this(id, display, color, unlockType, tier, threshold, null);
+    }
+
     /**
      * Reads one title, dropping it (returns {@code null}) rather than failing the whole catalogue --
      * the same policy {@code ShopSection.fromJson} follows, for the same reason: one operator typo
@@ -59,7 +65,12 @@ public record TitleDefinition(
             RaidLog.error("titles.json: dropping title '" + id + "' with a non-positive threshold");
             return null;
         }
-        return new TitleDefinition(id, display, color, unlockType, tier, threshold);
+        String type = json.has("type") ? json.get("type").getAsString().trim().toLowerCase(java.util.Locale.ROOT) : null;
+        if (unlockType == TitleUnlockType.ALBUM_TYPE && (type == null || type.isEmpty())) {
+            RaidLog.error("titles.json: dropping title '" + id + "': album_type needs a type");
+            return null;
+        }
+        return new TitleDefinition(id, display, color, unlockType, tier, threshold, type);
     }
 
     /** {@link #color}, resolved to a real {@code ChatFormatting}, falling back to white if unknown. */
@@ -76,6 +87,7 @@ public record TitleDefinition(
         json.addProperty("unlock_type", unlockType.serializedName());
         if (tier != null) json.addProperty("tier", tier.serializedName());
         json.addProperty("threshold", threshold);
+        if (type != null) json.addProperty("type", type);
         return json;
     }
 }

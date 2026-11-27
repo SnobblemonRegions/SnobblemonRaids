@@ -25,8 +25,14 @@ public record ShopEntry(
         int limit,
         ShopResetPeriod reset,
         ShopItemGift item,
-        ShopPokemonGift pokemon
+        ShopPokemonGift pokemon,
+        ShopCurrency currency
 ) {
+    /** An entry paid in Raid Points, which is every entry but the Renown Vendor's. */
+    public ShopEntry(String id, int cost, int limit, ShopResetPeriod reset, ShopItemGift item, ShopPokemonGift pokemon) {
+        this(id, cost, limit, reset, item, pokemon, ShopCurrency.RAID_POINTS);
+    }
+
     /** Lowercase, and nothing that could be mistaken for formatting or a path separator. */
     private static final Pattern ID = Pattern.compile("[a-z0-9_.-]{1,64}");
 
@@ -47,6 +53,7 @@ public record ShopEntry(
             throw new IllegalArgumentException("limit " + limit + " is outside 0.." + ShopLimits.MAX_LIMIT);
         }
         if (reset == null) reset = ShopResetPeriod.DAILY;
+        if (currency == null) currency = ShopCurrency.RAID_POINTS;
         if ((item == null) == (pokemon == null)) {
             throw new IllegalArgumentException("shop entry " + id + " must carry exactly one of item or pokemon");
         }
@@ -150,12 +157,13 @@ public record ShopEntry(
             reset = ShopResetPeriod.parse(root.get("reset").getAsString(), reset);
         }
 
+        ShopCurrency currency = ShopCurrency.parse(root.has("currency") ? root.get("currency").getAsString() : null);
         if (hasItem) {
             ShopItemGift gift = ShopItemGift.fromJson(root, id);
-            return gift == null ? null : new ShopEntry(id, cost, limit, reset, gift, null);
+            return gift == null ? null : new ShopEntry(id, cost, limit, reset, gift, null, currency);
         }
         ShopPokemonGift gift = ShopPokemonGift.fromJson(root, id);
-        return gift == null ? null : new ShopEntry(id, cost, limit, reset, null, gift);
+        return gift == null ? null : new ShopEntry(id, cost, limit, reset, null, gift, currency);
     }
 
     JsonObject toJson() {
@@ -164,6 +172,7 @@ public record ShopEntry(
         root.addProperty("cost", cost);
         root.addProperty("limit", limit);
         root.addProperty("reset", reset.serializedName());
+        if (currency != ShopCurrency.RAID_POINTS) root.addProperty("currency", currency.serializedName());
         JsonObject payload = item != null ? item.toJson() : pokemon.toJson();
         payload.entrySet().forEach(field -> root.add(field.getKey(), field.getValue()));
         return root;

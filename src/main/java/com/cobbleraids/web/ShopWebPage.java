@@ -33,6 +33,7 @@ public final class ShopWebPage {
 
     /** Opens the page; it asks for its first page itself once it is listening. */
     public static boolean open(ServerPlayer player) {
+        com.cobbleraids.shop.LegendaryVoucherService.leave(player);   // opening the shop is leaving the voucher chooser
         return WebUi.open(player, PAGE);
     }
 
@@ -57,13 +58,23 @@ public final class ShopWebPage {
         }
     }
 
+    private static com.cobbleraids.shop.ShopCurrency currencyOf(ShopEntryPayload entry) {
+        com.cobbleraids.shop.ShopEntry listed = com.cobbleraids.shop.ShopCatalogManager.index().get(entry.id());
+        return listed == null ? com.cobbleraids.shop.ShopCurrency.RAID_POINTS : listed.currency();
+    }
+
     /** Sends a page, preceded by whichever of its icons this open of the page has not been given yet. */
     public static void deliver(ServerPlayer player, ShopPagePayload payload) {
         JsonObject page = new JsonObject();
         page.addProperty("heading", payload.heading());
         page.addProperty("pageIndex", payload.pageIndex());
         page.addProperty("pageCount", payload.pageCount());
-        page.addProperty("balance", payload.balance());
+        // A page is one currency: the chooser's (vouchers), the Renown Vendor's (coins in the inventory), or Raid Points.
+        String currency = com.cobbleraids.shop.LegendaryVoucherService.choosing(player) ? "voucher"
+                : !payload.entries().isEmpty() && payload.entries().stream().allMatch(e -> currencyOf(e) == com.cobbleraids.shop.ShopCurrency.RENOWN_COINS)
+                ? "renown_coins" : "raid_points";
+        page.addProperty("currency", currency);
+        page.addProperty("balance", currency.equals("renown_coins") ? com.cobbleraids.item.RenownCoinWallet.count(player) : payload.balance());
         page.addProperty("rotatesInMillis", payload.rotatesInMillis());
         JsonArray entries = new JsonArray();
         String awaiting = RaidShopGateway.awaitingConfirmation(player);
@@ -95,6 +106,15 @@ public final class ShopWebPage {
             cell.addProperty("remaining", entry.limit() > 0 ? Math.max(0, entry.remaining()) : 0);
             cell.addProperty("limit", entry.limit());
             cell.addProperty("soldOut", entry.soldOut());
+            // when a sold-out listing comes back, in words, for its tooltip
+            com.cobbleraids.shop.ShopEntry listed = com.cobbleraids.shop.ShopCatalogManager.index().get(entry.id());
+            if (listed != null && listed.isLimited()) cell.addProperty("soldNote", switch (listed.reset()) {
+                case NEVER -> "Yours for good: one per player";
+                case DAILY -> "Back tomorrow";
+                case WEEKLY -> "Back next week";
+                case MONTHLY -> "Back next month";
+                case ROTATION -> "Back with the next restock";
+            });
             cell.addProperty("personal", entry.personal());
             cell.addProperty("canReroll", entry.canReroll());
             cell.addProperty("rerollCost", entry.rerollCost());
@@ -109,6 +129,8 @@ public final class ShopWebPage {
                 String path = entry.itemId().getPath();
                 cell.addProperty("name", WebIcons.itemName(namespace, path));
                 key = WebIcons.itemKey(namespace, path);
+                String shown = WebIcons.clientItem(entry.itemId(), player);
+                if (!shown.isEmpty()) cell.addProperty("clientItem", shown);
             }
             if (WebIcons.dataUrl(key).isEmpty()) key = WebIcons.FALLBACK_ITEM;
             cell.addProperty("icon", key);

@@ -57,6 +57,8 @@ public final class RaidShopCommand {
     public static void build(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
                 Commands.literal("cobbleraids")
+                        .then(Commands.literal("album")
+                                .executes(context -> openAlbum(context.getSource())))
                         .then(Commands.literal("shop")
                                 .executes(context -> open(context.getSource()))
                                 .then(Commands.literal("buy")
@@ -65,6 +67,16 @@ public final class RaidShopCommand {
                                                 .executes(context -> buy(context.getSource(),
                                                         StringArgumentType.getString(context, "entry"))))))
         );
+    }
+
+    /** The Coin Album: needs the Snobblemon Client, like the shop page. */
+    private static int openAlbum(CommandSourceStack source) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        var player = source.getPlayerOrException();
+        if (!com.cobbleraids.web.AlbumWebPage.open(player)) {
+            source.sendFailure(net.minecraft.network.chat.Component.literal("The Coin Album needs the Snobblemon Client mod."));
+            return 0;
+        }
+        return 1;
     }
 
     private static int list(CommandSourceStack source) throws com.mojang.brigadier.exceptions.CommandSyntaxException {

@@ -38,6 +38,7 @@ class RaidCommandGatingTest {
             "points",
             "shop",
             "shop buy <entry>",
+            "album",
             "bossshop",
             "bossshop save",
             "bossshop save <replace>",

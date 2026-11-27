@@ -39,7 +39,40 @@ public record TitleCatalog(List<TitleDefinition> titles) {
                 new TitleDefinition("legend_slayer", "Legend Slayer", "LIGHT_PURPLE",
                         TitleUnlockType.TIER_WINS, RaidRarityTier.LEGENDARY, 10),
                 new TitleDefinition("collector", "Collector", "GREEN",
-                        TitleUnlockType.BOSSES_CAUGHT, null, 50)));
+                        TitleUnlockType.BOSSES_CAUGHT, null, 50)))
+                .withAlbumTitles();
+    }
+
+    /** Version 2 added the Coin Album's titles; an older file gets them once (see {@link #fromJson}). */
+    public static final int CURRENT_VERSION = 2;
+    static final List<String> ALBUM_TYPES = List.of("normal", "fire", "water", "electric", "grass", "ice", "fighting", "poison", "ground",
+            "flying", "psychic", "bug", "rock", "ghost", "dragon", "dark", "steel", "fairy");
+
+    /**
+     * The Coin Album's titles (owner, 2026-11-27): pressed-species milestones, one "<Type> Curator" per album page, and Renowned for the whole
+     * album. A type title is earnable only while the Daily Boss pool has species of that type.
+     */
+    static List<TitleDefinition> albumTitles() {
+        List<TitleDefinition> out = new ArrayList<>(List.of(
+                new TitleDefinition("album_coin_bearer", "Coin Bearer", "YELLOW", TitleUnlockType.ALBUM_SPECIES, null, 10),
+                new TitleDefinition("album_numismatist", "Numismatist", "GOLD", TitleUnlockType.ALBUM_SPECIES, null, 25),
+                new TitleDefinition("album_curator", "Curator", "GOLD", TitleUnlockType.ALBUM_SPECIES, null, 50),
+                new TitleDefinition("album_grand_curator", "Grand Curator", "GOLD", TitleUnlockType.ALBUM_SPECIES, null, 100),
+                new TitleDefinition("album_renowned", "Renowned", "LIGHT_PURPLE", TitleUnlockType.ALBUM_COMPLETE, null, 1)));
+        for (String type : ALBUM_TYPES) {
+            String name = Character.toUpperCase(type.charAt(0)) + type.substring(1);
+            out.add(new TitleDefinition("album_curator_" + type, name + " Curator", "YELLOW", TitleUnlockType.ALBUM_TYPE, null, 1, type));
+        }
+        return out;
+    }
+
+    /** This catalogue with every album title it does not have yet, at the end. */
+    TitleCatalog withAlbumTitles() {
+        List<TitleDefinition> out = new ArrayList<>(titles);
+        Set<String> ids = new HashSet<>();
+        titles.forEach(title -> ids.add(title.id()));
+        for (TitleDefinition album : albumTitles()) if (ids.add(album.id())) out.add(album);
+        return new TitleCatalog(out);
     }
 
     /**
@@ -64,11 +97,15 @@ public record TitleCatalog(List<TitleDefinition> titles) {
             }
             titles.add(title);
         }
-        return new TitleCatalog(titles);
+        // A file from before the Coin Album gets its titles once; saved as version 2, an operator's deletions then stay deleted.
+        int version = root.has("version") ? root.get("version").getAsInt() : 1;
+        TitleCatalog catalog = new TitleCatalog(titles);
+        return version < CURRENT_VERSION ? catalog.withAlbumTitles() : catalog;
     }
 
     public JsonObject toJson() {
         JsonObject root = new JsonObject();
+        root.addProperty("version", CURRENT_VERSION);
         JsonArray array = new JsonArray();
         titles.forEach(title -> array.add(title.toJson()));
         root.add("titles", array);

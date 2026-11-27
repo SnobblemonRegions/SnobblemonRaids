@@ -20,7 +20,7 @@ public final class RaidItemPack {
     static final List<String> NAMES = List.of(
             "starter_raid_key", "powerhouse_raid_key", "mythical_raid_key", "legendary_raid_key",
             "starter_raid_key_fragment", "powerhouse_raid_key_fragment", "mythical_raid_key_fragment",
-            "legendary_raid_key_fragment", "raid_core", "guardian_scale", RaidRadarItem.MODEL_PATH);
+            "legendary_raid_key_fragment", "raid_core", "guardian_scale", RaidRadarItem.MODEL_PATH, "legendary_voucher");
 
     public static void register() {
         PolymerResourcePackUtils.RESOURCE_PACK_CREATION_EVENT.register(builder ->
