@@ -54,4 +54,21 @@ class WorldBossBarTextTest {
         assertEquals("Gengar  ·  5k/5k  ·  100%  ·  0 fighting",
                 WorldBossBarText.build("Gengar", 5000, 5000, 100, 0, -1).getString(), "no time part when the boss stays until beaten");
     }
+
+    @Test
+    void theRenownedBarSpeaksInGoldWithTheSameWords() {
+        var event = WorldBossBarText.build("Wren", 117000, 117000, 100, 0, 39);
+        var renowned = WorldBossBarText.build("Wren", 117000, 117000, 100, 0, 39, WorldBossBarText.Palette.RENOWN);
+        assertEquals(event.getString(), renowned.getString(), "only the colours change");
+        assertEquals(WorldBossBarText.Palette.RENOWN.nameFrom(), renowned.getSiblings().get(0).getStyle().getColor().getValue());
+        assertEquals(WorldBossBarText.Palette.EVENT.nameFrom(), event.getSiblings().get(0).getStyle().getColor().getValue());
+    }
+
+    @Test
+    void theGatherLineNamesTheCountdownAndWhoIsReady() {
+        assertEquals("Wren  ·  the fight opens in 0:28  ·  3 ready",
+                WorldBossBarText.gathering("Wren", 28, 3, WorldBossBarText.Palette.RENOWN).getString());
+        assertEquals("Wren  ·  the fight opens in 1:05  ·  0 ready",
+                WorldBossBarText.gathering("Wren", 65, 0, WorldBossBarText.Palette.EVENT).getString());
+    }
 }

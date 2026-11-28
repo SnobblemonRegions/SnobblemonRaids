@@ -249,6 +249,19 @@ class WorldBossConfigAndRulesTest {
     }
 
     @Test
+    void theDailyBossKeepsItsFullLifetimeWhateverTheEventWindow() {
+        // The event window ended weeks ago: an event boss would get only the 60 s floor, but the daily boss keeps its own clock.
+        WorldBossConfig config = WorldBossConfig.fromJson(json(
+                "{\"window\":{\"end\":\"2026-11-03T05:00:00Z\"},\"spawn\":{\"lifetime_minutes\":40}}"));
+        long start = Instant.parse("2026-11-27T15:04:54Z").toEpochMilli();
+        assertEquals(start + 60_000L, WorldBossRules.endMillis(config, start, WorldBossKind.EVENT));
+        assertEquals(start + 40 * 60_000L, WorldBossRules.endMillis(config, start, WorldBossKind.DAILY));
+        long inWindow = Instant.parse("2026-11-03T04:50:00Z").toEpochMilli();
+        assertEquals(inWindow + 40 * 60_000L, WorldBossRules.endMillis(config, inWindow, WorldBossKind.DAILY),
+                "a daily boss during an event is not cut short by the event's end either");
+    }
+
+    @Test
     void coordinateHintsRoundToTheNearestHundred() {
         assertEquals(100, WorldBossRules.coordinateHint(149));
         assertEquals(200, WorldBossRules.coordinateHint(150));

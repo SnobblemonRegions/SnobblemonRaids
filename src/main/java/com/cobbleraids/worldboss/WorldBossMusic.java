@@ -50,7 +50,8 @@ final class WorldBossMusic {
     /** Called once a second while a boss is active. */
     static void tick(MinecraftServer server, WorldBossState state, WorldBossConfig config, Set<UUID> duelling, Set<UUID> chained) {
         WorldBossConfig.Music music = config.music();
-        if (!music.enabled()) {
+        // The tracks are the Halloween event's; the renowned Daily Boss stays quiet until it has a theme of its own
+        if (!music.enabled() || state.kind() == WorldBossKind.DAILY) {
             stopAll(server);
             return;
         }

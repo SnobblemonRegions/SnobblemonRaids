@@ -18,6 +18,15 @@ public final class WorldBossBarText {
     static final int CRITICAL = 0xFF5A5A;
     private static final int SEPARATOR = 0x6E6580;
 
+    /**
+     * The bar's colours. EVENT is the original World Boss look (violet into spectral green, made for the Halloween event); RENOWN is the
+     * Daily Boss's burnished gold, to sit on its gold bar.
+     */
+    public record Palette(int nameFrom, int nameTo, int fighting, int time, int separator) {
+        public static final Palette EVENT = new Palette(NAME_FROM, NAME_TO, 0xD9B3FF, 0xB8B0C8, SEPARATOR);
+        public static final Palette RENOWN = new Palette(0xFFE7A8, 0xD9963F, 0xF2D29B, 0xC9B79A, 0x7D6A50);
+    }
+
     private WorldBossBarText() {}
 
     /** 950 is "950", 4317 is "4.3k", 5000 is "5k", 12000 is "12k", 1250000 is "1.3M". One decimal at most, none when it would be .0. */
@@ -62,19 +71,37 @@ public final class WorldBossBarText {
      * @param minutesLeft minutes until the boss leaves, or a negative number when it stays until it is beaten (the time is then left out)
      */
     public static Component build(String species, double current, double max, int percent, int fighting, long minutesLeft) {
-        MutableComponent text = Component.empty();
-        int[] colors = gradient(species.length(), NAME_FROM, NAME_TO);
-        for (int i = 0; i < species.length(); i++) {
-            text.append(Component.literal(String.valueOf(species.charAt(i))).withStyle(Style.EMPTY.withBold(true).withColor(TextColor.fromRgb(colors[i]))));
-        }
-        text.append(separator()).append(Component.literal(shortNumber(current) + "/" + shortNumber(max)).withColor(0xFFFFFF));
-        text.append(separator()).append(Component.literal(percent + "%").withStyle(Style.EMPTY.withBold(true).withColor(TextColor.fromRgb(percentColor(percent)))));
-        text.append(separator()).append(Component.literal(fighting + " fighting").withColor(0xD9B3FF));
-        if (minutesLeft >= 0) text.append(separator()).append(Component.literal(timeLeft(minutesLeft)).withColor(0xB8B0C8));
+        return build(species, current, max, percent, fighting, minutesLeft, Palette.EVENT);
+    }
+
+    public static Component build(String species, double current, double max, int percent, int fighting, long minutesLeft, Palette palette) {
+        MutableComponent text = name(species, palette);
+        text.append(separator(palette)).append(Component.literal(shortNumber(current) + "/" + shortNumber(max)).withColor(0xFFFFFF));
+        text.append(separator(palette)).append(Component.literal(percent + "%").withStyle(Style.EMPTY.withBold(true).withColor(TextColor.fromRgb(percentColor(percent)))));
+        text.append(separator(palette)).append(Component.literal(fighting + " fighting").withColor(palette.fighting()));
+        if (minutesLeft >= 0) text.append(separator(palette)).append(Component.literal(timeLeft(minutesLeft)).withColor(palette.time()));
         return text;
     }
 
-    private static Component separator() {
-        return Component.literal("  ·  ").withColor(SEPARATOR);
+    /** The bar while players gather: the name, the countdown, and how many are in. */
+    public static Component gathering(String species, int secondsLeft, int ready, Palette palette) {
+        MutableComponent text = name(species, palette);
+        text.append(separator(palette)).append(Component.literal("the fight opens in " + secondsLeft / 60 + ":"
+                + String.format(Locale.ROOT, "%02d", secondsLeft % 60)).withColor(0xFFFFFF));
+        text.append(separator(palette)).append(Component.literal(ready + " ready").withColor(palette.fighting()));
+        return text;
+    }
+
+    private static MutableComponent name(String species, Palette palette) {
+        MutableComponent text = Component.empty();
+        int[] colors = gradient(species.length(), palette.nameFrom(), palette.nameTo());
+        for (int i = 0; i < species.length(); i++) {
+            text.append(Component.literal(String.valueOf(species.charAt(i))).withStyle(Style.EMPTY.withBold(true).withColor(TextColor.fromRgb(colors[i]))));
+        }
+        return text;
+    }
+
+    private static Component separator(Palette palette) {
+        return Component.literal("  ·  ").withColor(palette.separator());
     }
 }
