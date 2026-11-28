@@ -892,6 +892,7 @@ public final class WorldBossService {
             // Each player is marked paid and saved just before their own payment (at most once for them), and the whole step is marked done only
             // when the loop ends. A crash half way therefore costs the one player in flight, and the rerun after the restart pays the rest.
             int paid = 0;
+            Set<UUID> paidPlayers = new LinkedHashSet<>();
             float average = WorldBossRules.averageDamage(damage);
             WorldBossPayoutStore payouts = WorldBossPayoutStore.get(current);
             String day = WorldBossPayoutStore.today();
@@ -919,6 +920,7 @@ public final class WorldBossService {
                     RaidFaultBarrier.guard("worldboss:award", () -> CobbleRaidsPoints.award(current, playerId, amount));
                 }
                 paid++;
+                paidPlayers.add(playerId);
                 ServerPlayer online = current.getPlayerList().getPlayer(playerId);
                 if (online != null) {
                     say(online, "You earned " + amount + " Raid Points for " + Math.round(share * 1000f) / 10f
@@ -929,6 +931,7 @@ public final class WorldBossService {
             flush(current);
             RaidLog.info("World Boss {} defeated: {} player(s) paid {} Raid Points each", s.bossId(), paid,
                     config.rewardRaidPoints());
+            RaidFaultBarrier.guard("worldboss:loot", () -> payWorldBossLoot(current, s, config, damage, paidPlayers));
             // Balance phase 3: the fallen pool pays Cobblemon experience by share (PoolExperienceRules, x5 for a World Boss).
             RaidFaultBarrier.guard("worldboss:experience", () -> {
                 RaidDefinition fallen = RaidDefinitionRegistry.get(ResourceLocation.tryParse(s.definitionId()));
@@ -992,9 +995,11 @@ public final class WorldBossService {
         RaidFaultBarrier.guard("worldboss:daily-capture", () -> capture[0] = RaidCaptureSessionService.offer(current, definition,
                 definition.species(), null, Math.min(100, level), false, affix.map(RenownAffix::id).orElse(null), s.bossId(),
                 new LinkedHashSet<>(fighters.keySet())));
+        Map<UUID, List<com.cobbleraids.reward.RewardExtra>> coins = renownCoins(fighters, definition);
         RaidFaultBarrier.guard("worldboss:daily-reward", () -> RaidRewardService.grant(new RaidRewardEligibility(s.bossId(), definition.id(),
                 RaidOutcome.VICTORY, fighters, new LinkedHashSet<>(fighters.keySet()), 0,
-                renown.map(RaidRenown::title).orElse(""), renown.map(r -> r.boon().encode()).orElse("")), current));
+                renown.map(RaidRenown::title).orElse(""), renown.map(r -> r.boon().encode()).orElse(""),
+                DAILY_TABLES, coins, false), current));
         for (UUID playerId : fighters.keySet()) {
             ServerPlayer online = current.getPlayerList().getPlayer(playerId);
             if (online == null) continue;
@@ -1004,6 +1009,43 @@ public final class WorldBossService {
         }
         RaidLog.info("Daily World Boss {} defeated: {} player(s) given a {} reward{}", s.bossId(), fighters.size(), definition.id(),
                 capture[0] ? " and a capture attempt" + affix.map(found -> " (affix " + found.id() + ")").orElse("") : "");
+    }
+
+    /** The loot tier the Daily Boss's claims roll (validation/economy/build_tables.py REWARD_TIERS). */
+    static final String DAILY_TABLES = "daily";
+    /** The loot tier an event World Boss's claims roll. */
+    static final String WORLD_BOSS_TABLES = "world_boss";
+
+    /** Renown Coins for each fighter: everyone gets one of the boss's species, the top three by damage get two (owner, 2026-11-27). */
+    static Map<UUID, List<com.cobbleraids.reward.RewardExtra>> renownCoins(Map<UUID, Float> fighters, RaidDefinition definition) {
+        Map<UUID, List<com.cobbleraids.reward.RewardExtra>> out = new LinkedHashMap<>();
+        Set<UUID> top = WorldBossRules.topDamage(fighters, 3);
+        String tier = definition.rarityTier().serializedName();
+        for (UUID id : fighters.keySet()) {
+            out.put(id, List.of(com.cobbleraids.reward.RewardExtra.coins(definition.species(), tier, top.contains(id) ? 2 : 1)));
+        }
+        return out;
+    }
+
+    /** An event World Boss's loot: its own tier's tables (no Raid Points: it pays those itself) and this event's seasonal rolls. */
+    private static void payWorldBossLoot(MinecraftServer current, WorldBossState s, WorldBossConfig config, Map<UUID, Float> damage,
+                                         Set<UUID> paid) {
+        if (paid.isEmpty()) return;
+        ResourceLocation definitionId = ResourceLocation.tryParse(s.definitionId());
+        if (definitionId == null || RaidDefinitionRegistry.get(definitionId) == null) return;
+        Map<UUID, Float> contribution = new LinkedHashMap<>();
+        Map<UUID, List<com.cobbleraids.reward.RewardExtra>> seasonal = new LinkedHashMap<>();
+        for (UUID id : paid) {
+            contribution.put(id, damage.getOrDefault(id, 0f));
+            List<com.cobbleraids.reward.RewardExtra> rolled = WorldBossRules.rollSeasonal(config.seasonal(), ThreadLocalRandom.current());
+            if (!rolled.isEmpty()) seasonal.put(id, rolled);
+        }
+        RaidRewardService.grant(new RaidRewardEligibility(s.bossId(), definitionId, RaidOutcome.VICTORY, contribution,
+                new LinkedHashSet<>(paid), 0, "", "", WORLD_BOSS_TABLES, seasonal, true), current);
+        for (UUID id : paid) {
+            ServerPlayer online = current.getPlayerList().getPlayer(id);
+            if (online != null) say(online, "Your World Boss reward is ready to claim.", ChatFormatting.GREEN);
+        }
     }
 
     private static void announceDefeat(MinecraftServer current, Map<UUID, Float> damage, float total) {

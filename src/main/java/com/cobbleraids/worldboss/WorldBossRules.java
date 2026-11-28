@@ -205,6 +205,27 @@ public final class WorldBossRules {
         return Math.max(end, startMillis + 60_000L);
     }
 
+    /** The {@code places} players who dealt the most damage (all of them when there are fewer); ties keep the earlier entry. */
+    public static java.util.Set<java.util.UUID> topDamage(Map<java.util.UUID, Float> damage, int places) {
+        java.util.Set<java.util.UUID> out = new java.util.LinkedHashSet<>();
+        damage.entrySet().stream()
+                .sorted(Map.Entry.<java.util.UUID, Float>comparingByValue().reversed())
+                .limit(Math.max(0, places))
+                .forEach(entry -> out.add(entry.getKey()));
+        return out;
+    }
+
+    /** One player's seasonal rolls: each listed item comes with its own chance. Unknown ids are left to the claim, which skips them. */
+    public static List<com.cobbleraids.reward.RewardExtra> rollSeasonal(List<WorldBossConfig.Seasonal> seasonal, Random random) {
+        List<com.cobbleraids.reward.RewardExtra> out = new ArrayList<>();
+        for (WorldBossConfig.Seasonal one : seasonal) {
+            if (random.nextFloat() >= one.chance()) continue;
+            net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(one.item());
+            if (id != null) out.add(new com.cobbleraids.reward.RewardExtra(id, one.count(), "", ""));
+        }
+        return out;
+    }
+
     /** Rounds a coordinate to the nearest hundred, so an announcement points near the boss and not at it. */
     public static int coordinateHint(int coordinate) {
         return coordinate >= 0 ? (coordinate + 50) / 100 * 100 : (coordinate - 50) / 100 * 100;

@@ -47,6 +47,43 @@ Weights are hundredths of a percent; each pool totals 10000. The *matched* colum
 | guardian scale | -- | -- | 0.04% | 0.04% | 0.06% | 0.06% | 0.08% | 0.08% |
 | base fallback | 79.95% | 79.95% | 66.76% | 76.76% | 59.46% | 69.46% | 51.77% | 61.77% |
 
+## Boss reward tiers
+
+The Daily Boss and the event World Boss roll these instead of their boss's own tier. Mega Stone is the boss-matched row; everything else is the unmatched pool (the matched pool takes the stone's weight out of the fallback).
+
+| Row | mythical | daily (from mythical) | world_boss (from mythical) |
+|---|---:|---:|---:|
+| mega stone | 10.00% | 15.00% | 10.00% |
+| netherite incubator | 0.30% | 0.45% | 0.30% |
+| daycare spark | 1.50% | 1.50% | 1.50% |
+| shiny booster | 1.50% | 1.50% | 1.50% |
+| shiny capsule | 0.20% | 0.30% | 0.20% |
+| daycare booster | 1.00% | 1.00% | 1.00% |
+| fertility candy | 0.75% | 0.75% | 0.75% |
+| tm / tr | 10.00% | 10.00% | 10.00% |
+| basic capsule | 4.00% | 4.00% | 4.00% |
+| rare capsule | 3.00% | 3.00% | 3.00% |
+| epic capsule core | 0.20% | 0.20% | 0.20% |
+| pokemon capsule | 0.50% | 0.50% | 0.50% |
+| bracelet / journal | 1.60% | 1.60% | 1.60% |
+| shiny leaf | 0.30% | 0.30% | 0.30% |
+| shiny crown | 0.10% | 0.10% | 0.10% |
+| training reader | 0.80% | 0.80% | 0.80% |
+| riding upgrade | 0.60% | 0.60% | 0.60% |
+| type charm | 4.00% | 4.00% | 4.00% |
+| catch / exp charm | 1.50% | 1.50% | 1.50% |
+| multi charm | 0.20% | 0.30% | 0.20% |
+| gold bottle cap | 0.20% | 0.30% | 0.20% |
+| shiny charm | 0.05% | 0.08% | 0.05% |
+| auspicious ball | 1.00% | 1.00% | 1.00% |
+| union room ball | 0.60% | 0.60% | 0.60% |
+| redchain random ball | 0.05% | 0.05% | 0.05% |
+| golden auspicious ball | 0.05% | 0.05% | 0.05% |
+| rare candy | 4.00% | 4.00% | 4.00% |
+| raid core | 0.15% | 0.15% | 0.15% |
+| guardian scale | 0.08% | 0.08% | 0.08% |
+| base fallback | 61.77% | 61.29% | 61.77% |
+
 ## Mega Stones
 
 The 5.00% row splits evenly between a boss's stones, so a single-stone boss is 5.00% and an X/Y boss is 2.50% each. 9 of 132 bosses drop one; starter raids never do (12 starter bosses carry a stone and drop none).

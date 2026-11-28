@@ -51,7 +51,7 @@ public final class RaidRewardGrantEngine {
                 pending.contributionPercentage(), pending.contributionBonusRolls(),
                 RaidRewardPolicyManager.get(), CobbleRaidsConfigManager.get().currency(),
                 table -> RaidLootRoller.exists(player, parse(table, definitionId)),
-                sinceStone, CobbleRaidsConfigManager.get().megaPity());
+                sinceStone, CobbleRaidsConfigManager.get().megaPity(), pending.tableTier());
 
         // One generator per claim, seeded from the claim token, handing a fresh sub-seed to each
         // selection. Reusing the claim seed directly for every roll would make all of a bundle's
@@ -63,6 +63,7 @@ public final class RaidRewardGrantEngine {
             case RewardPlan.Policy policy -> grantPolicy(player, definitionId, policy, claimRandom, currency);
             case RewardPlan.Legacy legacy -> grantLegacy(player, definitionId, legacy, claimRandom, currency);
         };
+        result = result.withExtras(giveExtras(player, pending, definitionId));
         result = result.withPoints(awardPoints(player, pending));
         if (plan instanceof RewardPlan.Policy policy && policy.megaCapable()) {
             recordMegaCapableClaim(player, result, sinceStone);
@@ -330,6 +331,24 @@ public final class RaidRewardGrantEngine {
      * never be completed. Skipping the line leaves the rest of the reward intact and the claim
      * properly spent, which is what a modpack that has just dropped a mod needs.
      */
+    /** Hands over the claim's guaranteed extras (Renown Coins, seasonal items) and lists them for the reveal. */
+    private static List<RaidDefinition.RewardItem> giveExtras(ServerPlayer player, PendingRaidReward pending, ResourceLocation definitionId) {
+        List<RaidDefinition.RewardItem> given = new ArrayList<>();
+        for (RewardExtra extra : pending.extras()) {
+            if (extra.isCoin()) {
+                ResourceLocation species = ResourceLocation.tryParse(extra.species());
+                if (species == null || com.cobbleraids.item.RenownCoinItem.item() == null) continue;
+                net.minecraft.world.item.ItemStack coins = com.cobbleraids.item.RenownCoinItem.stack(species, extra.tier(), extra.count());
+                player.getInventory().placeItemBackInInventory(coins);
+                given.add(new RaidDefinition.RewardItem(extra.item(), extra.count(), 1.0, 1));
+                continue;
+            }
+            var granted = give(player, new RaidDefinition.RewardItem(extra.item(), extra.count(), 1.0, 1), definitionId);
+            if (granted != null) given.add(granted);
+        }
+        return given;
+    }
+
     private static RaidDefinition.RewardItem give(ServerPlayer player, RaidDefinition.RewardItem reward, ResourceLocation definitionId) {
         Item item = BuiltInRegistries.ITEM.get(reward.item());
         if (!BuiltInRegistries.ITEM.getKey(item).equals(reward.item())) {

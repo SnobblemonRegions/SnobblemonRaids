@@ -84,6 +84,28 @@ public final class RewardPlanResolver {
                                      Predicate<String> tableExists,
                                      int raidsSinceMegaStone,
                                      CobbleRaidsConfig.MegaPity pityConfig) {
+        return resolve(rewards, choice, tier, species, contributionPercentage, bonusRolls, policy, currencyConfig, tableExists,
+                raidsSinceMegaStone, pityConfig, "");
+    }
+
+    /**
+     * As above, with {@code tableTier}: when not empty, the claim rolls that tier's tables ({@code general/daily}, {@code specialty/daily},
+     * and for a boss with a Mega Stone {@code specialty/boss_daily/<species>}) instead of its boss's. The currency payout and the Mega
+     * Stone pity table still follow the boss itself.
+     */
+    public static RewardPlan resolve(RaidDefinition.Rewards rewards,
+                                     RaidDefinition.RewardChoice choice,
+                                     RaidRarityTier tier,
+                                     String species,
+                                     double contributionPercentage,
+                                     int bonusRolls,
+                                     RaidRewardPolicy policy,
+                                     CobbleRaidsConfig.Currency currencyConfig,
+                                     Predicate<String> tableExists,
+                                     int raidsSinceMegaStone,
+                                     CobbleRaidsConfig.MegaPity pityConfig,
+                                     String tableTier) {
+        boolean overridden = tableTier != null && !tableTier.isBlank();
         BigInteger currency = RaidCurrencyPolicy.payout(currencyConfig, tier, contributionPercentage);
 
         if (isSelfDescribing(rewards, choice)) {
@@ -104,8 +126,10 @@ public final class RewardPlanResolver {
                     currency);
         }
 
-        String bossTable = species == null || species.isBlank() ? null
+        String ownBossTable = species == null || species.isBlank() ? null
                 : policy.bossSpecialtyTableFor(species);
+        String bossTable = ownBossTable == null || !overridden ? ownBossTable
+                : ownBossTable.replace("specialty/boss/", "specialty/boss_" + tableTier + "/");
         boolean megaCapable = bossTable != null && tableExists != null && tableExists.test(bossTable);
 
         List<String> tables = new ArrayList<>();
@@ -113,9 +137,9 @@ public final class RewardPlanResolver {
             // The guarantee replaces the specialty selection rather than adding one: a player owed
             // a stone gets a stone instead of that roll, not as well as it, so the bundle is always
             // the same size and nothing else in the pool is displaced.
-            tables.add(megaTableFor(bossTable));
+            tables.add(megaTableFor(ownBossTable));
         } else {
-            tables.add(megaCapable ? bossTable : policy.specialtyTableFor(tier));
+            tables.add(megaCapable ? bossTable : overridden ? policy.specialtyTableFor(tableTier) : policy.specialtyTableFor(tier));
         }
         // Key fragments are a selection like any other, whose table happens to have exactly one
         // outcome. Rolling them through the plan rather than adding a guaranteed-items channel
@@ -132,7 +156,7 @@ public final class RewardPlanResolver {
         for (int index = 0; index < fragments; index++) tables.add(fragmentTable);
 
         int generalRolls = policy.standardGeneralRolls() + Math.max(0, bonusRolls);
-        String general = policy.generalTableFor(tier);
+        String general = overridden ? policy.generalTableFor(tableTier) : policy.generalTableFor(tier);
         for (int index = 0; index < generalRolls; index++) tables.add(general);
         return new RewardPlan.Policy(tables, Math.max(0, bonusRolls), currency, megaCapable);
     }

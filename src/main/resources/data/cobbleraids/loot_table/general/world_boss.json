@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:base/mythical",
+          "weight": 62
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:general/leaf/cards",
+          "weight": 18
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "cobbleraids:general/leaf/curios/mythical",
+          "weight": 20
+        }
+      ]
+    }
+  ]
+}

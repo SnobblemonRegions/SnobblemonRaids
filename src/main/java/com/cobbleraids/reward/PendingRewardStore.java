@@ -137,7 +137,22 @@ public final class PendingRewardStore extends SavedData {
                 // Absent on every claim saved before the boon icon existed, same "" fallback.
                 tag.getString("renown_boon"),
                 // Absent on every claim saved before points were fixed at victory: priced at claim, as before.
-                tag.contains("points") ? tag.getInt("points") : PendingRaidReward.POINTS_AT_CLAIM);
+                tag.contains("points") ? tag.getInt("points") : PendingRaidReward.POINTS_AT_CLAIM,
+                // Absent on every claim saved before table tiers and extras existed: the boss's own tier, nothing extra.
+                tag.getString("table_tier"),
+                readExtras(tag));
+    }
+
+    private static java.util.List<RewardExtra> readExtras(CompoundTag tag) {
+        java.util.List<RewardExtra> out = new java.util.ArrayList<>();
+        for (net.minecraft.nbt.Tag raw : tag.getList("extras", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+            CompoundTag extra = (CompoundTag) raw;
+            ResourceLocation item = ResourceLocation.tryParse(extra.getString("item"));
+            int count = extra.getInt("count");
+            if (item == null || count < 1) continue;   // a damaged entry costs that item, never the claim
+            out.add(new RewardExtra(item, Math.min(count, 64_000), extra.getString("species"), extra.getString("tier")));
+        }
+        return out;
     }
 
     @Override
@@ -173,6 +188,19 @@ public final class PendingRewardStore extends SavedData {
             tag.putString("renown_boon", pending.renownBoon());
         }
         tag.putInt("points", pending.points());
+        if (!pending.tableTier().isEmpty()) tag.putString("table_tier", pending.tableTier());
+        if (!pending.extras().isEmpty()) {
+            ListTag extras = new ListTag();
+            for (RewardExtra extra : pending.extras()) {
+                CompoundTag one = new CompoundTag();
+                one.putString("item", extra.item().toString());
+                one.putInt("count", extra.count());
+                if (!extra.species().isEmpty()) one.putString("species", extra.species());
+                if (!extra.tier().isEmpty()) one.putString("tier", extra.tier());
+                extras.add(one);
+            }
+            tag.put("extras", extras);
+        }
         return tag;
     }
 

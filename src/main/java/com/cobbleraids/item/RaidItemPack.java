@@ -25,7 +25,9 @@ public final class RaidItemPack {
     public static void register() {
         PolymerResourcePackUtils.RESOURCE_PACK_CREATION_EVENT.register(builder ->
                 RaidFaultBarrier.guard("resource-pack:item-art", () -> {
-                    for (String name : NAMES) {
+                    java.util.List<String> all = new java.util.ArrayList<>(NAMES);
+                    all.addAll(RenownCoinItem.artNames());
+                    for (String name : all) {
                         add(builder, "assets/cobbleraids/models/item/" + name + ".json");
                         add(builder, "assets/cobbleraids/textures/item/" + name + ".png");
                     }
