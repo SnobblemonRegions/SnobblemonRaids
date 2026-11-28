@@ -17,6 +17,10 @@ public enum ShopPurchaseResult {
     ROTATED(false, "That listing has rotated out. Reopen the page to see the new stock."),
     LIMIT_REACHED(false, "You have bought as many of those as you may."),
     NOT_ENOUGH_POINTS(false, "You do not have enough Raid Points."),
+    NOT_ENOUGH_COINS(false, "You do not have enough Renown Coins. Coins in your Coin Album are kept safe; take some out to spend them."),
+    NO_VOUCHER(false, "You have no Legendary Voucher of your own to use."),
+    CHOSEN(true, "Your new legendary has joined your party."),
+    CHOSEN_TO_PC(true, "Your new legendary was sent to your PC: your party was full."),
     NO_ROOM(false, "Your party and PC are both full."),
     UNRESOLVED(false, "That listing is broken. Tell an administrator."),
     FAILED(false, "The purchase could not be completed.");

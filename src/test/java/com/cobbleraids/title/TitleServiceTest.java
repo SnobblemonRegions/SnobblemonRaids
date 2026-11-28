@@ -58,4 +58,23 @@ class TitleServiceTest {
         assertFalse(TitleService.qualifies(wonNotCaught, title));
         assertTrue(TitleService.qualifies(caught, title));
     }
+
+    @Test
+    @DisplayName("album titles follow the Coin Album, and need its progress to unlock")
+    void albumTitlesFollowTheAlbum() {
+        var album = new com.cobbleraids.album.RenownAlbum.Progress(12, 40, java.util.Set.of("dragon"), false);
+        var bearer = new TitleDefinition("album_coin_bearer", "Coin Bearer", "YELLOW", TitleUnlockType.ALBUM_SPECIES, null, 10);
+        var numismatist = new TitleDefinition("album_numismatist", "Numismatist", "GOLD", TitleUnlockType.ALBUM_SPECIES, null, 25);
+        var dragon = new TitleDefinition("album_curator_dragon", "Dragon Curator", "YELLOW", TitleUnlockType.ALBUM_TYPE, null, 1, "dragon");
+        var steel = new TitleDefinition("album_curator_steel", "Steel Curator", "YELLOW", TitleUnlockType.ALBUM_TYPE, null, 1, "steel");
+        var renowned = new TitleDefinition("album_renowned", "Renowned", "LIGHT_PURPLE", TitleUnlockType.ALBUM_COMPLETE, null, 1);
+        assertTrue(TitleService.qualifies(RaidPlayerRecord.EMPTY, bearer, album));
+        assertFalse(TitleService.qualifies(RaidPlayerRecord.EMPTY, numismatist, album));
+        assertTrue(TitleService.qualifies(RaidPlayerRecord.EMPTY, dragon, album));
+        assertFalse(TitleService.qualifies(RaidPlayerRecord.EMPTY, steel, album));
+        assertFalse(TitleService.qualifies(RaidPlayerRecord.EMPTY, renowned, album));
+        assertTrue(TitleService.qualifies(RaidPlayerRecord.EMPTY, renowned,
+                new com.cobbleraids.album.RenownAlbum.Progress(40, 40, java.util.Set.of("dragon"), true)));
+        assertFalse(TitleService.qualifies(RaidPlayerRecord.EMPTY, bearer), "no album progress, no album title");
+    }
 }

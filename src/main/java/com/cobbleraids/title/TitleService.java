@@ -24,7 +24,7 @@ public final class TitleService {
         RaidPlayerRecord record = RaidPlayerRecords.get(playerId);
         for (TitleDefinition title : TitleCatalogManager.get().titles()) {
             if (record.hasTitle(title.id())) continue;
-            if (!qualifies(record, title)) continue;
+            if (!qualifies(record, title, album(server, playerId, title))) continue;
             RaidPlayerRecords.unlockTitle(server, playerId, title.id());
             notify(server, playerId, title);
         }
@@ -32,8 +32,23 @@ public final class TitleService {
 
     // Package-private rather than private so TitleServiceTest can drive it directly against a plain
     // RaidPlayerRecord, with no MinecraftServer to bootstrap.
-    static boolean qualifies(RaidPlayerRecord record, TitleDefinition title) {
+    /** The album's progress, read only for an album title (it walks the Daily Boss pool). */
+    private static com.cobbleraids.album.RenownAlbum.Progress album(MinecraftServer server, UUID playerId, TitleDefinition title) {
         return switch (title.unlockType()) {
+            case ALBUM_SPECIES, ALBUM_TYPE, ALBUM_COMPLETE -> com.cobbleraids.web.AlbumWebPage.progress(server, playerId);
+            default -> null;
+        };
+    }
+
+    static boolean qualifies(RaidPlayerRecord record, TitleDefinition title) {
+        return qualifies(record, title, null);
+    }
+
+    static boolean qualifies(RaidPlayerRecord record, TitleDefinition title, com.cobbleraids.album.RenownAlbum.Progress album) {
+        return switch (title.unlockType()) {
+            case ALBUM_SPECIES -> album != null && album.pressed() >= title.threshold();
+            case ALBUM_TYPE -> album != null && album.completedTypes().contains(title.type());
+            case ALBUM_COMPLETE -> album != null && album.complete();
             case RAIDS_WON -> record.raidsWon() >= title.threshold();
             case TIER_WINS -> title.tier() != null && record.winsIn(title.tier()) >= title.threshold();
             case BOSSES_CAUGHT -> record.bossesCaught() >= title.threshold();

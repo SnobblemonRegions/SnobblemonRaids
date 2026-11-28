@@ -455,6 +455,20 @@ public final class WorldBossService {
      * The raid definitions the daily boss is drawn from: {@code daily.raid_definitions} when it names any, otherwise every loaded definition of
      * {@code daily.tiers} that spawns in the wild (event-only definitions, which never spawn on their own, are left out).
      */
+    /**
+     * The Coin Album's species: every species the Daily Boss can field (its pool is the album), id to the boss's tier, in pool order. A
+     * species with two definitions keeps the first.
+     */
+    public static Map<String, String> albumSpecies() {
+        Map<String, String> out = new LinkedHashMap<>();
+        for (String id : dailyDefinitions(WorldBossConfigManager.get())) {
+            ResourceLocation parsed = ResourceLocation.tryParse(id);
+            RaidDefinition definition = parsed == null ? null : RaidDefinitionRegistry.get(parsed);
+            if (definition != null) out.putIfAbsent(definition.species().toString(), definition.rarityTier().serializedName());
+        }
+        return out;
+    }
+
     private static List<String> dailyDefinitions(WorldBossConfig config) {
         if (!config.daily().raidDefinitions().isEmpty()) return config.daily().raidDefinitions();
         List<String> ids = new ArrayList<>();
@@ -1005,7 +1019,8 @@ public final class WorldBossService {
             if (online == null) continue;
             String catchLine = !capture[0] ? "" : affix.map(found -> " Claim it for your chance to catch the boss, and its affix "
                     + found.displayName() + ".").orElse(" Claim it for your chance to catch the boss.");
-            say(online, "Your reward for the daily boss is ready." + catchLine, ChatFormatting.GREEN);
+            say(online, "Your reward for the daily boss is ready, with a Renown Coin." + catchLine
+                    + " Press coins into your Coin Album (/cobbleraids album) or spend them at the Renown Vendor.", ChatFormatting.GREEN);
         }
         RaidLog.info("Daily World Boss {} defeated: {} player(s) given a {} reward{}", s.bossId(), fighters.size(), definition.id(),
                 capture[0] ? " and a capture attempt" + affix.map(found -> " (affix " + found.id() + ")").orElse("") : "");

@@ -23,7 +23,9 @@ public enum ShopResetPeriod {
     /** The limit refills at 00:00 UTC on Monday. */
     WEEKLY,
     /** The limit refills every four hours, in step with the rotating Pokemon page. */
-    ROTATION;
+    ROTATION,
+    /** The limit refills at 00:00 UTC on the first of each month (the Legendary Voucher). */
+    MONTHLY;
 
     /** Seconds in one rotation of the Pokemon page. */
     public static final long ROTATION_SECONDS = 4L * 3600L;
@@ -47,7 +49,17 @@ public enum ShopResetPeriod {
             case DAILY -> day;
             case WEEKLY -> weekOfDay(day);
             case ROTATION -> Math.floorDiv(instant.getEpochSecond(), ROTATION_SECONDS);
+            case MONTHLY -> monthOf(instant);
         };
+    }
+
+    /**
+     * The calendar month (UTC) an instant falls in, as a negative number: -(year * 12 + month). Negative so a monthly tally can never be
+     * mistaken for a lifetime (0), daily, weekly or rotation one, which are all positive; see {@code RaidPlayerRecord.prunePurchases}.
+     */
+    public static long monthOf(Instant instant) {
+        java.time.LocalDate date = java.time.LocalDate.ofInstant(instant, java.time.ZoneOffset.UTC);
+        return -(date.getYear() * 12L + date.getMonthValue());
     }
 
     /**
@@ -76,6 +88,7 @@ public enum ShopResetPeriod {
             case "daily", "day" -> DAILY;
             case "weekly", "week" -> WEEKLY;
             case "rotation" -> ROTATION;
+            case "monthly", "month" -> MONTHLY;
             default -> fallback;
         };
     }
@@ -87,6 +100,7 @@ public enum ShopResetPeriod {
             case DAILY -> "today";
             case WEEKLY -> "this week";
             case ROTATION -> "this rotation";
+            case MONTHLY -> "this month";
         };
     }
 }

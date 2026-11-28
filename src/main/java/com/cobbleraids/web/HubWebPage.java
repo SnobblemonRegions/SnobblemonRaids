@@ -22,7 +22,7 @@ import net.minecraft.server.level.ServerPlayer;
  * remembering a command (/cobbleraids opens it).
  *
  * <p>The hub shows a figure or two from each room and sends nothing but "open this one"; opening goes
- * through the same gateway {@code /cobbleraids shop|trophy|legends} uses.
+ * through the same gateway {@code /cobbleraids shop|trophy|legends|album} uses.
  */
 public final class HubWebPage {
     private HubWebPage() {}
@@ -50,6 +50,7 @@ public final class HubWebPage {
                     case "trophy" -> TrophyRoomGateway.open(player, TrophyGalleryQuery.MAX_COLUMNS);
                     case "legends" -> LegendRoomGateway.open(player, LegendGalleryQuery.MAX_COLUMNS);
                     case "leaders" -> LeaderboardWebPage.open(player);
+                    case "album" -> AlbumWebPage.open(player);
                     default -> { }
                 }
             }
@@ -67,6 +68,9 @@ public final class HubWebPage {
         out.addProperty("legends", HallOfLegends.all().size());
         PlayerStats stats = RaidStatsStore.book().players().get(player.getUUID());
         out.addProperty("raidsWon", stats == null ? 0 : stats.block(StatScope.ALL_TIME, RaidStats.window()).raidsWon());
+        com.cobbleraids.album.RenownAlbum.Progress album = AlbumWebPage.progress(player);
+        out.addProperty("albumFilled", album.pressed());
+        out.addProperty("albumTotal", album.total());
         return out;
     }
 }

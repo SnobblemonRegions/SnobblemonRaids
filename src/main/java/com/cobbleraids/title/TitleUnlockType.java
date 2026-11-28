@@ -9,6 +9,12 @@ import java.util.Locale;
  * new stat is ever worth gating a title on.
  */
 public enum TitleUnlockType {
+    /** Pressed this many species into the Coin Album. */
+    ALBUM_SPECIES,
+    /** Filled every slot of one type's album page ({@code type} on the title). */
+    ALBUM_TYPE,
+    /** Filled the whole Coin Album. */
+    ALBUM_COMPLETE,
     /** Total raids won, of any tier. */
     RAIDS_WON,
     /** Raids won of one specific {@code RaidRarityTier}, named by the title's own {@code tier} field. */

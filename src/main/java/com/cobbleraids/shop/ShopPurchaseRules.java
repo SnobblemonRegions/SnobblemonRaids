@@ -29,7 +29,9 @@ public final class ShopPurchaseRules {
         // The limit before the price: telling a player who has hit their daily cap that they cannot
         // afford it sends them off to earn points for a purchase that will still be refused.
         if (remaining(entry, tally, now) <= 0) return ShopPurchaseResult.LIMIT_REACHED;
-        if (balance < entry.cost()) return ShopPurchaseResult.NOT_ENOUGH_POINTS;
+        if (balance < entry.cost()) {
+            return entry.currency() == ShopCurrency.RENOWN_COINS ? ShopPurchaseResult.NOT_ENOUGH_COINS : ShopPurchaseResult.NOT_ENOUGH_POINTS;
+        }
         return null;
     }
 

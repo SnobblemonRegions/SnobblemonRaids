@@ -96,7 +96,10 @@ public final class RaidShopGateway {
     }
 
     /** A player left, or the server stopped: nothing half-confirmed is carried over. */
-    public static void forget(java.util.UUID playerId) { CONFIRMATION.clear(playerId); }
+    public static void forget(java.util.UUID playerId) {
+        CONFIRMATION.clear(playerId);
+        LegendaryVoucherService.forget(playerId);
+    }
 
     public static void onServerStopped() { CONFIRMATION.clearAll(); }
 
@@ -113,7 +116,9 @@ public final class RaidShopGateway {
         if (!CONFIRMATION.confirm(player.getUUID(), id, System.currentTimeMillis())) {
             player.sendSystemMessage(Component.literal(id.startsWith(REROLL_PREFIX)
                             ? "Click REROLL again to confirm. A reroll cannot be undone."
-                            : "Click it again to confirm your purchase. Raid Points are not refunded.")
+                            : id.startsWith(LegendaryVoucherService.PREFIX)
+                            ? "Click it again to choose this legendary. Your voucher is used up."
+                            : "Click it again to confirm your purchase. Nothing is refunded.")
                     .withStyle(ChatFormatting.YELLOW));
             WebSounds.play(player, SoundEvents.UI_BUTTON_CLICK.value(), 0.6f, 1.0f);
             sendPage(player, action.pageIndex());
@@ -124,7 +129,10 @@ public final class RaidShopGateway {
         // Checked before the catalogue lookup, not after: a coincidentally-prefixed operator id in
         // the global catalogue must never be shadowed by this, and checking first makes that
         // structurally impossible rather than merely unlikely.
-        if (id.startsWith(ROTATING_PREFIX)) {
+        if (id.startsWith(LegendaryVoucherService.PREFIX)) {
+            result = LegendaryVoucherService.redeem(player, id.substring(LegendaryVoucherService.PREFIX.length()));
+            message = result.message();
+        } else if (id.startsWith(ROTATING_PREFIX)) {
             result = ShopRotationService.purchase(player, id);
             message = result.message();
         } else if (id.startsWith(REROLL_PREFIX)) {
@@ -155,7 +163,17 @@ public final class RaidShopGateway {
     }
 
     private static void sendPage(ServerPlayer player, int requestedPage) {
-        List<ShopPageView> catalogPages = listablePages(ShopCatalogManager.pages());
+        if (LegendaryVoucherService.choosing(player)) {
+            LegendaryVoucherService.sendPage(player, requestedPage);
+            return;
+        }
+        // The Renown Vendor's pages come last, after "Your Bosses" (owner, 2026-11-27), wherever its section sits in the catalogue. Purchases
+        // name their entry id, never a page, so this only changes where the pages are shown.
+        List<ShopPageView> catalogPages = new ArrayList<>();
+        List<ShopPageView> vendorPages = new ArrayList<>();
+        for (ShopPageView page : listablePages(ShopCatalogManager.pages())) {
+            (ShopCatalog.RENOWN_SECTION.equals(page.sectionId()) ? vendorPages : catalogPages).add(page);
+        }
         com.cobbleraids.catching.BossShopOffers.pruneExpired(player);
         Map<ResourceLocation, BossSnapshot> personal = DefeatedBossSnapshots.forPlayer(player.getUUID());
         com.cobbleraids.catching.BossShopOffers.OfferView offer = com.cobbleraids.catching.BossShopOffers.view(player);
@@ -163,7 +181,8 @@ public final class RaidShopGateway {
         boolean hasPersonalPage = !personal.isEmpty() || offer != null;
         List<ShopRotation.Listing> rotating = ShopRotationService.current(Instant.now(), player.getUUID());
         boolean hasRotatingPage = !rotating.isEmpty();
-        int pageCount = catalogPages.size() + (hasRotatingPage ? 1 : 0) + (hasPersonalPage ? 1 : 0);
+        int pageCount = catalogPages.size() + (hasRotatingPage ? 1 : 0) + (hasPersonalPage ? 1 : 0) + vendorPages.size();
+        int vendorStart = pageCount - vendorPages.size();
         if (pageCount == 0) {
             ShopWebPage.deliver(player,
                     new ShopPagePayload("Raid Shop", 0, 1, RaidPointsStore.balance(player.getUUID()), List.of(), 0L));
@@ -180,6 +199,10 @@ public final class RaidShopGateway {
         if (index < catalogPages.size()) {
             heading = catalogPages.get(index).heading();
             entries = buildCatalogEntries(catalogPages.get(index), player);
+        } else if (index >= vendorStart) {
+            ShopPageView vendor = vendorPages.get(index - vendorStart);
+            heading = vendor.heading();
+            entries = buildCatalogEntries(vendor, player);
         } else if (hasRotatingPage && index == catalogPages.size()) {
             // After the catalogue's own pages and before "Your Bosses", so page 0 and every
             // bookmark on the catalogue stay exactly what they were.
@@ -188,8 +211,8 @@ public final class RaidShopGateway {
             Instant now = Instant.now();
             rotatesInMillis = Math.max(1L, ShopRotationService.nextRotation(now).toEpochMilli() - now.toEpochMilli());
         } else {
-            // Always the last page, so page 0 -- and every existing bookmark or expectation about
-            // it -- stays exactly what it already was.
+            // After the catalogue and the rotating page, before only the Renown Vendor, so page 0 --
+            // and every existing bookmark or expectation about it -- stays exactly what it already was.
             int used = personal.size();
             int slots = com.cobbleraids.catching.BossShopOffers.maxSlots();
             heading = com.cobbleraids.catching.BossShopSlots.heading(used, slots);
