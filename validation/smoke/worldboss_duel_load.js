@@ -1,3 +1,8 @@
+// Retired: this runner used a fixed game port and an unverified console target.
+console.error('Retired unsafe runner. Use worldboss_rehearsal.py and worldboss_native_pilot.py; see README.md.');
+process.exit(2);
+
+// Historical implementation, retained for reference only.
 // N mineflayer bots duel one World Boss on a throwaway server; samples /tick query before and during.
 //   CONSOLE=<file the server reads commands from> LOG=<server log> node worldboss_duel_load.js N [maxSeconds]
 // Needs mineflayer on NODE_PATH, the server in offline mode on port 25565 with Polymer (the bots answer its

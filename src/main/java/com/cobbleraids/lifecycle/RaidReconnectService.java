@@ -53,7 +53,7 @@ public final class RaidReconnectService {
     /** How long after JOIN the battle UI is resent -- see RaidRewardService.JOIN_OPEN_DELAY_TICKS. */
     private static final int RESUME_OPEN_DELAY_TICKS = 40;
 
-    private record GraceHold(UUID raidId, long deadlineTick, boolean heldOnShowdown) {}
+    private record GraceHold(UUID raidId, long deadlineTick, boolean heldOnShowdown, com.cobbleraids.worldboss.WorldBossDisconnectGrace worldBoss) {}
     private record PendingResume(UUID raidId, long readyTick, boolean heldOnShowdown) {}
 
     private static final Map<UUID, GraceHold> HOLDS = new ConcurrentHashMap<>();
@@ -72,7 +72,10 @@ public final class RaidReconnectService {
         if (!raid.isActiveParticipant(playerId)) return;
 
         CobbleRaidsConfig.ReconnectGrace config = CobbleRaidsConfigManager.get().reconnectGrace();
-        if (!config.enabled()) {
+        boolean worldBoss = raid.isOwned() && com.cobbleraids.worldboss.WorldBossService.OWNER.equals(raid.getOwnership().owner());
+        var existing = HOLDS.get(playerId);
+        if (worldBoss && existing != null && existing.raidId().equals(raid.getId())) return;
+        if (!worldBoss && !config.enabled()) {
             RaidLifecycleCoordinator.onPlayerDisconnected(raid, playerId);
             return;
         }
@@ -89,9 +92,9 @@ public final class RaidReconnectService {
             battle.writeShowdownAction(">raidhold " + actor.getShowdownId());
         }
 
-        int graceSeconds = graceSecondsFor(raid, config.graceSeconds());
+        int graceSeconds = worldBoss ? com.cobbleraids.worldboss.WorldBossDisconnectGrace.SECONDS : graceSecondsFor(raid, config.graceSeconds());
         long deadline = server.getTickCount() + (long) graceSeconds * 20L;
-        HOLDS.put(playerId, new GraceHold(raid.getId(), deadline, othersStillActive));
+        HOLDS.put(playerId, new GraceHold(raid.getId(), deadline, othersStillActive, worldBoss ? new com.cobbleraids.worldboss.WorldBossDisconnectGrace(System.nanoTime()) : null));
         RaidLog.info("Holding " + player.getGameProfile().getName() + "'s raid slot for "
                 + graceSeconds + "s after a disconnect.");
         announceOthers(server, raid, playerId, Component.literal(player.getGameProfile().getName()
@@ -128,6 +131,7 @@ public final class RaidReconnectService {
 
         RaidSession raid = findRaid(hold.raidId());
         if (raid == null || raid.getStatus() != RaidSession.Status.ACTIVE) return;
+        if (hold.worldBoss() != null && hold.worldBoss().expired(System.nanoTime())) { RaidLifecycleCoordinator.onPlayerDisconnected(raid, playerId); return; }
 
         PokemonBattle battle = raid.getBattle();
         if (hold.heldOnShowdown() && !battle.getEnded()) {
@@ -185,7 +189,7 @@ public final class RaidReconnectService {
         if (!HOLDS.isEmpty()) releaseHeldActors(server);
         for (Iterator<Map.Entry<UUID, GraceHold>> it = HOLDS.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<UUID, GraceHold> entry = it.next();
-            if (entry.getValue().deadlineTick() > now) continue;
+            if (entry.getValue().worldBoss() != null ? !entry.getValue().worldBoss().expired(System.nanoTime()) : entry.getValue().deadlineTick() > now) continue;
             it.remove();
             RaidSession raid = findRaid(entry.getValue().raidId());
             // Safe even if the raid already ended for some other reason while this was pending:

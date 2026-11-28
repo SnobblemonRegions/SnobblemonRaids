@@ -36,4 +36,16 @@ public abstract class ShowdownContextBootMixin {
     private void cobbleRaids$installBeforeContext(CallbackInfo ci) {
         ShowdownIntegrationInstaller.installSafely("before Showdown context creation");
     }
+
+    @Inject(method = "indicateSpeciesInitialized", at = @At("RETURN"))
+    private void cobbleRaids$warmAfterSpecies(CallbackInfo ci) {
+        try { com.cobbleraids.showdown.ShowdownBattleWarmup.warm(this); }
+        catch (Exception failure) { com.cobbleraids.fault.RaidFaultBarrier.report("startup:simulator-turn-warmup", failure); }
+    }
+
+    @Inject(method = "sendFromShowdown", at = @At("HEAD"), cancellable = true)
+    private void cobbleRaids$privateStartupOutput(String battleId, String message, CallbackInfo ci) {
+        try { if (com.cobbleraids.showdown.ShowdownBattleWarmup.consumeWarmupOutput(this, battleId, message)) ci.cancel(); }
+        catch (Exception failure) { com.cobbleraids.fault.RaidFaultBarrier.report("startup:simulator-private-output", failure); }
+    }
 }

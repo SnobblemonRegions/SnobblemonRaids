@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '0.8.207-spawn-safety'
+version = '0.8.211-worldboss-playtest'
 group = 'com.cobbleraids'
 
 base {
@@ -50,6 +50,7 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.jetbrains.kotlin:kotlin-stdlib:2.2.20' // Native Cobblemon adapter and spawn-detail regression fixtures.
 }
 
 /**

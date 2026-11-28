@@ -1,0 +1,1 @@
+{"species":"cobbleraids:radar_projector","order":0,"variations":[{"aspects":[],"model":"cobbleraids:radar_projector.geo","poser":"cobbleraids:radar_projector","texture":"cobbleraids:textures/radar_projector.png","layers":[{"name":"radar_lights","texture":"cobbleraids:textures/radar_projector_lights.png","emissive":true}]}]}

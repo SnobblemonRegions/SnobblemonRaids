@@ -1,5 +1,59 @@
 # Live smoke test
 
+For the current World Boss test-only pilot on Windows, use
+[WORLD-BOSS-NATIVE-REHEARSAL.md](../../docs/WORLD-BOSS-NATIVE-REHEARSAL.md).
+It creates a separate world and verifies process ownership before issuing commands.
+
+Cold-login diagnosis uses `worldboss_native_pilot.py --probe --login-only
+--require-login-pacer --fighters 5` against a newly prepared rig. This marks
+`cold_login` before any clients connect, grants no parties and starts no boss.
+Check the raw file with `worldboss_perf_report.py <recording> --phase cold_login
+--joining-phase cold_login --min-players 6`. Only this explicit joining phase
+permits rising attendance; all ticks, including initial zero-player ticks, keep
+the same latency limits. Requested attendance must remain present at phase end.
+`--diagnostic-jfr` records the whole native loop for diagnosis and taints the
+process: the reporter rejects it as capacity approval. Never reuse those players
+or that JVM to claim a cold-first-login result. See
+[the November 26 evidence](../../docs/WORLD-BOSS-COLD-LOGIN-2026-11-26.md) for scope
+and failed candidates; cold login has not passed overall approval.
+
+The probe records bounded, ID-matched `tickCpuTimes` alongside unchanged wall
+timings. CPU samples distinguish first-use CPU work from blocking/scheduling;
+unsupported counters use -1, and Windows CPU accounting can be quantized.
+CPU samples never replace a raw wall-time row or relax any gate.
+`--require-login-pacer` now additionally requires every actual native outbound
+protocol setup to be prepared and consumed exactly once, with no failures or
+compatibility fallbacks. An empty Netty FIFO marker alone is insufficient.
+See [protocol evidence](../../docs/WORLD-BOSS-LOGIN-PROTOCOL-2026-11-26.md).
+
+After recording has stopped, the private probe's `wbperf listener-hash-check`
+checks native listener hash/equality contracts and all loaded advancement criteria.
+`wbperf command-node-check` requires at least six prior native login mappings and
+checks native command cloning, permission levels 0/4, aliases and native command
+packet reconstruction. Neither fixture registers progress, executes a command,
+or creates a player/entity. Both reject active timing, and running either prevents
+any further timing recording in that process. Use another fresh rig for timing.
+
+`--require-poi-read-ahead` adds `wbperf poi-read-ahead-check` after recording
+stops and before clients disconnect. It requires healthy/drained native read-ahead,
+actual unowned wild Pokemon, and native POI dirty/write invalidation with restored
+fixture data. It also reloads the real native profile-cache file and checks every
+connected synthetic profile, prepared/pinned native handles, exact use/release
+counts, and healthy I/O counters.
+It requires the probe and forbids disabling natural spawning.
+The fixture cannot run during timing, and the process cannot record again afterward.
+
+With `--exercise-player-autosave`, completion requires both paced advancement
+serialization and its detached JSON disk queue to drain without failures. Native
+forced-save/reload ordering is checked by the post-timing compatibility fixture.
+The bounded stack sampler observes explicit automatic-save calls as well as ticks;
+negative stack-sample IDs label operations and never replace raw tick rows.
+Every combat status sample must remain ACTIVE/NONE; storage-held, regrouping
+or ended events cannot silently count as a combat workload.
+
+`worldboss_duel_load.js` is retired and exits with status 2: it used a fixed game
+port, unverified console targets, obsolete live-start commands and invalid percentile aggregation.
+
 Boots a real Fabric + Cobblemon server with a CobbleRaids build and checks that raids actually work.
 
 ```sh

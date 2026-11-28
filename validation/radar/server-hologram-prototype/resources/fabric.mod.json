@@ -1,0 +1,1 @@
+{"schemaVersion": 1, "id": "raid_hologram_experiment", "version": "1", "name": "Raid hologram experiment", "entrypoints": {"main": ["probe.ServerProbe"], "client": ["probe.CaptureProbe"]}, "depends": {"cobblemon": "1.8.2", "fabric-api": "*"}, "mixins": ["radar-experiment.mixins.json"]}

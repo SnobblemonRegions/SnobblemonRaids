@@ -68,13 +68,18 @@ public final class CobbleRaids implements ModInitializer {
         // Before anything that could look an item up by id, and before the reward policy is used:
         // a loot table naming an unregistered id costs the whole table, not just the entry.
         com.cobbleraids.worldboss.arena.ArenaBlocks.register();
+        com.cobbleraids.worldboss.WorldBossArenaProtection.register();
         RaidItemPack.register();
+        com.cobbleraids.worldboss.WorldBossDomeMaterial.register();
+        com.cobbleraids.worldboss.SovereignSealMaterial.register();
+        com.cobbleraids.worldboss.WorldBossVoicePack.register();
         RaidKeyItems.register();
         RaidHeldItems.register();
         com.cobbleraids.item.RaidRadarItem.register();
         // Last of the items: Polymer's recipe-viewer support (JEI, REI, EMI) only lists items in a creative tab.
         com.cobbleraids.item.RaidCreativeTab.register();
         com.cobbleraids.radar.RadarHologramNetworking.register();
+        com.cobbleraids.worldboss.DistortionVeilPrototype.register();
 
         RaidInstructionRegistrar.register();
         RaidBattleEventCoordinator.register();
@@ -94,6 +99,7 @@ public final class CobbleRaids implements ModInitializer {
             RaidFaultBarrier.safeTick("deferred-discard", server, com.cobbleraids.spawn.RaidDeferredDiscard::tick);
             RaidFaultBarrier.safeTick("rewards", server, RaidRewardService::tick);
             RaidFaultBarrier.safeTick("reward-reminders", server, RaidRewardService::remindTick);
+            RaidFaultBarrier.safeTick("world-boss-simulator", server, com.cobbleraids.showdown.WorldBossSimulator::tick);
             RaidFaultBarrier.safeTick("world-boss", server, com.cobbleraids.worldboss.WorldBossService::tick);
             RaidFaultBarrier.safeTick("duel-raids", server, com.cobbleraids.duel.RaidDuelService::tick);
             RaidFaultBarrier.safeTick("raid-edge", server, com.cobbleraids.presentation.RaidEdgeService::tick);
@@ -114,7 +120,10 @@ public final class CobbleRaids implements ModInitializer {
         // that a bad config can no longer abort the *rest* of the data pack reload -- including this
         // mod's own definition loading, which registers later.
         ServerLifecycleEvents.START_DATA_PACK_RELOAD.register((server, resources) ->
-                RaidFaultBarrier.guard("config-reload", CobbleRaidsConfigManager::reload));
+                RaidFaultBarrier.guard("config-reload", () -> {
+                    com.cobbleraids.showdown.WorldBossSimulator.invalidate("Data pack reload; restart required for world bosses");
+                    CobbleRaidsConfigManager.reload();
+                }));
         // Same barrier, same reason: a malformed reward policy keeps the last good one rather than
         // aborting the reload that also brings in this mod's raid definitions.
         ServerLifecycleEvents.START_DATA_PACK_RELOAD.register((server, resources) ->
@@ -207,8 +216,10 @@ public final class CobbleRaids implements ModInitializer {
         // Repairs the Showdown integration (ShowdownResourceLoaderMixin) if another mod's own
         // unbundle-time file writes clobbered it after ours -- confirmed live against a real pack
         // (mega_showdown) that patches the same Cobblemon Showdown files at the same injection point.
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> RaidFaultBarrier.guard("startup:showdown",
-                () -> ShowdownIntegrationInstaller.installSafely("at server start")));
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> RaidFaultBarrier.guard("startup:showdown", () -> {
+            ShowdownIntegrationInstaller.installSafely("at server start");
+            com.cobbleraids.showdown.WorldBossSimulator.started(server);
+        }));
         // First: ends every raid still in battle before anything below runs or the world saves, so
         // no boss is ever written to disk mid-fight. See RaidLifecycleCoordinator.abortAll.
         ServerLifecycleEvents.SERVER_STOPPING.register(server ->

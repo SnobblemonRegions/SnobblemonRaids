@@ -1,6 +1,6 @@
 """Normal production JAR graphical probe, isolated from the user's actual modpack configuration."""
 from pathlib import Path
-import argparse,json,os,re,shutil,subprocess,sys,time
+import argparse,json,os,re,shutil,subprocess,sys,time,zipfile
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'validation/smoke'))
 from smoke_test import Server,read_password,rcon_port,server_port,CONTAINED_FAULT,MIXIN_TROUBLE,SUSPECT_EXCEPTION
@@ -17,8 +17,19 @@ def main():
     for folder in ['mods','shaderpacks','config']: (run/folder).mkdir(parents=True,exist_ok=True)
     for pattern in ['iris-fabric-1.8.8+mc1.21.1.jar','sodium-fabric-0.6.13+mc1.21.1.jar']:
         source=args.instances_dir/'Cobblemon SMP/mods'/pattern;shutil.copy2(source,run/'mods'/source.name)
-    for pattern in ['Cobblemon*.jar','fabric-api*.jar']:
-        source=next((args.server_dir/'mods').glob(pattern));shutil.copy2(source,run/'mods'/source.name)
+    # Mirror registry-bearing client dependencies too (e.g. Accessories and Cards).
+    # Core CobbleRaids is deliberately absent: this probe tests the optional companion.
+    selected={}
+    for jar in (args.server_dir/'mods').glob('*.jar'):
+        with zipfile.ZipFile(jar) as archive:
+            if 'fabric.mod.json' not in archive.namelist():continue
+            metadata=json.loads(archive.read('fabric.mod.json'))
+        mod_id=metadata['id']
+        if metadata.get('environment','*')=='server' or mod_id=='cobbleraids':continue
+        assert mod_id not in selected, ('duplicate client mod',mod_id)
+        selected[mod_id]=jar
+    assert {'cobblemon','fabric-api'} <= selected.keys(), selected.keys()
+    for source in selected.values():shutil.copy2(source,run/'mods'/source.name)
     (run/'mods/CobbleRaids-Radar-Client-0.1.0+1.21.1.jar').unlink(missing_ok=True)
     (run/'mods/CobbleRaids-Radar-Client-0.2.0+1.21.1.jar').unlink(missing_ok=True)
     (run/'mods/CobbleRaids-Radar-Client-0.3.0+1.21.1.jar').unlink(missing_ok=True)

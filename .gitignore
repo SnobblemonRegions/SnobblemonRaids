@@ -31,3 +31,6 @@ __pycache__/
 /radar-client/run/
 
 /radar-client/run-hologram-smoke/
+
+# Disposable rehearsal installations contain worlds and private RCON settings.
+/.rehearsals/

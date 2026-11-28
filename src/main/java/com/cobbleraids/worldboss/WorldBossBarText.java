@@ -11,8 +11,8 @@ import net.minecraft.network.chat.TextColor;
  * how many players are fighting, and how long it will stay. The pieces that are plain arithmetic are separate methods so they can be tested.
  */
 final class WorldBossBarText {
-    static final int NAME_FROM = 0xB57BFF;
-    static final int NAME_TO = 0x7BE0A8;
+    static final int NAME_FROM = 0xFFF0BD;
+    static final int NAME_TO = 0xD6A64C;
     static final int HEALTHY = 0x7BE0A8;
     static final int HURT = 0xF5D142;
     static final int CRITICAL = 0xFF5A5A;
@@ -69,7 +69,7 @@ final class WorldBossBarText {
         }
         text.append(separator()).append(Component.literal(shortNumber(current) + "/" + shortNumber(max)).withColor(0xFFFFFF));
         text.append(separator()).append(Component.literal(percent + "%").withStyle(Style.EMPTY.withBold(true).withColor(TextColor.fromRgb(percentColor(percent)))));
-        text.append(separator()).append(Component.literal(fighting + " fighting").withColor(0xD9B3FF));
+        text.append(separator()).append(Component.literal(fighting + " fighting").withColor(0xD7DCE5));
         if (minutesLeft >= 0) text.append(separator()).append(Component.literal(timeLeft(minutesLeft)).withColor(0xB8B0C8));
         return text;
     }

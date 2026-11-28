@@ -1,0 +1,1 @@
+hudOwner=687565da-ccbe-49ce-98a1-621144a04d4e width=1.0 height=1.0 position=(0.5, 65.0, 0.5) render=true bounds=AABB[-25.5, 62.6, -25.5] -> [26.5, 101.0, 26.5] captured=0 binding=ready

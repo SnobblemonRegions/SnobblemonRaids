@@ -27,10 +27,13 @@ public final class ArenaMarkers extends SavedData {
     /** A marker's place: dimension id plus block position. */
     public record Spot(String dimension, BlockPos pos) {}
 
-    public enum Kind { SPAWN, ENTRANCE }
+    public enum Kind { SPAWN, ENTRANCE, WARD_PYLON, RELAY_CACHE, RELAY_CHECKPOINT, OBSERVER }
 
     private final Set<Spot> spawns = new LinkedHashSet<>();
     private final Set<Spot> entrances = new LinkedHashSet<>();
+    private final Set<Spot> wardPylons = new LinkedHashSet<>();
+    private final Set<Spot> relayCaches = new LinkedHashSet<>(), relayCheckpoints = new LinkedHashSet<>();
+    private final Set<Spot> observers = new LinkedHashSet<>();
 
     public static SavedData.Factory<ArenaMarkers> factory() {
         return new SavedData.Factory<>(ArenaMarkers::new, ArenaMarkers::load, DataFixTypes.LEVEL);
@@ -47,10 +50,11 @@ public final class ArenaMarkers extends SavedData {
         } catch (IOException e) {
             com.cobbleraids.RaidLog.warn("Could not save the arena markers: {}", e.toString());
         }
+        com.cobbleraids.fault.RaidFaultBarrier.guard("worldboss:marker-protection", () -> com.cobbleraids.worldboss.WorldBossService.refreshArenaProtection(server));
     }
 
     private Set<Spot> set(Kind kind) {
-        return kind == Kind.SPAWN ? spawns : entrances;
+        return switch (kind) { case SPAWN -> spawns; case ENTRANCE -> entrances; case WARD_PYLON -> wardPylons; case RELAY_CACHE -> relayCaches; case RELAY_CHECKPOINT -> relayCheckpoints; case OBSERVER -> observers; };
     }
 
     public boolean add(Kind kind, Spot spot) {
@@ -80,6 +84,10 @@ public final class ArenaMarkers extends SavedData {
         ArenaMarkers markers = new ArenaMarkers();
         read(tag.getList("spawns", Tag.TAG_COMPOUND), markers.spawns);
         read(tag.getList("entrances", Tag.TAG_COMPOUND), markers.entrances);
+        read(tag.getList("ward_pylons", Tag.TAG_COMPOUND), markers.wardPylons);
+        read(tag.getList("relay_caches", Tag.TAG_COMPOUND), markers.relayCaches);
+        read(tag.getList("relay_checkpoints", Tag.TAG_COMPOUND), markers.relayCheckpoints);
+        read(tag.getList("observers", Tag.TAG_COMPOUND), markers.observers);
         return markers;
     }
 
@@ -94,6 +102,10 @@ public final class ArenaMarkers extends SavedData {
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         tag.put("spawns", write(spawns));
         tag.put("entrances", write(entrances));
+        tag.put("ward_pylons", write(wardPylons));
+        tag.put("relay_caches", write(relayCaches));
+        tag.put("relay_checkpoints", write(relayCheckpoints));
+        tag.put("observers", write(observers));
         return tag;
     }
 

@@ -1,10 +1,30 @@
-# Optional 3D Raid Radar companion
+# 3D Raid Radar
 
-Server build: `CobbleRaids-0.8.194-raid-charges.jar`.
+Server build: `CobbleRaids-0.8.210-projector-follow.jar`.
 Client build: `CobbleRaids-Radar-Client-0.4.2+1.21.1.jar`.
 Target: Minecraft 1.21.1, Java 21, Fabric API 0.116.6+1.21.1.
 
-## Installation and controls
+## Server-driven projector
+
+Regenerate and serve the Polymer resource pack after installing the server build. Players on
+Cobblemon 1.8.2 who accept that pack can right-click the Raid Radar and choose **Deploy 3D projector**.
+The level compass base follows the player's first-person view. The map tilts toward the viewer and preserves the terrain bearings.
+Cyan terraces show sampled terrain over a dark backing. The readout identifies the selected raid, its distance and the marker colors.
+The survey contours interpolate between known heights at five elevation levels and smooth the joined paths.
+Each projector displays up to 176 contour segments. Marker stems connect the route to the survey surface.
+The raid readout sits on the front of the base, and the same pack supplies the held compass model.
+The contours, markers, and dial inlays use Cobblemon's emissive layer for contrast in shade.
+The dotted line shows a direct bearing. Sneak + use cycles the target. Choose **Stow 3D projector**,
+switch away from the radar or leave the dimension to close it.
+
+This mode sends a private, packet-only Cobblemon model to the viewer. It shares the radar's
+loaded-chunk terrain cache and sample budget. Terrain and marker updates are sent only when
+their quantized values change. Follow motion updates at most ten times per second, with client-side
+display interpolation and a small dead zone. Walking updates the survey area under the same sample
+budget. The same menu keeps the flat map and optional companion mode
+available. Players who decline the pack can still use the flat map.
+
+## Optional companion installation and controls
 
 - Install the server JAR on the server, replacing the earlier CobbleRaids JAR.
 - Players who want 3D install the separate client JAR alongside their existing Fabric/Cobblemon setup. Do not install the server CobbleRaids JAR on clients or the companion on the server.

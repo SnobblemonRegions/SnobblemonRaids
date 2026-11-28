@@ -10,10 +10,18 @@ import org.junit.jupiter.api.Test;
 class WorldBossLookTest {
 
     @Test
-    void theCopyStaysVisibleByDefaultButTheZoneHasNoGlow() {
+    void theCopyIsHiddenByDefaultAndTheZoneHasNoGlow() {
         var look = WorldBossConfig.defaults().look();
-        assertFalse(look.duelBossInvisible(), "hiding the copy is opt-in");
+        assertTrue(look.duelBossInvisible(), "players see the shared showpiece instead of private copies");
         assertTrue(look.noGlowInZone());
+    }
+
+    @Test
+    void staffCanExplicitlyKeepDuelCopiesVisible() {
+        var config = WorldBossConfig.fromJson(JsonParser.parseString(
+                "{\"visual\":{\"duel_boss_invisible\":false}}").getAsJsonObject());
+        assertFalse(config.look().duelBossInvisible());
+        assertEquals(config.look(), WorldBossConfig.fromJson(config.toJson()).look());
     }
 
     @Test

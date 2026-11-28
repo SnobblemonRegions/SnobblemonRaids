@@ -63,6 +63,13 @@ public final class RaidSession {
     private final String renownTitle;
     private final String renownBoon;
     private final Ownership ownership;
+    private long lastDamageSequence;
+
+    /** New simulator messages are ordered; transport replays must not damage the private pool twice. */
+    public synchronized boolean acceptDamageSequence(long sequence) {
+        if (sequence <= lastDamageSequence) return false;
+        lastDamageSequence = sequence; return true;
+    }
 
     public RaidSession(PokemonBattle battle, Collection<ServerPlayer> players, float maxHealth,
                        PokemonEntity bossEntity, UUID bossActorId, ResourceLocation definitionId,

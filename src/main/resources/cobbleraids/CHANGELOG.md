@@ -1,5 +1,13 @@
 # CobbleRaids changelog
 
+## 0.8.211-worldboss-playtest (2026-11-26)
+
+### New
+- Private playtest of seasonal World Boss battles, shared community progress, Worldheart collection and boss scenes.
+
+### Fixed
+- World Boss battles now pace arrivals and save progress without waiting for routine disk writes during combat.
+
 ## 0.8.207-spawn-safety (2026-11-23)
 
 ### Changed

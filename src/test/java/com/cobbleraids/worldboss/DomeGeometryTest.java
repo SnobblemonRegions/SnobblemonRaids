@@ -11,6 +11,15 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class DomeGeometryTest {
+    @Test void stationaryVisibilityIsStableAfterApplyingHysteresisOnce() {
+        var panels = DomeGeometry.panels(96, 96, 3, true);
+        var previous = new HashSet<Integer>();
+        for (int i=0; i<panels.size(); i+=3) previous.add(i);
+        for (int x=-160; x<=160; x+=40) for (int z=-160; z<=160; z+=40) {
+            var first = DomeGeometry.visible(panels,previous,x,12,z,150,190);
+            assertEquals(first,DomeGeometry.visible(panels,first,x,12,z,150,190));
+        }
+    }
 
     /** Rotates v by the unit quaternion (x, y, z, w). */
     private static double[] rotate(double qx, double qy, double qz, double qw, double[] v) {

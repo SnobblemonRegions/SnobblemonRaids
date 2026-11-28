@@ -21,8 +21,15 @@ public record RaidRewardEligibility(
         Set<UUID> participants,
         int elapsedCombatTicks,
         String renownTitle,
-        String renownBoon) {
+        String renownBoon,
+        long committedAtMillis) {
+    public RaidRewardEligibility(UUID raidId, ResourceLocation definitionId, RaidOutcome outcome, Map<UUID, Float> contribution,
+            Set<UUID> participants, int elapsedCombatTicks, String renownTitle, String renownBoon) {
+        this(raidId, definitionId, outcome, contribution, participants, elapsedCombatTicks, renownTitle, renownBoon, 0);
+    }
     public RaidRewardEligibility {
+        contribution = Map.copyOf(contribution); participants = Set.copyOf(participants);
+        if (committedAtMillis < 0) throw new IllegalArgumentException("Invalid committed victory time");
         renownTitle = renownTitle == null ? "" : renownTitle;
         renownBoon = renownBoon == null ? "" : renownBoon;
     }
@@ -31,6 +38,6 @@ public record RaidRewardEligibility(
         return new RaidRewardEligibility(
                 raid.getId(), raid.getDefinitionId(), RaidOutcome.VICTORY,
                 raid.getContributionSnapshot(), raid.getActiveParticipants(), raid.getElapsedCombatTicks(),
-                raid.getRenownTitle(), raid.getRenownBoon());
+                raid.getRenownTitle(), raid.getRenownBoon(), System.currentTimeMillis());
     }
 }

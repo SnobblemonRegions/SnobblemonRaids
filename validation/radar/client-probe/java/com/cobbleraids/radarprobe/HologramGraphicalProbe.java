@@ -23,6 +23,7 @@ public final class HologramGraphicalProbe implements ClientModInitializer {
     private int terrainMin=Integer.MAX_VALUE,terrainMax=Integer.MIN_VALUE,knownSamples;
     private final boolean naturalBiome=!System.getProperty("cobbleraids.radar.smoke.biome", "").isEmpty();
     @Override public void onInitializeClient() {
+        if (Boolean.getBoolean("cobbleraids.veil.capture") || System.getProperty("cobbleraids.radar.smoke.output") == null) return;
         output=Path.of(System.getProperty("cobbleraids.radar.smoke.output"));
         ClientTickEvents.END_CLIENT_TICK.register(client->{
             try { tick(client); }

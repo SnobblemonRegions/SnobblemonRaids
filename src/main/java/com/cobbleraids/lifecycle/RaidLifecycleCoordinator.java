@@ -328,6 +328,7 @@ public final class RaidLifecycleCoordinator {
         // Null for an ordinary raid, which has every side effect exactly as before owned encounters
         // existed. An owned encounter has only the ones its owner asked for.
         EncounterPolicy policy = raid.isOwned() ? raid.getOwnership().policy() : null;
+        var victorySnapshot = RaidRewardEligibility.victory(raid);
         FINALIZATION.finalizeOnce(raid.getId(), () -> {
             RaidFaultBarrier.guard("telemetry:raid-end", () -> RaidTelemetry.raidEnded(raid, RaidEndReason.VICTORY));
             // Its own barrier, first: a statistic that cannot be recorded must not be the reason a
@@ -341,7 +342,9 @@ public final class RaidLifecycleCoordinator {
             // Both need the boss's Pokemon, which the cleanup below is about to discard, and both
             // read the same per-player history, so they run together and before it.
             recordAndOfferCatch(raid, server, policy);
-            if (policy == null || policy.raidRewards()) RaidRewardService.grant(RaidRewardEligibility.victory(raid), server);
+            if (policy == null) RaidFaultBarrier.guard("worldboss:ordinary-blessing", () ->
+                    com.cobbleraids.worldboss.WorldBossService.ordinaryVictory(server, victorySnapshot));
+            if (policy == null || policy.raidRewards()) RaidRewardService.grant(victorySnapshot, server);
             // An ordinary raid also moves its victors' Pokemon toward promotion (an owned one pays through its owner).
             if (policy == null) RaidFaultBarrier.guard("ascensionlib:attunement",
                     () -> com.cobbleraids.raid.AscensionLibArming.settleVictory(raid.getBossActorId(), tierOf(raid),

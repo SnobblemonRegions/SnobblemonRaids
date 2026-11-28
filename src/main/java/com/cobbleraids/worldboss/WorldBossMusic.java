@@ -28,7 +28,7 @@ final class WorldBossMusic {
     enum Track { NONE, ZONE, BOSS }
 
     /** What a player is playing and when it began (game ticks). */
-    private record Playing(Track track, long startedTick) {}
+    private record Playing(Track track, long startedTick, ResourceLocation asset, ServerPlayer viewer) {}
 
     private static final Map<UUID, Playing> PLAYING = new HashMap<>();
 
@@ -58,22 +58,26 @@ final class WorldBossMusic {
         Set<UUID> online = new java.util.HashSet<>();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             online.add(player.getUUID());
-            boolean inZone = dimension != null && player.level().dimension().location().equals(dimension)
-                    && WorldBossBorder.inside(state.x(), state.z(), WorldBossRules.zoneRadius(state, config), player.getX(), player.getZ());
+            boolean inZone = dimension != null && WorldBossService.audienceViews(player) && (WorldBossService.inRange(player, state, config) || WorldBossService.audienceObserver(player));
             Track wanted = wanted(duelling.contains(player.getUUID()) || chained.contains(player.getUUID()), inZone);
+            if (!WorldBossService.audienceViews(player)) wanted = Track.NONE;
+            if (WorldBossScenes.ducksMusic(player)) wanted = Track.NONE;
             Playing now = PLAYING.get(player.getUUID());
+            if (now != null && now.viewer() != player) { PLAYING.remove(player.getUUID()); now = null; }
             Track current = now == null ? Track.NONE : now.track();
             long tick = player.serverLevel().getGameTime();
             if (wanted == Track.NONE) {
-                if (current != Track.NONE) stop(player, music, current);
+                if (current != Track.NONE) stop(player, now);
                 continue;
             }
-            if (!due(wanted, current, now == null ? 0L : now.startedTick(), tick, seconds(music, wanted))) continue;
-            if (current != Track.NONE && current != wanted) stop(player, music, current);
+            var asset = ResourceLocation.parse(sound(music, wanted));
+            boolean replaced = now != null && !now.asset().equals(asset);
+            if (!replaced && !due(wanted, current, now == null ? 0L : now.startedTick(), tick, seconds(music, wanted))) continue;
+            if (current != Track.NONE && (current != wanted || replaced)) stop(player, now);
             player.connection.send(new ClientboundSoundEntityPacket(
-                    Holder.direct(SoundEvent.createVariableRangeEvent(ResourceLocation.parse(sound(music, wanted)))),
+                    Holder.direct(SoundEvent.createVariableRangeEvent(asset)),
                     SoundSource.MUSIC, player, music.volume(), 1.0f, player.getRandom().nextLong()));
-            PLAYING.put(player.getUUID(), new Playing(wanted, tick));
+            PLAYING.put(player.getUUID(), new Playing(wanted, tick, asset, player));
         }
         // Players who logged off: nothing to stop, just forget them so a return starts the track fresh.
         for (Iterator<UUID> it = PLAYING.keySet().iterator(); it.hasNext();) {
@@ -84,10 +88,9 @@ final class WorldBossMusic {
     /** Ends the music for everyone: the boss left or was beaten, the system was turned off, or the server is stopping. */
     static void stopAll(MinecraftServer server) {
         if (PLAYING.isEmpty()) return;
-        WorldBossConfig.Music music = WorldBossConfigManager.get().music();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             Playing now = PLAYING.get(player.getUUID());
-            if (now != null) stop(player, music, now.track());
+            if (now != null && now.viewer() == player) stop(player, now);
         }
         PLAYING.clear();
     }
@@ -96,8 +99,9 @@ final class WorldBossMusic {
         PLAYING.clear();
     }
 
-    private static void stop(ServerPlayer player, WorldBossConfig.Music music, Track track) {
-        player.connection.send(new ClientboundStopSoundPacket(ResourceLocation.parse(sound(music, track)), SoundSource.MUSIC));
+    static void silenceOwned(ServerPlayer player) { var playing = PLAYING.get(player.getUUID()); if (playing != null && playing.viewer() == player) stop(player, playing); else PLAYING.remove(player.getUUID()); }
+    private static void stop(ServerPlayer player, Playing playing) {
+        player.connection.send(new ClientboundStopSoundPacket(playing.asset(), SoundSource.MUSIC));
         PLAYING.remove(player.getUUID());
     }
 

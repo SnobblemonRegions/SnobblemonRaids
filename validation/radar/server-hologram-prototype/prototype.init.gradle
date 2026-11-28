@@ -1,0 +1,20 @@
+gradle.projectsEvaluated {
+    def p = gradle.rootProject
+    def dir = p.file('validation/radar/server-hologram-prototype')
+    def probe = p.sourceSets.create('hologramExperiment')
+    probe.java.srcDir(new File(dir, 'java'))
+    probe.resources.srcDir(new File(dir, 'resources'))
+    probe.compileClasspath += p.sourceSets.main.compileClasspath
+    def devJar = p.tasks.register('hologramExperimentJar', Jar) {
+        from probe.output
+        archiveFileName = 'hologram-experiment-dev.jar'
+        destinationDirectory = p.layout.buildDirectory.dir('devlibs')
+    }
+    p.tasks.register('remapHologramExperiment', p.tasks.named('remapJar').get().class.superclass) {
+        dependsOn devJar
+        inputFile.set(devJar.flatMap { it.archiveFile })
+        archiveFileName = 'hologram-experiment.jar'
+        destinationDirectory = p.layout.buildDirectory.dir('smoke-libs')
+        addNestedDependencies = false
+    }
+}

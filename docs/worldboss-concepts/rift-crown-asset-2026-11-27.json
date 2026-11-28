@@ -1,0 +1,28 @@
+{
+  "file": "rift_crown.png",
+  "sha256": "de30054999f35c7d23edbaac177ff1ab785f81a493872255637acdfa63ba6fd1",
+  "authoring_tool": "built-in image_gen",
+  "reference": "docs/worldboss-concepts/giratina-bespoke-healthbars-2026-11-27.png / A - Rift Crown",
+  "source_size": [
+    2172,
+    724
+  ],
+  "source_uv": [
+    8,
+    24,
+    2156,
+    584
+  ],
+  "normal_display_size": [
+    360,
+    96
+  ],
+  "native_health_rect": [
+    85,
+    70,
+    189,
+    6
+  ],
+  "native_caption_y": 82,
+  "pixel_file_modified_after_generation": false
+}

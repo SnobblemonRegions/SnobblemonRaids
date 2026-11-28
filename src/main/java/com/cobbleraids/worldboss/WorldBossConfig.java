@@ -99,7 +99,8 @@ public record WorldBossConfig(
         Night night,
         Arena arena,
         float poolMax,
-        List<String> bossBannedMoves) {
+        List<String> bossBannedMoves,
+        List<WorldBossCalibration> calibrations) {
 
     /**
      * When the boss may start by itself: only at night when {@code only} is set. A command start ignores this. A dimension with a fixed time
@@ -148,13 +149,13 @@ public record WorldBossConfig(
      */
     public record Look(boolean duelBossInvisible, boolean noGlowInZone) {
         public static Look defaults() {
-            return new Look(false, true);
+            return new Look(true, true);
         }
     }
 
     /**
-     * The glass dome at the zone's edge (see {@link DomeGeometry}). It needs AscensionLib's resource pack, and while it is on it replaces the particle wall
-     * ({@code visual.border_particles}); turn it off to get the particles back for servers without the pack.
+     * The glass dome at the zone's edge (see {@link DomeGeometry}). It needs the generated server resource pack, and while it is on it replaces
+     * the particle wall ({@code visual.border_particles}); turn it off to get the particles back for servers without the pack.
      *
      * @param enabled draw the dome
      * @param height  how far it rises above the boss, in blocks (and sinks below it when full); it is as wide as the zone's radius
@@ -201,6 +202,11 @@ public record WorldBossConfig(
     public static final String FILE_NAME = "world_boss.json";
 
     public WorldBossConfig {
+        calibrations = List.copyOf(calibrations);
+        if (calibrations.stream().anyMatch(value -> value.evidence().startsWith("TEST_ONLY_"))) throw new IllegalArgumentException("Test-only references cannot be installed as live calibrations");
+        if (calibrations.stream().map(WorldBossCalibration::definition).distinct().count() != calibrations.size()) {
+            throw new IllegalArgumentException("calibrations must contain at most one measurement per definition");
+        }
         require(raidDefinitions != null && !raidDefinitions.isEmpty(), "raid_definitions", "must name at least one raid definition");
         for (String id : raidDefinitions) {
             require(id != null && !id.isBlank(), "raid_definitions", "must not contain a blank id");
@@ -274,7 +280,7 @@ public record WorldBossConfig(
                 70, 3_000L, 240, 30, 45, true, 128.0,
                 "minecraft:overworld", 300, 1500, 30, 30, true, 40, 60,
                 5f, DEFAULT_REWARD_RAID_POINTS, 0, true, 40, 8f, 3f, "#9A5CC6", 50, Music.defaults(), Dome.defaults(), Look.defaults(), Night.defaults(), Arena.defaults(),
-                150_000f, HEALING_MOVES);
+                150_000f, HEALING_MOVES, List.of());
     }
 
     /** The wall's tint as an ARGB int: {@link #wallColor} with the alpha of {@link #wallOpacityPercent}. */
@@ -353,12 +359,16 @@ public record WorldBossConfig(
                         (int) num(spawn, "spawn.night_to_tick", dn.toTick)),
                 new Arena(bool(arenaJson, "arena.enabled", d.arena.enabled()), num(arenaJson, "arena.radius", (float) d.arena.radius())),
                 num(pool, "pool.max", d.poolMax),
-                idList(duel, "duel.boss_banned_moves", d.bossBannedMoves));
+                idList(duel, "duel.boss_banned_moves", d.bossBannedMoves),
+                readCalibrations(root));
     }
 
     /** The defaults written back as JSON, with the keys in the same grouping the parser reads. */
     public JsonObject toJson() {
         JsonObject root = new JsonObject();
+        com.google.gson.JsonArray measurements = new com.google.gson.JsonArray();
+        calibrations.forEach(value -> measurements.add(value.toJson()));
+        root.add("calibrations", measurements);
         root.addProperty("enabled", enabled);
         com.google.gson.JsonArray ids = new com.google.gson.JsonArray();
         raidDefinitions.forEach(ids::add);
@@ -456,6 +466,17 @@ public record WorldBossConfig(
             return List.of(str(root, "raid_definition", fallback.get(0)));
         }
         return fallback;
+    }
+
+    private static List<WorldBossCalibration> readCalibrations(JsonObject root) {
+        if (!root.has("calibrations")) return List.of();
+        if (!root.get("calibrations").isJsonArray()) throw new IllegalArgumentException("calibrations must be a list");
+        List<WorldBossCalibration> values = new ArrayList<>();
+        for (var row : root.getAsJsonArray("calibrations")) {
+            if (!row.isJsonObject()) throw new IllegalArgumentException("calibrations entries must be objects");
+            values.add(WorldBossCalibration.fromJson(row.getAsJsonObject()));
+        }
+        return values;
     }
 
     /** A list of text ids under {@code path}'s leaf key, or {@code fallback} when it is not there. */

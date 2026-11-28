@@ -161,7 +161,7 @@ public final class WorldBossRules {
 
     /** The zone radius in force: the arena's own when the boss stands at an arena marker, otherwise the open-world radius. */
     public static double zoneRadius(WorldBossState state, WorldBossConfig config) {
-        return state != null && state.arena() ? config.arena().radius() : config.radius();
+        return state != null && state.arena() ? state.audienceRadius() == null ? config.arena().radius() : state.audienceRadius() : config.radius();
     }
 
     /**

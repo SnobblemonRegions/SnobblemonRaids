@@ -55,8 +55,19 @@ public final class EncounterService {
      */
     public static StartResult start(EncounterRequest request, EncounterListener listener,
                                     java.util.function.Consumer<PokemonEntity> prepareBoss) {
+        return startPrepared(request,listener,prepareBoss,boss -> true);
+    }
+
+    /** Internal native placement gate after dimensions/level are known, before a battle exists. */
+    public static StartResult startChecked(EncounterRequest request, EncounterListener listener, java.util.function.Predicate<PokemonEntity> placement) {
+        return startPrepared(request,listener,boss -> {},placement);
+    }
+
+    private static StartResult startPrepared(EncounterRequest request, EncounterListener listener,
+            java.util.function.Consumer<PokemonEntity> prepareBoss, java.util.function.Predicate<PokemonEntity> placement) {
         Objects.requireNonNull(request, "request");
         Objects.requireNonNull(listener, "listener");
+        Objects.requireNonNull(placement, "placement");
         requireServerThread(request.level().getServer());
 
         UUID encounterId = request.encounterId();
@@ -87,6 +98,10 @@ public final class EncounterService {
             // Its own barrier: a boss that could not be dressed up still fights as its definition made it.
             RaidFaultBarrier.guard("encounter:prepare-boss", () -> prepareBoss.accept(boss));
             applyLevel(boss, definition, request.bossLevel());
+            if (!placement.test(boss)) {
+                if (!boss.isRemoved()) boss.discard();
+                return refused("The battle space is no longer clear or does not fit this boss. Spread out and try again.");
+            }
             long derivedHealth = request.maxHealth().isPresent()
                     ? request.maxHealth().getAsLong()
                     : RaidScalingPolicy.maxHealth(definition, request.players().size(), request.bossLevel());
@@ -101,7 +116,7 @@ public final class EncounterService {
             ACTIVE.put(encounterId, session);
             // The pool carries its own baseline when an owner scaled it, so "130% was applied" is
             // readable from the line rather than needing a second, unscaled run to compare against.
-            RaidLog.info("Owned encounter {} started for {}: {} at level {}, {} player(s), pool {}{}{}",
+            routineLog(request.owner(), "Owned encounter {} started for {}: {} at level {}, {} player(s), pool {}{}{}",
                     encounterId, request.owner(), definition.id(), request.bossLevel(),
                     request.players().size(), health,
                     request.rules().healthPercent() == 100
@@ -114,6 +129,12 @@ public final class EncounterService {
             if (!boss.isRemoved()) boss.discard();
             return refused(describe(ex));
         }
+    }
+
+    /** Keep per-player world-boss traces diagnostic without changing other owners' operational logs. */
+    private static void routineLog(net.minecraft.resources.ResourceLocation owner, String message, Object... args) {
+        if (com.cobbleraids.worldboss.WorldBossService.OWNER.equals(owner)) RaidLog.debug(message, args);
+        else RaidLog.info(message, args);
     }
 
     /** A one-line summary of an owner's battle rules, for the start log (TDS #60). */
@@ -190,10 +211,14 @@ public final class EncounterService {
      * A no-op for an ordinary raid, for damage nobody dealt, and for a hit that took nothing.
      */
     public static void notifyDamage(RaidSession raid, UUID playerId, float applied) {
+        notifyDamage(raid, playerId, applied, 0, 0);
+    }
+
+    public static void notifyDamage(RaidSession raid, UUID playerId, float applied, int turn, long sequence) {
         RaidSession.Ownership ownership = raid == null ? null : raid.getOwnership();
         if (ownership == null || playerId == null || !(applied > 0f)) return;
         RaidFaultBarrier.guard("encounter:listener-damage", () ->
-                ownership.listener().onDamage(ownership.encounterId(), playerId, applied));
+                ownership.listener().onDamageAction(ownership.encounterId(), playerId, applied, turn, sequence));
     }
 
     /** Called by the lifecycle coordinator when a participant leaves an owned encounter. */
@@ -215,7 +240,7 @@ public final class EncounterService {
         EncounterResult result = new EncounterResult(ownership.encounterId(),
                 EncounterOutcomes.of(raid.getOutcome()), raid.getContributionSnapshot(),
                 raid.getActiveParticipants(), raid.getElapsedCombatTicks());
-        RaidLog.info("Owned encounter {} for {} ended: {}", ownership.encounterId(), ownership.owner(), result.outcome());
+        routineLog(ownership.owner(), "Owned encounter {} for {} ended: {}", ownership.encounterId(), ownership.owner(), result.outcome());
         RaidFaultBarrier.guard("encounter:listener-ended", () -> ownership.listener().onEnded(result));
     }
 

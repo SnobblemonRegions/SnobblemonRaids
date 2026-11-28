@@ -9,7 +9,8 @@ import net.minecraft.server.level.ServerPlayer;
 public final class RadarHologramNetworking {
     private RadarHologramNetworking() {}
     public static void register() {
-        PayloadTypeRegistry.playS2C().register(RadarHologramPayload.TYPE, RadarHologramPayload.CODEC);
+        com.cobbleraids.visual.protocol.VisualProtocol.once("radar", () ->
+                PayloadTypeRegistry.playS2C().register(RadarHologramPayload.TYPE, RadarHologramPayload.CODEC));
     }
     public static boolean canShow(ServerPlayer player) {
         return ServerPlayNetworking.canSend(player, RadarHologramPayload.TYPE);

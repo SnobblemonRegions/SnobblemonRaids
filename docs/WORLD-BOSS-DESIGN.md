@@ -1,3 +1,5 @@
+> Historical legacy design. Current scheduled-only starts, API version 2, staff seasons and implementation limits are documented in [the implementation handoff](handoff/WORLD-BOSS-IMPLEMENTATION-PROGRESS.md). The manual/window launch instructions below describe the earlier implementation.
+
 # World Boss (event system): design
 
 Status: **proposal, 2026-10-25, nothing built.** Branch `world-boss`. First use: the Halloween event, 2026-10-31 to 2026-11-02 (see AscensionLib `docs/HALLOWEEN-EVENT-DESIGN.md`).

@@ -60,9 +60,36 @@ class RaidCommandGatingTest {
             // arena marker commands are operator-only and so must never appear in this list.
             "worldboss join",
             "worldboss leave",
+            "worldboss pause",
+            "worldboss resume",
+            "worldboss claim",
+            "worldboss scene skip",
+            "worldboss scene voice <volume>",
+            "worldboss scene subtitles on",
+            "worldboss scene subtitles off",
+            "worldboss scene effects full",
+            "worldboss scene effects minimal",
+            "worldboss scene effects off",
+            "worldboss scene transcript <season> <kind>",
+            "worldboss scene transcript <season> <kind> <awakening>",
+            "worldboss scene replay <season> <kind>",
+            "worldboss scene replay <season> <kind> <awakening>",
+            "worldboss ward focus",
+            "worldboss ward relay",
+            "worldboss collection",
+            "worldboss collection legacy set <season>",
+            "worldboss collection legacy clear",
+            "worldboss collection attune <season> <slot>",
+            "worldboss collection attune <season> <slot> <style>",
+            "worldboss collection detach",
+            "worldboss collection effects full",
+            "worldboss collection effects minimal",
+            "worldboss collection effects off",
             "worldboss status",
             "worldboss me",
             "worldboss warp",
+            "worldboss fight",
+            "worldboss observe",
             "worldboss return");
 
     private static CommandSourceStack source(int permissionLevel) {
@@ -117,9 +144,18 @@ class RaidCommandGatingTest {
         for (String admin : Set.of("spawn <pokemon>", "despawn", "despawn all", "reload", "list",
                 "points give <target> <amount>", "points take <target> <amount>", "points set <target> <amount>",
                 "reward grant <target> <definition>", "reward clear <target>", "capture grant <target> <definition>",
-                "debug audit", "debug status", "perf")) {
+                "debug audit", "debug status", "perf", "worldboss control hold", "worldboss control recover", "worldboss preflight",
+                "worldboss season status", "worldboss season stage <id> <name>", "worldboss season activate", "worldboss season pause", "worldboss season resume")) {
             assertTrue(op.contains(admin), "operator cannot reach: " + admin);
         }
+    }
+
+    @Test void worldBossRecoveryControlsRequirePermissionLevelTwo() {
+        Set<String> levelOne = reachable("cr", source(1));
+        assertTrue(!levelOne.contains("worldboss control hold"));
+        assertTrue(!levelOne.contains("worldboss control recover"));
+        assertTrue(!levelOne.contains("worldboss preflight"));
+        assertTrue(levelOne.stream().noneMatch(path -> path.startsWith("worldboss season ")));
     }
 
     @Test

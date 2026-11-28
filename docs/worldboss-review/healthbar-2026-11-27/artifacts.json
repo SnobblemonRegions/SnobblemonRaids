@@ -1,0 +1,26 @@
+{
+  "artifacts": {
+    "core": {
+      "file": "CobbleRaids-0.8.211-worldboss-playtest.jar",
+      "sha256": "dcf142ecd3fddf9aa36af88cf54cd72478c108d26f41be661c54c885ab0d67cd"
+    },
+    "companion": {
+      "file": "CobbleRaids-Radar-Client-0.4.2+1.21.1.jar",
+      "sha256": "467bc615290b5835ac1e238e2f317401024e20de28de7a5c9cf773f871446e19"
+    }
+  },
+  "tests": {
+    "core": {
+      "tests": 1415,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "companion": {
+      "tests": 25,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  }
+}

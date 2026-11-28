@@ -23,7 +23,8 @@ public final class RadarHologramClient implements ClientModInitializer {
     private static long openedAt;
     @Override public void onInitializeClient() {
         WorldRenderEvents.AFTER_ENTITIES.register(HologramProjectionRenderer::render);
-        PayloadTypeRegistry.playS2C().register(RadarHologramPayload.TYPE, RadarHologramPayload.CODEC);
+        com.cobbleraids.visual.protocol.VisualProtocol.once("radar", () ->
+                PayloadTypeRegistry.playS2C().register(RadarHologramPayload.TYPE, RadarHologramPayload.CODEC));
         ClientPlayNetworking.registerGlobalReceiver(RadarHologramPayload.TYPE,
                 (payload, context) -> context.client().execute(() -> accept(payload)));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> clear());

@@ -1,0 +1,25 @@
+{
+  "revision": "5026800714d07231937d92eb4cceabf06e05d74e",
+  "files": [
+    {
+      "file": "font/cinzel_decorative_bold.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/5026800714d07231937d92eb4cceabf06e05d74e/ofl/cinzeldecorative/CinzelDecorative-Bold.ttf",
+      "sha256": "e854e68a388aa50d742a4415c1ae5c17a617ef7956c95a70021d0a4a44f20518"
+    },
+    {
+      "file": "font/licenses/CinzelDecorative-OFL.txt",
+      "url": "https://raw.githubusercontent.com/google/fonts/5026800714d07231937d92eb4cceabf06e05d74e/ofl/cinzeldecorative/OFL.txt",
+      "sha256": "1e5d6660366ddcfca4f2fc10e2acfba9fa4d97d40aec80d7dbfd41d730a420ae"
+    },
+    {
+      "file": "font/barlow_semibold.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/5026800714d07231937d92eb4cceabf06e05d74e/ofl/barlow/Barlow-SemiBold.ttf",
+      "sha256": "86577cb32f8abe3673db53ca0f4221e6856751a4f6730c867e00f720f8bb1fc5"
+    },
+    {
+      "file": "font/licenses/Barlow-OFL.txt",
+      "url": "https://raw.githubusercontent.com/google/fonts/5026800714d07231937d92eb4cceabf06e05d74e/ofl/barlow/OFL.txt",
+      "sha256": "186d750eb496a4c17a76385f82be6aea2ac1cf2de074a811d63786cf374ea73f"
+    }
+  ]
+}

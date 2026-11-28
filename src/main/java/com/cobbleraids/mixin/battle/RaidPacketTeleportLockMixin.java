@@ -31,8 +31,10 @@ public abstract class RaidPacketTeleportLockMixin {
     private void cobbleRaids$lockPacketTeleport(double x, double y, double z, float yaw, float pitch,
                                                 Set<RelativeMovement> relative, CallbackInfo ci) {
         try {
+            if (player != null) com.cobbleraids.worldboss.WorldBossService.invalidateWardAction(player.getUUID());
             if (player == null || RaidTeleportLock.isInPlace(player, x, y, z, relative)) return;
-            if (RaidTeleportLock.refuse(player)) ci.cancel();
+            // Vanilla absMoveTo uses these exact values before encoding relative packet deltas.
+            if (RaidTeleportLock.refuse(player) || !com.cobbleraids.worldboss.WorldBossService.allowArenaTeleport(player, player.serverLevel(), x, y, z)) ci.cancel();
         } catch (Exception ex) {
             RaidFaultBarrier.report("mixin:packet-teleport-lock", ex);
         }

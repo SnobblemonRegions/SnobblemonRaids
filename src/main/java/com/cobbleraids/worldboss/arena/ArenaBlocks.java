@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 
 /**
- * Registers the two arena marker blocks and their items: {@code cobbleraids:world_boss_spawn} and {@code cobbleraids:world_boss_entrance}.
+ * Registers arena spawn, entrance, ward pylon and relay route markers and their items.
  * Give one with {@code /give @s cobbleraids:world_boss_spawn} and place it where the boss should stand.
  */
 public final class ArenaBlocks {
@@ -20,12 +20,19 @@ public final class ArenaBlocks {
 
     public static Block spawn;
     public static Block entrance;
+    public static Block wardPylon;
+    public static Block relayCache, relayCheckpoint;
+    public static Block observer;
 
     /** Idempotent: a second call would throw on the duplicate id. */
     public static void register() {
         if (spawn != null) return;
         spawn = block("world_boss_spawn", ArenaMarkers.Kind.SPAWN, "World Boss Spawn Marker");
         entrance = block("world_boss_entrance", ArenaMarkers.Kind.ENTRANCE, "World Boss Arena Entrance Marker");
+        wardPylon = block("world_boss_ward_pylon", ArenaMarkers.Kind.WARD_PYLON, "World Boss Ward Pylon Marker");
+        relayCache = block("world_boss_relay_cache", ArenaMarkers.Kind.RELAY_CACHE, "World Boss Relay Cache Marker");
+        relayCheckpoint = block("world_boss_relay_checkpoint", ArenaMarkers.Kind.RELAY_CHECKPOINT, "World Boss Relay Checkpoint Marker");
+        observer = block("world_boss_observer", ArenaMarkers.Kind.OBSERVER, "World Boss Spectator Terrace Marker");
     }
 
     private static Block block(String path, ArenaMarkers.Kind kind, String name) {

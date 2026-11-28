@@ -38,6 +38,11 @@ public final class RaidLog {
 
     private RaidLog() {}
 
+    /** High-volume diagnostic traces; occurrence-level operational events remain INFO. */
+    public static void debug(String message, Object... args) {
+        LOGGER.debug(PREFIX + message, args);
+    }
+
     /** Ordinary operational events: a raid spawned, rewards restored, config migrated. */
     public static void info(String message, Object... args) {
         LOGGER.info(PREFIX + message, args);

@@ -77,7 +77,9 @@ public final class RaidFactory {
             boolean armed = AscensionLibArming.wanted(ownership) && AscensionLibArming.declareAndArm(playerIds, bossEntity.getPokemon().getUuid(),
                     bossEntity.getPokemon().getSpecies().getResourceIdentifier().toString(), bossEntity.getPokemon().getLevel(),
                     AscensionLibArming.threatFor(definition.rarityTier()));
-            try {
+            try (var simulation = com.cobbleraids.showdown.WorldBossSimulator.starting(
+                    ownership != null && com.cobbleraids.worldboss.WorldBossService.OWNER.equals(ownership.owner()) ? ownership.encounterId() : null,
+                    bossEntity.getPokemon().getUuid())) {
                 result = BattleRegistry.startBattle(
                         format,
                         new BattleSide(playerActors.toArray(BattleActor[]::new)),

@@ -75,9 +75,12 @@ It samples loaded chunks only and adds no client mod or custom shader. The stack
 terrain appearance is illustrated depth on a flat map. See
 [controls, limits and validation](docs/RAID-RADAR-PROTOTYPE.md).
 
-An optional [3D client companion](docs/RAID-RADAR-HOLOGRAM.md) renders a physical compass
-with raised terrain in first person. Players without it keep the flat map; H toggles
-the companion display. Server-side crafting and raid rules remain authoritative.
+Choose **Deploy 3D projector** in the status menu to open a floating compass with raised
+terrain, live raid markers and a dotted bearing. It uses Cobblemon's existing renderer and requires
+the current Polymer resource pack. The projector follows your first-person view and stows when
+you switch away from the radar or leave the dimension. The flat map remains available, and the
+optional companion can still render its camera-following display.
+See [projector and companion controls](docs/RAID-RADAR-HOLOGRAM.md).
 
 ## Raid charges
 

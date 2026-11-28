@@ -43,9 +43,20 @@ def validate_physical_side_boundary() -> None:
         text = strip_comments(read(path))
         assert "ClientPlayNetworking" not in text, f"{path} references ClientPlayNetworking"
         if "PayloadTypeRegistry" in text:
-            assert path == JAVA / "radar/RadarHologramNetworking.java", f"{path} registers an unexpected packet"
-            assert "ServerPlayNetworking.canSend(player, RadarHologramPayload.TYPE)" in text
-            assert "if (canShow(player)) ServerPlayNetworking.send(player, payload);" in text
+            if path == JAVA / "radar/RadarHologramNetworking.java":
+                assert "ServerPlayNetworking.canSend(player, RadarHologramPayload.TYPE)" in text
+                assert "if (canShow(player)) ServerPlayNetworking.send(player, payload);" in text
+            elif path == JAVA / "worldboss/WorldBossHudBridge.java":
+                assert "ServerPlayNetworking.canSend(player, BossHudPayload.TYPE)" in text
+                assert "PayloadTypeRegistry.playS2C()" in text
+                assert "registerGlobalReceiver" not in text
+                assert "playC2S" not in text
+            else:
+                assert path == JAVA / "worldboss/DistortionVeilPrototype.java", f"{path} registers an unexpected packet"
+                assert "ServerPlayNetworking.canSend(player, VeilPayload.TYPE)" in text
+                assert "ServerPlayNetworking.canSend(viewer.player(), VeilPayload.TYPE)" in text
+                assert "state.testMode()" in text
+                assert "registerGlobalReceiver" not in text, "visuals must remain server-authoritative"
         assert "net.minecraft.client." not in text, f"{path} references client rendering code"
 
 

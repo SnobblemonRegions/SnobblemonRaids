@@ -12,7 +12,7 @@ import java.util.Set;
  * can be tested without a server.
  *
  * <p>Vanilla Minecraft has no smooth sphere model, so the dome is a mesh of flat glass panels, each one display entity showing a two-sided
- * quad (AscensionLib's {@code world_event_dome_N} models) whose texture holds an up-pointing isosceles triangle: base along the bottom, apex at
+ * quad (the owned {@code worldboss_distortion_dome_N} models) whose texture holds an up-pointing isosceles triangle: base along the bottom, apex at
  * the top middle. A display entity's transform is {@code translation * left * scale * right}, applied to the quad's corners, which is enough to
  * land that texture triangle on ANY triangle: its 2x2 in-plane matrix {@code [[width, shear], [0, height]]} (the shear is how far the real
  * apex sits off the middle of the base) is split by a singular value decomposition into a rotation, a stretch and a rotation, which are the

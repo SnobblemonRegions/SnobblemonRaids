@@ -1,0 +1,53 @@
+{
+  "unique_channel_frames": {
+    "full": 6,
+    "off": 1
+  },
+  "samples": [
+    {
+      "setting": "full",
+      "image": "flair-full-0-5ab2ca86.png",
+      "channel_sha256": "7a387af0c8788fc2fa6c269d0df18d8aa853625c631065f9458284077058fb8e"
+    },
+    {
+      "setting": "full",
+      "image": "flair-full-1-c0c550de.png",
+      "channel_sha256": "59b1d6809bfb4d41a54d93f368d99e7b910bd42d947300e98ecfeadd818518c3"
+    },
+    {
+      "setting": "full",
+      "image": "flair-full-2-1a8e0dc7.png",
+      "channel_sha256": "1728ee7c43edbfef0182d1fc1a0c7227d7863056a2287886f7f4924b3f2074d6"
+    },
+    {
+      "setting": "full",
+      "image": "flair-full-3-f40b1809.png",
+      "channel_sha256": "801df6f569cb4cbfd8fc51eaaa972df3bbffb4f481957c1d72c1c346b45012d9"
+    },
+    {
+      "setting": "full",
+      "image": "flair-full-4-84129481.png",
+      "channel_sha256": "ae1e987c06691ee5eb58159fbb0f1fdac883def08398e294d4a3c46cd272f5a1"
+    },
+    {
+      "setting": "full",
+      "image": "flair-full-5-fee30aca.png",
+      "channel_sha256": "5d3000794b406ff625e34cdfa87ee37557a44478dfde5324d83f9faa087485f3"
+    },
+    {
+      "setting": "off",
+      "image": "flair-off-0-35707df5.png",
+      "channel_sha256": "ce888b8124cb2b837a7dd6cf434d41f68b9e99763b6b8e1a2ce2763297061001"
+    },
+    {
+      "setting": "off",
+      "image": "flair-off-1-2e15787f.png",
+      "channel_sha256": "ce888b8124cb2b837a7dd6cf434d41f68b9e99763b6b8e1a2ce2763297061001"
+    },
+    {
+      "setting": "off",
+      "image": "flair-off-2-3e601887.png",
+      "channel_sha256": "ce888b8124cb2b837a7dd6cf434d41f68b9e99763b6b8e1a2ce2763297061001"
+    }
+  ]
+}

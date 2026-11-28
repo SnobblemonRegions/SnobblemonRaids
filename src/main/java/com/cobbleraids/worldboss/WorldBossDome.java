@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -30,8 +29,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.CustomModelData;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -39,26 +36,21 @@ import net.minecraft.world.phys.Vec3;
  *
  * <p>Each panel is an {@code item_display} entity that is never added to the world: the server builds it, and sends the add and data packets
  * only to players near that panel. So the dome costs the world nothing (no entity ticking, saving or tracking) and a player far away is sent
- * nothing. The item is vanilla with a {@code custom_model_data} number that AscensionLib's resource pack maps to an animated glass triangle
- * (see {@code ItemModelOverrides.DOME_*} there); a client without the pack sees an ender eye model rendered flat, which is why the particle
- * wall can stay on as a fallback.
+ * nothing. Polymer allocates model numbers for this mod's own animated Distortion panels. AscensionLib's seasonal panel mappings are
+ * independent. Clients need the generated server resource pack to see the dome artwork.
  *
  * <p>Everything runs on the server thread.
  */
 final class WorldBossDome {
 
-    /** Vanilla item and model numbers of the pack's panels: three swirl variants, then the flash. Frozen with AscensionLib's numbers. */
-    private static final int FIRST_MODEL = 8201;
-    private static final int FLASH_MODEL = FIRST_MODEL + DomeGeometry.SWIRL_VARIANTS;
+    /** Three independently phased panels followed by a crossing flash; physical model numbers belong to Polymer. */
+    private static final int FLASH_MODEL = DomeGeometry.SWIRL_VARIANTS;
     /** A panel is sent to a player within this many blocks of it, and kept until they are this far (the margin stops flicker). */
     private static final double NEAR = 150.0;
     private static final double FAR = 190.0;
     /** A crossing flash lasts this many game ticks; panels flashed per crossing. */
     private static final long FLASH_TICKS = 14L;
     private static final int FLASH_PANELS = 3;
-    /** A hemisphere's base ring sits this far below the boss's feet, so terrain that dips a little does not leave a gap under it. */
-    private static final double SINK = 2.0;
-
     /** A flash overlay in front of a panel, and who was sent it. */
     private record Flash(Entity entity, long expiresTick, Set<UUID> viewers) {}
 
@@ -68,12 +60,27 @@ final class WorldBossDome {
     private static List<Panel> panels = List.of();
     private static Entity[] entities = new Entity[0];
     private static final Map<UUID, Set<Integer>> SHOWN = new HashMap<>();
+    private static final Map<UUID, ServerPlayer> VIEWERS = new HashMap<>();
+    private static final Map<UUID, Vec3> SAMPLED = new HashMap<>();
     private static final List<Flash> FLASHES = new ArrayList<>();
 
     private WorldBossDome() {}
 
     /** Sends each player the panels near them and takes back the ones they have left behind. Called a few times a second. */
     static void tick(MinecraftServer server, WorldBossState state, WorldBossConfig config) {
+        if (DistortionVeilPrototype.enabled(state) && config.dome().enabled()) {
+            if (!panels.isEmpty()) clear(server);
+            SovereignSealPrototype.clear(server);
+            DistortionVeilPrototype.tick(server, state, config);
+            return;
+        }
+        DistortionVeilPrototype.clear(server);
+        if (SovereignSealPrototype.enabled(state) && config.dome().enabled()) {
+            if (!panels.isEmpty()) clear(server);
+            SovereignSealPrototype.tick(server, state, config);
+            return;
+        }
+        SovereignSealPrototype.clear(server);
         WorldBossConfig.Dome dome = config.dome();
         ResourceLocation dimensionId = ResourceLocation.tryParse(state.dimension());
         ServerLevel level = dimensionId == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, dimensionId));
@@ -85,12 +92,22 @@ final class WorldBossDome {
         Set<UUID> online = new HashSet<>();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             online.add(player.getUUID());
+            if (VIEWERS.put(player.getUUID(), player) != player) { SHOWN.remove(player.getUUID()); SAMPLED.remove(player.getUUID()); }
             if (player.level() != level) {
                 SHOWN.remove(player.getUUID());   // the client dropped them with the old dimension
+                SAMPLED.remove(player.getUUID());
                 continue;
             }
+            if (!WorldBossService.audienceViews(player)) {
+                Set<Integer> old = SHOWN.remove(player.getUUID());
+                SAMPLED.remove(player.getUUID());
+                if (old != null && !old.isEmpty()) sendRemove(player, old.stream().mapToInt(i -> entities[i].getId()).toArray());
+                continue;
+            }
+            Vec3 at = player.position();
+            if (SHOWN.containsKey(player.getUUID()) && at.equals(SAMPLED.get(player.getUUID()))) continue;
             Set<Integer> have = SHOWN.computeIfAbsent(player.getUUID(), id -> new HashSet<>());
-            Set<Integer> want = DomeGeometry.visible(panels, have, player.getX() - centre.x, player.getY() - centre.y, player.getZ() - centre.z, NEAR, FAR);
+            Set<Integer> want = DomeGeometry.visible(panels, have, at.x - centre.x, at.y - centre.y, at.z - centre.z, NEAR, FAR);
             for (int index : want) {
                 if (!have.contains(index)) sendAdd(player, entities[index]);
             }
@@ -100,17 +117,22 @@ final class WorldBossDome {
             }
             if (!gone.isEmpty()) sendRemove(player, gone.stream().mapToInt(i -> entities[i].getId()).toArray());
             SHOWN.put(player.getUUID(), want);
+            SAMPLED.put(player.getUUID(), at);
         }
         SHOWN.keySet().retainAll(online);
+        VIEWERS.keySet().retainAll(online);
+        SAMPLED.keySet().retainAll(online);
         expireFlashes(server, level.getGameTime());
     }
 
     /** Takes the dome away from everyone and forgets it: the boss ended, the dome was turned off, or the server is stopping. */
     static void clear(MinecraftServer server) {
+        DistortionVeilPrototype.clear(server);
+        SovereignSealPrototype.clear(server);
         if (!SHOWN.isEmpty() || !FLASHES.isEmpty()) {
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 Set<Integer> have = SHOWN.get(player.getUUID());
-                if (have != null && !have.isEmpty()) sendRemove(player, have.stream().mapToInt(i -> entities[i].getId()).toArray());
+                if (VIEWERS.get(player.getUUID()) == player && have != null && !have.isEmpty()) sendRemove(player, have.stream().mapToInt(i -> entities[i].getId()).toArray());
             }
             for (Flash flash : FLASHES) remove(server, flash);
         }
@@ -119,7 +141,11 @@ final class WorldBossDome {
 
     /** For the server-stopped hook: nobody is left to tell. */
     static void reset() {
+        DistortionVeilPrototype.reset();
+        SovereignSealPrototype.reset();
         SHOWN.clear();
+        VIEWERS.clear();
+        SAMPLED.clear();
         FLASHES.clear();
         builtKey = "";
         builtLevel = null;
@@ -129,6 +155,7 @@ final class WorldBossDome {
 
     /** A flash and a chill when a player crosses the wall: the panels nearest to them light up for a moment. */
     static void ripple(ServerPlayer player, boolean entering) {
+        if (!WorldBossService.audienceViews(player)) return;
         if (panels.isEmpty() || builtLevel == null || player.level() != builtLevel) return;
         Vec3 at = player.position();
         long now = builtLevel.getGameTime();
@@ -143,7 +170,7 @@ final class WorldBossDome {
             for (var shown : SHOWN.entrySet()) {
                 if (!shown.getValue().contains(index)) continue;
                 ServerPlayer viewer = builtLevel.getServer().getPlayerList().getPlayer(shown.getKey());
-                if (viewer == null) continue;
+                if (viewer == null || VIEWERS.get(shown.getKey()) != viewer || !WorldBossService.audienceViews(viewer)) continue;
                 sendAdd(viewer, flash);
                 viewers.add(shown.getKey());
             }
@@ -159,26 +186,25 @@ final class WorldBossDome {
 
     private static void ensureBuilt(ServerLevel level, WorldBossState state, WorldBossConfig config) {
         WorldBossConfig.Dome dome = config.dome();
-        String key = state.dimension() + "|" + state.x() + "|" + state.y() + "|" + state.z() + "|" + WorldBossRules.zoneRadius(state, config) + "|" + dome.height() + "|" + dome.detail() + "|" + dome.full();
+        String key = state.dimension() + "|" + state.x() + "|" + state.y() + "|" + state.z() + "|" + WorldBossRules.zoneRadius(state, config) + "|" + dome.detail();
         if (key.equals(builtKey) && level == builtLevel) return;
-        SHOWN.clear();
-        FLASHES.clear();
+        clear(level.getServer());
         builtKey = key;
         builtLevel = level;
-        centre = new Vec3(state.x(), dome.full() ? state.y() : state.y() - SINK, state.z());
-        panels = DomeGeometry.panels(WorldBossRules.zoneRadius(state, config), dome.height(), dome.detail(), dome.full());
+        centre = new Vec3(state.x(), state.y(), state.z());
+        double radius = WorldBossRules.zoneRadius(state, config);
+        panels = DomeGeometry.panels(radius, radius, dome.detail(), true);
         entities = new Entity[panels.size()];
         for (int i = 0; i < panels.size(); i++) {
             Panel panel = panels.get(i);
-            entities[i] = make(level, panel, FIRST_MODEL + panel.variant(), 0, 0, 0);
+            entities[i] = make(level, panel, panel.variant(), 0, 0, 0);
         }
     }
 
     /** An unattached item display showing one panel, offset from its place by (dx, dy, dz). */
     private static Entity make(ServerLevel level, Panel panel, int model, double dx, double dy, double dz) {
         Entity entity = EntityType.ITEM_DISPLAY.create(level);
-        var stack = Items.ENDER_EYE.getDefaultInstance();
-        stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(model));
+        var stack = WorldBossDomeMaterial.stack(model);
         CompoundTag tag = new CompoundTag();
         tag.put("item", stack.save(level.registryAccess()));
         tag.put("item_display", StringTag.valueOf("none"));

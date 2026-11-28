@@ -21,9 +21,11 @@ public final class RaidDamageInstruction extends RaidPoolInstruction {
 
     @Override
     protected void applyToPool(RaidSession raid, PokemonBattle battle, float amount) {
+        RaidDamageEvidence evidence = RaidDamageEvidence.parse(publicMessage.argumentAt(3), publicMessage.argumentAt(4));
+        if (evidence != null && !raid.acceptDamageSequence(evidence.sequence())) return;
         UUID contributor = resolveContributor(battle);
         float applied = raid.damage(contributor, amount);
-        EncounterService.notifyDamage(raid, contributor, applied);
+        EncounterService.notifyDamage(raid, contributor, applied, evidence == null ? 0 : evidence.turn(), evidence == null ? 0 : evidence.sequence());
 
         if (CobbleRaidsConfigManager.get().debugLogging()) {
             RaidLog.info("Applied raid damage: battle={}, requested={}, applied={}, hp={}/{}, contributor={}",
@@ -46,11 +48,11 @@ public final class RaidDamageInstruction extends RaidPoolInstruction {
      * token like {@code "p3a"}, whose first two characters name the actor.
      */
     private UUID resolveContributor(PokemonBattle battle) {
+        String sourceArgument = publicMessage.argumentAt(2);
+        if (sourceArgument == null || sourceArgument.length() < 2) return null;
         BattlePokemon source = publicMessage.battlePokemon(2, battle);
         if (source != null && source.getActor() != null) return source.getActor().getUuid();
 
-        String sourceArgument = publicMessage.argumentAt(2);
-        if (sourceArgument == null || sourceArgument.length() < 2) return null;
         BattleActor sourceActor = battle.getActor(sourceArgument.substring(0, 2));
         return sourceActor == null ? null : sourceActor.getUuid();
     }

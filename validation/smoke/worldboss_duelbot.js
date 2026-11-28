@@ -26,7 +26,9 @@ const mineflayer = require('mineflayer');
 const SKIP_RECIPES = { '1.21': { play: { toClient: { types: { packet_declare_recipes: 'restBuffer' } } } } };
 const readline = require('readline');
 
-const [, , username, host, port] = process.argv;
+const [, , username, host, port, ...options] = process.argv;
+const stationary = options.includes('--stationary');
+if (options.some(option => option !== '--stationary')) throw new Error('Unknown duelbot option');
 if (!username) {
   console.error('usage: node raidbot.js <username> [host] [port]');
   process.exit(1);
@@ -41,6 +43,9 @@ const bot = mineflayer.createBot({
   username,
   version: '1.21.1',
   auth: 'offline',
+  // Optional stationary-fixture comparison: retain vanilla movement updates and
+  // teleport acknowledgements, but do not simulate local gravity/collisions.
+  physicsEnabled: !stationary,
   checkTimeoutInterval: 120 * 1000, customPackets: SKIP_RECIPES, hideErrors: true, viewDistance: 2,
 });
 
@@ -74,6 +79,7 @@ function sendMove(moveName) {
     Buffer.from([0]),            // gimmickID: absent
   ]);
   bot._client.write('custom_payload', {channel: 'cobblemon:battle_select_actions', data: payload});
+  emit(`SENT ${moveName}`);
 }
 
 // A response with no payload after its type ordinal: FORFEIT=7, FLEE_ATTEMPT=8 (ShowdownActionResponseType
@@ -163,7 +169,9 @@ bot._client.on('custom_payload', (packet) => {
   } else if (channel === 'cobblemon:battle_queue_request') {
     const parsed = parseMoves(data);
     if (parsed.length) known = parsed;
+    emit(`REQUEST moves=${parsed.join(',')}`);
   } else if (channel === 'cobblemon:battle_make_choice') {
+    emit('PROMPT');
     if (fighting) sendMove(chooseMove());
   } else if (channel === 'cobblemon:battle_end') {
     emit('BATTLE_END');

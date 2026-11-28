@@ -7,12 +7,12 @@ import java.util.UUID;
  * The surface another mod uses to follow World Boss events (for example to pay its own reward).
  *
  * <p>Signatures use only {@code java.*}, {@code net.minecraft.*} and this package, the same rule as
- * {@code com.cobbleraids.api.encounter}. Experimental, {@link #API_VERSION} 1.
+ * {@code com.cobbleraids.api.encounter}. Experimental, {@link #API_VERSION} 2.
  */
 public final class CobbleRaidsWorldBoss {
 
     /** Incremented on any incompatible change to this package. */
-    public static final int API_VERSION = 1;
+    public static final int API_VERSION = 2;
 
     private CobbleRaidsWorldBoss() {}
 
@@ -26,20 +26,33 @@ public final class CobbleRaidsWorldBoss {
         WorldBossService.removeListener(listener);
     }
 
+    /**
+     * The immutable recipients of a secured payout, including qualified support players with no
+     * damage. Call on the server thread from {@link WorldBossListener#onDefeated}; the frozen
+     * journal promise, rather than a second integration-specific damage threshold, is authoritative.
+     * Historical secured payouts remain queryable while retained in the journal.
+     *
+     * @throws IllegalStateException if the payout is not secured or recovery is unavailable
+     */
+    public static java.util.Set<UUID> qualifiedPlayers(UUID bossId) {
+        return WorldBossService.qualifiedPlayers(bossId);
+    }
+
     /** True when the World Boss system is switched on ({@code enabled} in {@code world_boss.json}); {@link #start} refuses otherwise. */
     public static boolean isEnabled() {
         return com.cobbleraids.worldboss.WorldBossConfigManager.get().enabled();
     }
 
     /**
-     * Starts a World Boss now, the same way {@code /cr worldboss start} does: the event window and the night-only setting are not asked, but the
-     * system must be enabled and no other World Boss may be active. With {@code spawn.auto_start} off in {@code world_boss.json} this is the
-     * only way a boss appears besides the command, which lets another mod decide when the event happens. Call on the server thread.
-     * Added after {@link #API_VERSION} 1 as a compatible addition.
+     * Legacy manual-live-start entry point. API version 2 retains its binary signature but refuses
+     * unscheduled live starts: staff stage/activate seasons and the daily scheduler reserves each
+     * rewarded occurrence. The returned reason explains the policy. Use the operator test command
+     * in an isolated world for rehearsals. External integrations should observe events through listeners.
      *
-     * @param near a player to place the boss around (it must be in the configured spawn dimension, else a random player there is used), or null
-     * @return null on success, otherwise a short reason the boss did not start
+     * @param near retained for binary compatibility; ignored
+     * @return a non-null reason that unscheduled live starts are disabled
      */
+    @Deprecated
     public static String start(net.minecraft.server.MinecraftServer server, net.minecraft.server.level.ServerPlayer near) {
         return WorldBossService.start(server, near);
     }

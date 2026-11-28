@@ -56,7 +56,9 @@ public final class RaidTeleportLock {
 
     static boolean isInPlace(double px, double py, double pz, double x, double y, double z,
                              boolean relX, boolean relY, boolean relZ) {
-        return near(px, relX ? px + x : x) && near(py, relY ? py + y : y) && near(pz, relZ ? pz + z : z);
+        // ServerGamePacketListenerImpl.teleport receives absolute server positions. Relative flags
+        // affect only the outgoing packet's encoding, not the destination used by absMoveTo.
+        return near(px, x) && near(py, y) && near(pz, z);
     }
 
     private static boolean near(double a, double b) {

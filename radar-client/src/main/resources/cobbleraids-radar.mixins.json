@@ -3,7 +3,12 @@
   "package": "com.cobbleraids.radarclient.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "ItemInHandRendererMixin"
+    "ItemInHandRendererMixin",
+    "WorldBossDistanceMixin",
+    "WorldBossBoundsMixin",
+    "WorldBossWingRenderMixin",
+    "WorldBossWingPartMixin",
+    "WorldBossHudMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -11,6 +11,7 @@ import com.cobbleraids.lifecycle.RaidReconnectService;
 import com.cobbleraids.raid.RaidRegistry;
 import com.cobbleraids.showdown.ShowdownExtensionRegistry;
 import com.cobbleraids.showdown.ShowdownFormatExtras;
+import com.cobbleraids.showdown.RaidBootstrap;
 import com.cobbleraids.raid.RaidSession;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -112,7 +113,7 @@ public abstract class RaidBattleRegistryMixin {
             if (result.startsWith(">start ")) result = withRaidPlayerCount(result, ordered.size());
             rewritten[i] = result;
         }
-        service.startBattle(battle, cobbleRaids$withExtensionFields(battle, rewritten));
+        service.startBattle(battle, RaidBootstrap.withoutUnrequestedTeamChoices(cobbleRaids$withExtensionFields(battle, rewritten)));
     }
 
     /**

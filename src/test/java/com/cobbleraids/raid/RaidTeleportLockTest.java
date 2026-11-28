@@ -29,7 +29,7 @@ class RaidTeleportLockTest {
     @Test
     void aCorrectionToTheCurrentPositionIsNotAWarp() {
         assertTrue(RaidTeleportLock.isInPlace(10, 64, -3, 10, 64, -3, false, false, false));
-        assertTrue(RaidTeleportLock.isInPlace(10, 64, -3, 0, 0, 0, true, true, true));
+        assertTrue(RaidTeleportLock.isInPlace(10, 64, -3, 10, 64, -3, true, true, true));
     }
 
     @Test
@@ -37,5 +37,15 @@ class RaidTeleportLockTest {
         assertFalse(RaidTeleportLock.isInPlace(10, 64, -3, 400, 64, 400, false, false, false));
         assertFalse(RaidTeleportLock.isInPlace(10, 64, -3, 0, 5, 0, true, true, true));
         assertFalse(RaidTeleportLock.isInPlace(10, 64, -3, 10, 64, -2, false, false, false));
+    }
+
+    @Test
+    void outboundRelativeFlagsNeverChangeTheAbsoluteServerDestination() {
+        for (int flags = 0; flags < 8; flags++) {
+            boolean x = (flags & 1) != 0, y = (flags & 2) != 0, z = (flags & 4) != 0;
+            assertTrue(RaidTeleportLock.isInPlace(10, 64, -3, 10, 64, -3, x, y, z));
+            assertFalse(RaidTeleportLock.isInPlace(10, 64, -3, 0, 0, 0, x, y, z));
+            assertFalse(RaidTeleportLock.isInPlace(10, 64, -3, 20, 64, -3, x, y, z));
+        }
     }
 }

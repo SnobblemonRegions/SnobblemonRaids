@@ -1,0 +1,9 @@
+{
+  "skins": [{
+    "id": "worldboss_distortion",
+    "match": "BLUE/PROGRESS",
+    "background": "assets/cobbleraids/textures/boss_bar/distortion_background.png",
+    "progress": "assets/cobbleraids/textures/boss_bar/distortion_progress.png",
+    "meta": "assets/cobbleraids/textures/boss_bar/distortion_progress.png.mcmeta"
+  }]
+}

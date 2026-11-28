@@ -25,6 +25,15 @@ public interface EncounterListener {
      */
     default void onDamage(UUID encounterId, UUID playerId, float applied) {}
 
+    /**
+     * Ordered simulator evidence for a hit. Missing/invalid evidence is reported as zeroes;
+     * legacy owners still receive their original onDamage callback through this default.
+     * Turn/sequence are battle-local, not client claims or animation counters.
+     */
+    default void onDamageAction(UUID encounterId, UUID playerId, float applied, int turn, long sequence) {
+        onDamage(encounterId, playerId, applied);
+    }
+
     /** Called exactly once, after the battle has ended and the boss has been removed. */
     void onEnded(EncounterResult result);
 }

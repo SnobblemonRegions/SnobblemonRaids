@@ -1,0 +1,53 @@
+{
+  "unique_channel_frames": {
+    "full": 6,
+    "off": 1
+  },
+  "samples": [
+    {
+      "setting": "full",
+      "image": "flair-full-0-47e53790.png",
+      "channel_sha256": "57f1f5d7afef7960bfb8a3759953a62a32a097e4f20cb97e5fcc891ce8ef5994"
+    },
+    {
+      "setting": "full",
+      "image": "flair-full-1-8c14b499.png",
+      "channel_sha256": "63dc9433dbd3565beda40c078574918a357618541d8c8e37204cb6abd8c262e6"
+    },
+    {
+      "setting": "full",
+      "image": "flair-full-2-7a7e4d01.png",
+      "channel_sha256": "65ad2aba5eb6e675bf9e71add8bfc7f3096f8df96ae2b447cba6c45b88d741a3"
+    },
+    {
+      "setting": "full",
+      "image": "flair-full-3-c4148038.png",
+      "channel_sha256": "eca0b35f139cbab7bd5eaa0f9f2e14f57dae2c1674d2c232bc06fd5da99f3089"
+    },
+    {
+      "setting": "full",
+      "image": "flair-full-4-1ea04b8b.png",
+      "channel_sha256": "adda7c74e26eb7b5f86395bd0ae0bd179b721f654f115f43e2637223c9b5ac42"
+    },
+    {
+      "setting": "full",
+      "image": "flair-full-5-909243a7.png",
+      "channel_sha256": "0aa66e1e22e2ad88d8e60f731355a0f94e5d1a879bb53a67ce95fb2f7c752ef4"
+    },
+    {
+      "setting": "off",
+      "image": "flair-off-0-86724866.png",
+      "channel_sha256": "626c558dbc44c88e2cd1657726bcfc891770f1502532cf98346046e3bf9d727d"
+    },
+    {
+      "setting": "off",
+      "image": "flair-off-1-3e9d42c7.png",
+      "channel_sha256": "626c558dbc44c88e2cd1657726bcfc891770f1502532cf98346046e3bf9d727d"
+    },
+    {
+      "setting": "off",
+      "image": "flair-off-2-c3260f61.png",
+      "channel_sha256": "626c558dbc44c88e2cd1657726bcfc891770f1502532cf98346046e3bf9d727d"
+    }
+  ]
+}

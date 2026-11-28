@@ -8,7 +8,7 @@ active. An exception escaping one of these does not break a raid; it unwinds int
 call stack and takes the server with it.
 
 So this asserts a property rather than a spelling: every method annotated @Inject / @Redirect /
-@ModifyArg under com.cobbleraids.mixin either carries a try/catch in its compiled body, or delegates
+@ModifyArg / @ModifyVariable / @WrapMethod / @WrapOperation under com.cobbleraids.mixin either carries a try/catch in its compiled body, or delegates
 to a method that is itself a barrier (ShowdownIntegrationInstaller.installSafely). Unlike the phase
 scripts, it cannot go stale when code is renamed or moved -- it re-derives the entry points from the
 source every run, so a newly added mixin is covered the day it lands.
@@ -35,10 +35,10 @@ DELEGATED_BARRIERS = {
     "installSafely",
 }
 
-ANNOTATION = re.compile(r"@(Inject|Redirect|ModifyArg)\b")
+ANNOTATION = re.compile(r"@(Inject|Redirect|ModifyArg|ModifyVariable|WrapMethod|WrapOperation)\b")
 DECLARATION = re.compile(r"^\s+(?:private|public|protected).*?\b(\w+)\s*\(", re.M | re.S)
-# javap prints a method declaration at exactly two spaces of indent, ending in ');'
-JAVAP_DECL = re.compile(r"^  (?:\S.*?\s)?(\S+)\(.*\);$", re.M)
+# javap prints a method declaration at exactly two spaces; checked exceptions follow the ')'.
+JAVAP_DECL = re.compile(r"^  (?:\S.*?\s)?(\S+)\(.*\)(?: throws [^;]+)?;$", re.M)
 
 
 def entry_points() -> dict[str, list[tuple[str, str]]]:

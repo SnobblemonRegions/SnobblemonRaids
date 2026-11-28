@@ -13,8 +13,9 @@ Conditions.raidboss = {
     // line says 100/100 and overwrites the authoritative shared raid percentage.
     // raid-patch.js drops every boss -damage line; this marks the expected one.
     target.__cobbleRaidsSuppressVanillaDamageLog = true;
-    if (source) this.add('-raiddamage', target, damage, source);
-    else this.add('-raiddamage', target, damage);
+    // This ordered simulator counter is independent of delayed client animation dispatch.
+    this.__cobbleRaidsDamageSequence = (this.__cobbleRaidsDamageSequence || 0) + 1;
+    this.add('-raiddamage', target, damage, source || '', this.turn, this.__cobbleRaidsDamageSequence);
     return 0;
   }
   // No onTryHeal here. It used to report -raidheal and return 0, which made
